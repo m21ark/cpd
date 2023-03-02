@@ -417,6 +417,22 @@ void statistics()
 		STOP_PAPI
 	}
 
+	for (int size = 4096; size <= 10240; size += 2048)
+	{
+
+		START_PAPI
+
+		file << "\t" << size << "x" << size << ":  ";
+
+		clock_t t1 = clock();
+		OnMultLine(size, size);
+		clock_t t2 = clock();
+
+		file << "\t" << (double)(t2 - t1) / CLOCKS_PER_SEC;
+
+		STOP_PAPI
+	}
+
 	file << "\n\nOption 3 (Block Multiplication) - Size 4096x4096 to 10240x10240 (+2048) and Block 128 up to 512\n\n";
 	cout << "\n\nOption 3 (Block Multiplication) - Size 4096x4096 to 10240x10240 (+2048) and Block 128 up to 512\n\n";
 

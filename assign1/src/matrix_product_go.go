@@ -233,6 +233,20 @@ func statistics() {
 		file.Write([]byte(txt))
 	}
 
+	for size := 4096; size <= 10240; size += 2048 {
+
+		txt = fmt.Sprintf("\t%dx%d:  ", size, size)
+		file.Write([]byte(txt))
+
+		t1 := time.Now()
+		OnMultLine(size, size)
+		t2 := time.Now()
+
+		txt = fmt.Sprintf("\t%v\n", t2.Sub(t1).Seconds())
+
+		file.Write([]byte(txt))
+	}
+
 	file.Write([]byte("\n\nOption 3 (Block Multiplication) - Size 4096x4096 to 10240x10240 (+2048) and Block 128 up to 512\n\n"))
 	for block := 128; block <= 512; block *= 2 {
 		file.Write([]byte("\tBlock: " + fmt.Sprint(block) + "\n\t============================\n"))
