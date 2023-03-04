@@ -213,30 +213,19 @@ void OnMultBlock_Iterative(int m_ar, int m_br, int bkSize)
 }
 
 static int DIM;
-
 void mm(int crow, int ccol,
 		int arow, int acol,
 		int brow, int bcol,
 		double *a, double *b, double *c,
 		int l, int m, int n, int bkSize)
-{ // 4 deste parametros podem ser removidos
+{
 
 	int lhalf[3], mhalf[3], nhalf[3];
 	int i, j, k;
 	double *aptr, *bptr, *cptr;
 
 	if (m * n > bkSize)
-	{ // neste caso serão sempre o mesmo n e m
-
-		/*
-
-			---------   l[0]
-			|   |   |   l[l/2]
-			|   |   |   l[l - l/2] ... https://moodle.up.pt/pluginfile.php/173686/mod_resource/content/1/CPD_blockMatrixMult.pdf
-			---------   ...... slide 3 ... todas as possiblidades que aparecem no slide
-
-
-		*/
+	{
 
 		lhalf[0] = 0;
 		lhalf[1] = l / 2;
@@ -266,7 +255,6 @@ void mm(int crow, int ccol,
 	}
 	else
 	{
-
 		for (i = 0; i < l; i++)
 		{
 			for (j = 0; j < n; j++)
@@ -528,7 +516,7 @@ int main(int argc, char *argv[])
 		cin >> op;
 		if (op == 0)
 			break;
-		cout << "Dimensions: lins=cols ? ";
+		cout << "Matrix size (N=M): ";
 		cin >> lin;
 		col = lin;
 		DIM = lin;
@@ -542,16 +530,16 @@ int main(int argc, char *argv[])
 			OnMultLine(lin, col);
 			break;
 		case 3:
-			cout << "Block Size? ";
+			cout << "Block size: ";
 			cin >> blockSize;
-			if (blockSize > lin)
+			if (blockSize > lin || blockSize < 0)
 				blockSize = lin;
 			OnMultBlock_Iterative(lin, col, blockSize);
 			break;
 		case 4:
-			cout << "Block Size? ";
+			cout << "Block size: ";
 			cin >> blockSize;
-			if (blockSize > lin)
+			if (blockSize > lin || blockSize < 0)
 				blockSize = lin;
 			OnMultBlock_Recursive(lin, col, blockSize);
 			break;

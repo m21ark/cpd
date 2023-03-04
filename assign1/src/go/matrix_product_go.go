@@ -24,6 +24,8 @@ func minInt(a int, b int) int {
 	return b
 }
 
+// Function used only for debugging
+/*
 func printMatrix(m_ar int, m_br int, phc []float64) {
 	fmt.Println("\nResult matrix:")
 
@@ -41,6 +43,7 @@ func printMatrix(m_ar int, m_br int, phc []float64) {
 
 	fmt.Println()
 }
+*/
 
 func genStartMatrix(m_ar int, m_br int) ([]float64, []float64, []float64) {
 
@@ -137,61 +140,6 @@ func OnMultBlock(m_ar int, m_br int, bkS int) {
 
 }
 
-const DIM int = 4096
-
-func mm(crow int, ccol int, arow int, acol int, brow int, bcol int, a []float64, b []float64, c []float64, l int, m int, n int, bkSize int) {
-
-	var lhalf, mhalf, nhalf [3]int
-
-	var i, j, k int
-
-	if m*n > bkSize {
-
-		lhalf[0] = 0
-		lhalf[1] = l / 2
-		lhalf[2] = l - l/2
-		mhalf[0] = 0
-		mhalf[1] = m / 2
-		mhalf[2] = m - m/2
-		nhalf[0] = 0
-		nhalf[1] = n / 2
-		nhalf[2] = n - n/2
-
-		for i = 0; i < 2; i++ {
-			for j = 0; j < 2; j++ {
-				for k = 0; k < 2; k++ {
-					mm(crow+lhalf[i], ccol+mhalf[j], arow+lhalf[i], acol+mhalf[k], brow+mhalf[k], bcol+nhalf[j], a, b, c, lhalf[i+1], mhalf[k+1], nhalf[j+1], bkSize)
-				}
-			}
-		}
-	} else {
-
-		for i = 0; i < l; i++ {
-			for j = 0; j < n; j++ {
-
-				// cptr = c + (crow + i) * DIM + (ccol + j);
-				// aptr = a + (arow + i) * DIM + (acol);
-				// bptr = b + (brow)*DIM + (bcol + j);
-
-				for k = 0; k < m; k++ {
-					// *cptr += *(aptr++) * *bptr;
-					// bptr += DIM;
-				}
-			}
-		}
-	}
-}
-
-func OnMultBlockRec(m_ar int, m_br int, bkSize int) {
-
-	pha, phb, phc := genStartMatrix(m_ar, m_br)
-
-	mm(0, 0, 0, 0, 0, 0, pha, phb, phc, m_ar, m_br, m_br, bkSize)
-
-	// printMatrix(m_ar, m_br, phc)
-
-}
-
 func statistics() {
 
 	var txt string
@@ -264,25 +212,6 @@ func statistics() {
 		file.Write([]byte("\n\n"))
 	}
 
-	file.Write([]byte("Option 4 (Recursive Block Multiplication) - Size 4096x4096 to 10240x10240 (+2048) and Block 128 up to 512\n\n"))
-	for block := 128; block <= 512; block *= 2 {
-		file.Write([]byte("\tBlock: " + fmt.Sprint(block) + "\n\t============================\n"))
-		for size := 4096; size <= 10240; size += 2048 {
-
-			txt = fmt.Sprintf("\t%dx%d:  ", size, size)
-			file.Write([]byte(txt))
-
-			t1 := time.Now()
-			OnMultBlockRec(size, size, block)
-			t2 := time.Now()
-
-			txt = fmt.Sprintf("\t%v\n", t2.Sub(t1).Seconds())
-
-			file.Write([]byte(txt))
-		}
-		file.Write([]byte("\n\n"))
-	}
-
 	file.Close()
 }
 
@@ -300,17 +229,15 @@ func main() {
 		}
 	}
 
-	var lin, col, blockSize int
+	var lin, blockSize int
 
-	fmt.Print("Matrix size (N  M): ")
+	fmt.Print("Matrix size (N=M): ")
 	fmt.Scan(&lin)
-	fmt.Scan(&col)
-	fmt.Println("Values given where: ", lin, "x", col)
+	fmt.Println("Values given where: ", lin, "x", lin)
 
 	fmt.Println("1. Multiplication")
 	fmt.Println("2. Line Multiplication")
 	fmt.Println("3. Block Multiplication")
-	fmt.Println("4. Recursive Block Multiplication")
 
 	var op int
 	fmt.Print("> ")
@@ -320,23 +247,20 @@ func main() {
 
 	switch op {
 	case 1:
-		fmt.Println("Multiplication of ", lin, "X", col, "started...")
-		OnMult(lin, col)
+		fmt.Println("Multiplication of", lin, "X", lin, "started...")
+		OnMult(lin, lin)
 	case 2:
-		fmt.Println("Line Multiplication of ", lin, "X", col, "started...")
-		OnMultLine(lin, col)
+		fmt.Println("Line Multiplication of", lin, "X", lin, "started...")
+		OnMultLine(lin, lin)
 	case 3:
 		fmt.Print("Block size: ")
 		fmt.Scan(&blockSize)
-		fmt.Println("Block Multiplication of ", lin, "X", col, "and size ", blockSize, "started...")
+		if blockSize > lin || blockSize < 0 {
+			blockSize = lin
+		}
+		fmt.Println("Block Multiplication of", lin, "X", lin, "and size", blockSize, "started...")
 		t1 = time.Now()
-		OnMultBlock(lin, col, blockSize)
-	case 4:
-		fmt.Print("Block size: ")
-		fmt.Scan(&blockSize)
-		fmt.Println("Recursive Block Multiplication of ", lin, "X", col, "and size ", blockSize, "started...")
-		t1 = time.Now()
-		OnMultBlockRec(lin, col, blockSize)
+		OnMultBlock(lin, lin, blockSize)
 	default:
 		fmt.Println("Invalid option")
 	}
