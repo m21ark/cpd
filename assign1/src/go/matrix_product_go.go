@@ -111,8 +111,6 @@ func OnMultBlock(m_ar int, m_br int, bkS int) {
 	num_blocks_j := int(math.Ceil(float64(m_br) / bkSize))
 	num_blocks_k := int(math.Ceil(float64(m_ar) / bkSize))
 
-	//fmt.Println("\n\nnum_blocks_i=", num_blocks_i, "num_blocks_j=", num_blocks_j, "num_blocks_k=", num_blocks_k, "\n\n")
-
 	for i := 0; i < num_blocks_i; i++ {
 		for j := 0; j < num_blocks_j; j++ {
 			for k := 0; k < num_blocks_k; k++ {
