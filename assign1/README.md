@@ -2,7 +2,7 @@
 
 ## About the project
 
-For this project we developed 3 different algorithms for matrix multiplications in two programming languages with the goal of studying the exectuion time and the impact of the memory hierarchy on the processor's efficiency.
+For this project we developed 3 different algorithms for matrix multiplications in two programming languages with the goal of studying the exectuion time and the impact of the memory hierarchy on the processor's efficiency. For that we used a metrics measuring tool called PAPI.
 
 The following presentedinstructions are directed to a Ubuntu based installation.
 
@@ -11,6 +11,8 @@ The following presentedinstructions are directed to a Ubuntu based installation.
 This project uses both C++ and Go languages for analysis. Thus, assuming C/C++ compiler is already installed, only Go requires installation:
 
 > \> `sudo apt install golang`
+
+Note: As PAPI installation varies with each OS, we opted to not cover it here.
 
 ## Compilation
 
