@@ -26,6 +26,7 @@ using namespace std;
 	if (ret != PAPI_OK)                          \
 		std::cout << "FAIL reset" << endl;
 
+// naive approach
 void OnMult(int m_ar, int m_br)
 {
 
@@ -89,7 +90,6 @@ void OnMultLine(int m_ar, int m_br)
 	SYSTEMTIME Time1, Time2;
 
 	char st[100];
-	double temp;
 	int i, j, k;
 
 	double *pha, *phb, *phc;
@@ -144,8 +144,7 @@ void OnMultBlock_Iterative(int m_ar, int m_br, int bkSize)
 	SYSTEMTIME Time1, Time2;
 
 	char st[100];
-	double temp;
-	int i, j, k;
+	int i, j;
 
 	double *pha, *phb, *phc;
 
@@ -273,14 +272,14 @@ void mm(int crow, int ccol,
 	}
 }
 
+// recursive approach (extra algorithm)
 void OnMultBlock_Recursive(int m_ar, int m_br, int bkSize)
 {
 
 	SYSTEMTIME Time1, Time2;
 
 	char st[100];
-	double temp;
-	int i, j, k;
+	int i, j;
 
 	double *pha, *phb, *phc;
 
@@ -500,7 +499,6 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	char c;
 	int lin, col, blockSize;
 	int op;
 

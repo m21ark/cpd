@@ -2,7 +2,7 @@
 
 ## About the project
 
-For this project we developed 3 different algorithms for matrix multiplications in two programming languages with the goal of studying the exectuion time and the impact of the memory hierarchy on the processor's efficiency.  
+For this project we developed 3 different algorithms for matrix multiplications in two programming languages with the goal of studying the exectuion time and the impact of the memory hierarchy on the processor's efficiency.
 
 The following presentedinstructions are directed to a Ubuntu based installation.
 

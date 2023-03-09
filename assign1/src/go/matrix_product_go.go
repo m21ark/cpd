@@ -45,6 +45,7 @@ func printMatrix(m_ar int, m_br int, phc []float64) {
 }
 */
 
+// creates custom size square matrix
 func genStartMatrix(m_ar int, m_br int) ([]float64, []float64, []float64) {
 
 	// why m_ar * m_ar? shouldnt be m_ar * m_br?
@@ -69,6 +70,7 @@ func genStartMatrix(m_ar int, m_br int) ([]float64, []float64, []float64) {
 	return pha, phb, phc
 }
 
+// naive approach
 func OnMult(m_ar int, m_br int) {
 
 	pha, phb, phc := genStartMatrix(m_ar, m_br)
@@ -88,6 +90,7 @@ func OnMult(m_ar int, m_br int) {
 	// printMatrix(m_ar, m_br, phc)
 }
 
+// line oriented approach
 func OnMultLine(m_ar int, m_br int) {
 
 	pha, phb, phc := genStartMatrix(m_ar, m_br)
@@ -104,6 +107,7 @@ func OnMultLine(m_ar int, m_br int) {
 
 }
 
+// block oriented approach
 func OnMultBlock(m_ar int, m_br int, bkS int) {
 
 	pha, phb, phc := genStartMatrix(m_ar, m_br)
@@ -140,6 +144,7 @@ func OnMultBlock(m_ar int, m_br int, bkS int) {
 
 }
 
+// generate statistics
 func statistics() {
 
 	var txt string

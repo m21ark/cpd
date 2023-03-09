@@ -1,5 +1,5 @@
 main:
-	g++ c/matrix_product.cpp -O2 -lpapi -o c/matrix_product_c
+	g++ c/matrix_product.cpp -O2 -lpapi -Wall -Wextra -o c/matrix_product_c
 	go build -o go/matrix_product_go go/matrix_product_go.go 
 	
 clean:
