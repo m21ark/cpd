@@ -16,8 +16,10 @@ public class Authentication {
             File file = new File(USERS_FILE);
             if (!file.exists()) {
                 // If it doesn't exist, create it
-                file.createNewFile();
-                System.out.println("Created new users.txt file.");
+                if (file.createNewFile())
+                    System.out.println("Created new users.txt file.");
+                else
+                    System.out.println("Failed to create users.txt file.");
             }
 
             // Read the lines from the users.txt file
@@ -27,11 +29,10 @@ public class Authentication {
             // Check if the username and password match any existing entry
             for (String line : lines) {
                 String[] fields = line.split(",");
-                if (fields[0].equals(username) && fields[1].equals(password)) {
+                if (fields[0].equals(username) && fields[1].equals(password))
                     return 1; // Credentials match an existing entry
-                } else if (fields[0].equals(username)) {
+                else if (fields[0].equals(username))
                     return 2; // Username exists but password is incorrect
-                }
             }
 
             // If the function didn't return yet, the username doesn't exist
@@ -39,11 +40,12 @@ public class Authentication {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Username not found. Do you want to add a new user? (y/n)");
             String answer = scanner.nextLine().toLowerCase();
+
             if (answer.equals("y")) {
+
                 // Ask the user for the password again, this time with asterisks
                 System.out.print("Repeat Password: ");
-                char[] passwordChars = System.console().readPassword();
-                String newPassword = new String(passwordChars);
+                String newPassword = new String(System.console().readPassword());
 
                 if (!password.equals(newPassword))
                     return 2; // Password repetition didnt match
@@ -55,9 +57,10 @@ public class Authentication {
                 writer.close();
 
                 return 3; // New entry added successfully
-            } else {
-                return 0; // User doesn't want to add a new entry
             }
+
+            return 0; // User doesn't want to add a new entry
+
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
             return 0; // Failed to read or write the users.txt file
@@ -69,19 +72,17 @@ public class Authentication {
         System.out.print("Username: ");
         String username = scanner.nextLine();
         System.out.print("Password: ");
-        char[] passwordChars = System.console().readPassword();
-        String password = new String(passwordChars);
+        String password = new String(System.console().readPassword());
 
         int result = authenticate(username, password);
-        if (result == 1) {
-            System.out.println("Login successful!");
-        } else if (result == 2) {
-            System.out.println("Incorrect password.");
-        } else if (result == 3) {
-            System.out.println("New user added.");
-        } else {
-            System.out.println("Login failed.");
+
+        switch (result) {
+            case 1 -> System.out.println("Login successful!");
+            case 2 -> System.out.println("Incorrect password.");
+            case 3 -> System.out.println("New user added.");
+            default -> System.out.println("Login failed.");
         }
+
     }
 }
 
