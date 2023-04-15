@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
-public class Client {
+public class Client { // This is the client application runner.
     public static void main(String[] args) throws IOException {
 
         GameConfig config = new GameConfig();
