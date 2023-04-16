@@ -1,15 +1,19 @@
 package game.server;
 
+import game.client.Client;
 import game.client.ClientHandler;
 import game.config.Configurations;
 import game.config.GameConfig;
+import game.logic.GameModel;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -21,9 +25,11 @@ public class GameServer {
     private ExecutorService executorService;
     private final Configurations configurations;
     private ServerSocketChannel serverSocket;
+
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 
     public GameServer(Configurations configurations) throws IOException {
+        super();
         this.configurations = configurations;
     }
 
@@ -61,6 +67,14 @@ public class GameServer {
     private void start() throws IOException {
         init();
         openServerSocket();
+
+        // Start the RMI registry on port 1099
+        Registry registry = LocateRegistry.createRegistry(1099);
+
+        // Create an instance of the remote object and bind it to the registry
+        PlayingServer playingServer = new PlayingServer();
+        registry.rebind("playingServer", playingServer);
+
         acceptConnections();
     }
 
@@ -71,4 +85,5 @@ public class GameServer {
         GameServer gameServer = new GameServer(configurations);
         gameServer.start();
     }
+
 }
