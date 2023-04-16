@@ -28,6 +28,9 @@ public class GameServer {
     }
 
     public void init() {
+        // var boundedQueue = new ArrayBlockingQueue<Runnable>(1000);
+        // new ThreadPoolExecutor(10, 20, 60, SECONDS, boundedQueue, new AbortPolicy());
+
         executorService = Executors.newCachedThreadPool();
     }
 
@@ -38,13 +41,10 @@ public class GameServer {
             serverSocket.configureBlocking(false);
             LOGGER.info("Server started on port " + configurations.getPort());
 
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void handleClient() {
-
     }
 
     private void acceptConnections() throws IOException {
@@ -52,7 +52,7 @@ public class GameServer {
             SocketChannel socketChannel = serverSocket.accept();
             if (socketChannel != null) {
                 executorService.submit(
-                        new ClientHandler(socketChannel.socket())
+                        new ClientHandler(socketChannel.socket()) // TODO: VER ISTO: isto garante que n está sempre a executar uma nova thread?
                 );
             }
         }
