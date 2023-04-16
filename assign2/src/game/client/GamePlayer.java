@@ -3,14 +3,14 @@ package game.client;
 import java.io.Serializable;
 
 public class GamePlayer implements Serializable {
-    private final String name;
-    private int rank;
-    private int score; // score in this game
+    protected final String name;
+    protected int rank;
+    protected int score; // score in this game
 
-    public GamePlayer(String name, int score) {
+    public GamePlayer(String name, int rank) {
         this.name = name;
-        this.rank = 0;
-        this.score = score;
+        this.rank = rank;
+        this.score = 0;
     }
 
     public int getRank() {

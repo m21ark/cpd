@@ -1,13 +1,13 @@
 package game.logic;
 
-import game.client.Client;
 import game.client.GamePlayer;
+import game.server.PlayingServer;
 
-import java.util.ArrayList;
+import java.rmi.server.RemoteRef;
 import java.util.List;
 
 public class GameModel implements Runnable {
-    private final int NR_MAX_PLAYERS = 5;
+    private final int NR_MAX_PLAYERS = 2;
     private List<GamePlayer> gamePlayers;
 
     public GameModel(List<GamePlayer> gamePlayers) {
@@ -16,7 +16,14 @@ public class GameModel implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Game started");
+        System.out.println("Game playground");
+
+        for (GamePlayer gamePlayer : gamePlayers) {
+            System.out.println(gamePlayer.getName());
+            RemoteRef connection = ((PlayingServer.WrappedPlayerConnection) gamePlayer).getConnection();
+            System.out.println("connection" + connection);
+        }
+
     }
 
     public List<GamePlayer> getGamePlayers() {

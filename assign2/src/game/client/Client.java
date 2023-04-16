@@ -67,25 +67,6 @@ public class Client implements Serializable { // This is the client application 
             e.printStackTrace();
         }
 
-
-        // ByteBuffer buffer = ByteBuffer.wrap(CommunicationProtocol.NEW_GAME.toString().getBytes());
-        // try {
-        //     int bytesWritten = socketChannel.write(buffer);
-//
-        //     if (bytesWritten == -1) {
-        //         socketChannel.close();
-        //         return;
-        //     }else if (bytesWritten == 0){
-        //         Selector selector = Selector.open();
-        //         socketChannel.register(selector, SelectionKey.OP_WRITE);
-        //         selector.select();
-        //         selector.close();
-        //     }else {
-        //         System.out.println("Game started!");
-        //     }
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
     }
 
     public static void main(String[] args) throws IOException {
