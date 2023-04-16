@@ -15,7 +15,7 @@ rem Start the server
 rem start /b cmd /c "java -cp assign2/bin game.server.GameServer"
 
 rem Start 51 clients
-for /l %%i in (1,1,51) do (
+for /l %%i in (1,1,1000) do (
   start /b cmd /c "java -cp assign2/bin game.client.Client"
 )
 

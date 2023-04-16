@@ -1,6 +1,5 @@
 package game.server;
 
-import game.client.Client;
 import game.client.GamePlayer;
 import game.logic.GameModel;
 
@@ -44,7 +43,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     }
     @Override
     public void queueGame(GamePlayer client) throws RemoteException{
-        // TODO: adicionar lock dos jogos e adicionar parte dos rankings
+        // TODO: adicionar lock dos jogos (ver abaixo) e adicionar parte dos rankings
+        // Neste momento fiz esta parte com rmi mas n fará muito sentido fazer assim
+        // melhor seria chamar o metodo no handler do client. Se assim for teremos de adicionar um lock
+        // nos jogos, acho que rmi aqui funciona bem mas n sei se o facto de ter de se fazer serealize n piora o resultado
+        // esta parte do codigo parece ter de ser sequencial ... ????
+
         // RemoteRef ref = this.getRef();
         // ref.invoke
         System.out.println("Added player to queue");

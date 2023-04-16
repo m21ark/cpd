@@ -45,13 +45,19 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    public void startGame() throws IOException {
+    public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
         int option = 0;
         while (option != 2) {
             option = this.options();
             if (option == 1) {
                 this.playGame();
+                try {
+                    wait(); // TODO: tem que ter o monitor lock
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Game Starting...!");
             }
         }
         socketChannel.close();

@@ -22,6 +22,8 @@ public class GameModel implements Runnable {
             System.out.println(gamePlayer.getName());
             RemoteRef connection = ((PlayingServer.WrappedPlayerConnection) gamePlayer).getConnection();
             System.out.println("connection" + connection);
+            connection.notify();
+            gamePlayer.notify(); // TODO: not working because it is not a remote object
         }
 
     }
