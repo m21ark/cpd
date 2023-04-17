@@ -1,16 +1,18 @@
 package game.logic;
 
-import game.client.GamePlayer;
+import game.protocols.CommunicationProtocol;
+import game.server.GameServer;
 import game.server.PlayingServer;
 
-import java.rmi.server.RemoteRef;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.List;
 
 public class GameModel implements Runnable {
     private final int NR_MAX_PLAYERS = 2;
-    private List<GamePlayer> gamePlayers;
+    private List<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
-    public GameModel(List<GamePlayer> gamePlayers) {
+    public GameModel(List<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
     }
 
@@ -18,21 +20,23 @@ public class GameModel implements Runnable {
     public void run() {
         System.out.println("Game playground");
 
-        for (GamePlayer gamePlayer : gamePlayers) {
-            System.out.println(gamePlayer.getName());
-            RemoteRef connection = ((PlayingServer.WrappedPlayerConnection) gamePlayer).getConnection();
-            System.out.println("connection" + connection);
-            connection.notify();
-            gamePlayer.notify(); // TODO: not working because it is not a remote object
+        // notify clients to start game
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+            Socket connection = gamePlayer.getConnection();
+            try {
+                GameServer.sendToClient(connection, CommunicationProtocol.GAME_STARTING);
+            } catch (IOException e) {
+                e.printStackTrace(); // client left the game or connection error
+            }
         }
 
     }
 
-    public List<GamePlayer> getGamePlayers() {
+    public List<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
         return gamePlayers;
     }
 
-    public void setGamePlayers(List<GamePlayer> gamePlayers) {
+    public void setGamePlayers(List<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
     }
 
@@ -40,7 +44,7 @@ public class GameModel implements Runnable {
         return gamePlayers.size() < NR_MAX_PLAYERS;
     }
 
-    public void addPlayer(GamePlayer client) {
+    public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
     }
 

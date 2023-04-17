@@ -3,6 +3,7 @@ package game.server;
 import game.client.GamePlayer;
 import game.logic.GameModel;
 
+import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.RemoteRef;
 import java.rmi.server.UnicastRemoteObject;
@@ -15,10 +16,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     private final List<GameModel> games = new ArrayList<>();
     private final ExecutorService executorGameService;
 
-    public class WrappedPlayerConnection extends GamePlayer {
+    public static class WrappedPlayerSocket extends GamePlayer {
 
-        private final RemoteRef connection;
-        public WrappedPlayerConnection(GamePlayer client, RemoteRef connection) {
+        private final Socket connection;
+        public WrappedPlayerSocket(GamePlayer client, Socket connection) {
             super(client.getName(), client.getRank());
             this.rank = client.getRank();
             this.score = client.getScore();
@@ -29,7 +30,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             return this;
         }
 
-        public RemoteRef getConnection() {
+        public Socket getConnection() {
             return connection;
         }
     }
@@ -42,7 +43,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         }
     }
     @Override
-    public void queueGame(GamePlayer client) throws RemoteException{
+    public void queueGame(GamePlayer client, String token) throws RemoteException{
         // TODO: adicionar lock dos jogos (ver abaixo) e adicionar parte dos rankings
         // Neste momento fiz esta parte com rmi mas n fará muito sentido fazer assim
         // melhor seria chamar o metodo no handler do client. Se assim for teremos de adicionar um lock
@@ -54,7 +55,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         System.out.println("Added player to queue");
         for (GameModel game : games) {
             if (game.isAvailable()) {
-                game.addPlayer(new WrappedPlayerConnection(client, this.getRef()));
+                game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
                 if (game.isFull()) {
                     System.out.println("Game started");
                     executorGameService.submit(game);

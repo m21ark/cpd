@@ -5,15 +5,21 @@ import game.client.ClientHandler;
 import game.config.Configurations;
 import game.config.GameConfig;
 import game.logic.GameModel;
+import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -25,12 +31,24 @@ public class GameServer {
     private ExecutorService executorService;
     private final Configurations configurations;
     private ServerSocketChannel serverSocket;
+    public static PlayingServer playingServer;
+    public static Map<String, Socket> clients = new HashMap<>();
 
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 
     public GameServer(Configurations configurations) throws IOException {
         super();
         this.configurations = configurations;
+    }
+
+    public static Socket getSocket(String token) {
+        return clients.get(token);
+    }
+
+    public static void sendToClient(Socket connection, CommunicationProtocol message) throws IOException {
+        OutputStream output = connection.getOutputStream();
+        PrintWriter writer = new PrintWriter(output, true);
+        writer.println(message.toString());
     }
 
     public void init() {
@@ -72,7 +90,7 @@ public class GameServer {
         Registry registry = LocateRegistry.createRegistry(1099);
 
         // Create an instance of the remote object and bind it to the registry
-        PlayingServer playingServer = new PlayingServer();
+        playingServer = new PlayingServer();
         registry.rebind("playingServer", playingServer);
 
         acceptConnections();
