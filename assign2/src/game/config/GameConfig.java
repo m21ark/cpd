@@ -6,13 +6,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class GameConfig implements Configurations{
+public class GameConfig implements Configurations {
     private final Properties properties;
+    File config = new File("src/resources/config.properties"); // TODO: VER ISTO
 
     public GameConfig() throws IOException {
+        // load configurations
         properties = new Properties();
-        File file = new File("assign2/src/resources/config.properties"); // TODO: VER ISTO
-        InputStream inputStream = new FileInputStream(file);
+        InputStream inputStream = new FileInputStream(config);
         properties.load(inputStream);
     }
 

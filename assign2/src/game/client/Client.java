@@ -28,26 +28,13 @@ public class Client implements Serializable { // This is the client application 
         GameConfig config = new GameConfig();
 
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
-        socketChannel = SocketChannel.open(address);
-        player = new GamePlayer("Player", 0); // TODO... tem de se fazer a autenticaçãao e mudar isto
-    }
-
-    public int options() {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Please select an option:");
-        System.out.println("------------------------");
-        System.out.println("1 - Start a new game");
-        System.out.println("2 - Exit");
-        System.out.println("------------------------");
-
         try {
-            return scanner.nextInt();
+            socketChannel = SocketChannel.open(address);
+        } catch (Exception e) {
+            System.out.println("Server is not running");
+            System.exit(0);
         }
-        catch (Exception e) {
-            System.out.println("Invalid option!");
-            return 0;
-        }
+        player = new GamePlayer("Player", 0); // TODO... tem de se fazer a autenticaçãao e mudar isto
     }
 
     private static String processData(ByteBuffer buffer) {
@@ -55,14 +42,6 @@ public class Client implements Serializable { // This is the client application 
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return new String(bytes);
-    }
-
-    private void sendGuess(String guess) throws IOException {
-        // OutputStream output = socketChannel.socket().getOutputStream();
-        // PrintWriter writer = new PrintWriter(output, true);
-        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
-        System.out.println("Sending guess: " + guess);
-
     }
 
     public static String waitForGameStart(SocketChannel socketChannel) throws IOException {
@@ -102,12 +81,12 @@ public class Client implements Serializable { // This is the client application 
 
                     //if (selectionKey.isWritable()) {
 
-                        // String message = "Hello, world!";
-                        // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-                        // socketChannel.write(buffer);
+                    // String message = "Hello, world!";
+                    // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+                    // socketChannel.write(buffer);
 //
-                        //
-                        // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
+                    //
+                    // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
                     //}
                 }
 
@@ -115,6 +94,37 @@ public class Client implements Serializable { // This is the client application 
             }
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        Client client = new Client("Player 1", 1);
+        client.startGame();
+    }
+
+    public int options() {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Please select an option:");
+        System.out.println("------------------------");
+        System.out.println("1 - Start a new game");
+        System.out.println("2 - Exit");
+        System.out.println("------------------------");
+
+        try {
+            return scanner.nextInt();
+        } catch (Exception e) {
+            System.out.println("Invalid option!");
+            return 0;
+        }
+    }
+
+    private void sendGuess(String guess) throws IOException {
+        // OutputStream output = socketChannel.socket().getOutputStream();
+        // PrintWriter writer = new PrintWriter(output, true);
+        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
+        System.out.println("Sending guess: " + guess);
+
+    }
+
     public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
         InputStream input = socketChannel.socket().getInputStream();
@@ -170,10 +180,5 @@ public class Client implements Serializable { // This is the client application 
 
     public void setPlayer(GamePlayer player) {
         this.player = player;
-    }
-
-    public static void main(String[] args) throws IOException {
-        Client client = new Client("Player 1", 1);
-        client.startGame();
     }
 }

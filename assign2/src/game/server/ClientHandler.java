@@ -1,31 +1,32 @@
-package game.client;
-
-import game.server.GameServer;
-import game.server.PlayingServer;
+package game.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class ClientHandler implements Runnable{
+public class ClientHandler implements Runnable {
     private final Socket socket;
+
     public ClientHandler(Socket accept) {
         this.socket = accept;
     }
 
     private String generateRandomToken() {
-        return "token" + Math.random() + socket.getLocalPort()+ socket.getPort();
+        return "token" + Math.random() + socket.getLocalPort() + socket.getPort();
     }
 
     @Override
     public void run() {
-        System.out.println("Client connected");
         String token = generateRandomToken();
+        System.out.println("Client connected with token : " + token);
 
-        GameServer.clients.put(token, socket); //TODO: lock aqui
+        // add client to the server's list
+        GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
 
-        // TODO: auhtentication
+        // TODO: authentication
+
+
 
         // write to client
         OutputStream output = null;

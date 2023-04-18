@@ -156,7 +156,7 @@ public class MyTests {
                     for (int k = 0; k < list.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
                         PlayingServer.WrappedPlayerSocket client = list.get(k);
-                        int guess = k == list.size() - 1 ? winner + 1: winner;
+                        int guess = k == list.size() - 1 ? winner + 1 : winner;
                         try {
                             Method privateMethod = _clients.get(k).getClass().getDeclaredMethod("sendGuess", String.class);
                             privateMethod.setAccessible(true);

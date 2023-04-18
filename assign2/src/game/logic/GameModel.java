@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Random;
 
 public class GameModel implements Runnable {
-    private static final int NR_MAX_PLAYERS = 2; // tb pode ser interessante ter um número minimo de jogadores
-    private static final int MAX_GUESS = 100; // exclusive
+
+    private static final int NR_MIN_PLAYERS = 2;
+    private static final int NR_MAX_PLAYERS = 2;
+    private static final int MAX_GUESS = 100;
     private static final int MAX_NR_GUESS = 100;
     private final int gameWinner = new Random().nextInt(MAX_GUESS);
     private List<PlayingServer.WrappedPlayerSocket> gamePlayers;
@@ -20,8 +22,13 @@ public class GameModel implements Runnable {
         this.gamePlayers = gamePlayers;
     }
 
+    public static int getNrMaxPlayers() {
+        return NR_MAX_PLAYERS;
+    }
+
     private void notifyPlayers() {
-        // notify clients to start game ... TODO: podemos meter que se n estiver disponível perde a vez e entra outro
+        // notify clients to start game ...
+        // TODO: podemos meter que se n estiver disponível perde a vez e entra outro
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
             try {
@@ -30,10 +37,6 @@ public class GameModel implements Runnable {
                 e.printStackTrace(); // client left the game or connection error
             }
         }
-    }
-
-    public static int getNrMaxPlayers() {
-        return NR_MAX_PLAYERS;
     }
 
     public int getGameWinner() {

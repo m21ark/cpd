@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class GamePlayer implements Serializable {
     protected final String name;
     protected int rank;
-    protected int score; // score in this game
+    protected int score; // score in this game (aka best guess yet)
 
     public GamePlayer(String name, int rank) {
         this.name = name;

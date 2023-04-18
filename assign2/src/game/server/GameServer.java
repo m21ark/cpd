@@ -1,7 +1,5 @@
 package game.server;
 
-
-import game.client.ClientHandler;
 import game.config.Configurations;
 import game.config.GameConfig;
 import game.protocols.CommunicationProtocol;
@@ -15,9 +13,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,13 +23,12 @@ import java.util.logging.Logger;
 // Lembrar de ver isto melhor ... https://hackernoon.com/implementing-an-event-loop-in-java-for-fun-and-profit
 
 public class GameServer {
-    private ExecutorService executorService;
-    private final Configurations configurations;
-    private ServerSocketChannel serverSocket;
+    private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
     public static PlayingServer playingServer;
     public static Map<String, Socket> clients = new HashMap<>();
-
-    private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
+    private final Configurations configurations;
+    private ExecutorService executorService;
+    private ServerSocketChannel serverSocket;
 
     public GameServer(Configurations configurations) {
         super();
@@ -48,6 +43,13 @@ public class GameServer {
         OutputStream output = connection.getOutputStream();
         PrintWriter writer = new PrintWriter(output, true);
         writer.println(message.toString());
+    }
+
+    public static void main(String[] args) throws IOException {
+        LOGGER.setLevel(Level.CONFIG);
+        Configurations configurations = new GameConfig();
+        GameServer gameServer = new GameServer(configurations);
+        gameServer.start();
     }
 
     public void init() {
@@ -74,8 +76,7 @@ public class GameServer {
         while (serverSocket.isOpen()) {
             SocketChannel socketChannel = serverSocket.accept();
             if (socketChannel != null) {
-                executorService.submit(
-                        new ClientHandler(socketChannel.socket()) // TODO: VER ISTO: isto garante que n está sempre a executar uma nova thread?
+                executorService.submit(new ClientHandler(socketChannel.socket()) // TODO: VER ISTO: isto garante que n está sempre a executar uma nova thread?
                 );
             }
         }
@@ -93,14 +94,6 @@ public class GameServer {
         registry.rebind("playingServer", playingServer);
 
         acceptConnections();
-    }
-
-    public static void main(String[] args) throws IOException {
-        LOGGER.setLevel(Level.CONFIG);
-
-        Configurations configurations = new GameConfig();
-        GameServer gameServer = new GameServer(configurations);
-        gameServer.start();
     }
 
 }
