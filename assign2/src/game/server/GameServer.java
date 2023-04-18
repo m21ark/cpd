@@ -1,23 +1,19 @@
 package game.server;
 
+import game.client.SocketUtils;
 import game.config.Configurations;
 import game.config.GameConfig;
 import game.protocols.CommunicationProtocol;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -42,12 +38,6 @@ public class GameServer {
 
     public static Socket getSocket(String token) {
         return clients.get(token);
-    }
-
-    public static void sendToClient(Socket connection, CommunicationProtocol message) throws IOException {
-        OutputStream output = connection.getOutputStream();
-        PrintWriter writer = new PrintWriter(output, true);
-        writer.println(message.toString());
     }
 
     public static void main(String[] args) throws IOException {
@@ -93,8 +83,6 @@ public class GameServer {
             }
         }
     }
-
-    
 
 
     private void start() throws IOException {

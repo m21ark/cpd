@@ -1,6 +1,11 @@
 package game.server;
 
-import java.io.*;
+import game.client.SocketUtils;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,7 +51,7 @@ public class ClientHandler implements Runnable {
         return "token" + Math.random() + socket.getLocalPort() + socket.getPort();
     }
 
-    public int authenticate(String username, String password) throws IOException {
+    public int authenticate(String username, String password) {
 
         // TODO: falta um timout para o caso de o cliente nao responder
 
@@ -72,21 +77,12 @@ public class ClientHandler implements Runnable {
         // add client to the server's list
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
 
-        // write to client
-        OutputStream output = null;
-        try {
-            output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-            writer.println(token);
-            // GameServer.playingServer.queueGame(
-            //         new PlayingServer.WrappedPlayerSocket(
-            //                 new GamePlayer("Player", 1), //tem de vir da autenticaçao
-            //                 socket)
-            // );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
+        // GameServer.playingServer.queueGame(
+        //         new PlayingServer.WrappedPlayerSocket(
+        //                 new GamePlayer("Player", 1), //tem de vir da autenticaçao
+        //                 socket)
+        // );
     }
 
     private String authenticateUser() {
@@ -97,35 +93,19 @@ public class ClientHandler implements Runnable {
         String username = "", password = "";
         boolean newUser = false;
 
-        try {
-            input = socket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-            username = reader.readLine();
-            password = reader.readLine();
-            System.out.println("Client connected with username : " + username + " and password : " + password);
-            authResult = authenticate(username, password);
-            System.out.println("Authentication result : " + authResult);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // Read username and password from client and try to authenticate
+        username = SocketUtils.readData(socket);
+        password = SocketUtils.readData(socket);
+        System.out.println("Client connected with username : " + username + " and password : " + password);
+        authResult = authenticate(username, password);
+        System.out.println("Authentication result : " + authResult);
 
         // Respond to client
-        OutputStream output = null;
-        try {
-            output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-            writer.println(authResult);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        SocketUtils.writeData(socket, String.valueOf(authResult));
 
         // if auth fails, close socket for this client
         if (authResult == 2) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            SocketUtils.closeSocket(socket);
             return "";
         } else if (authResult == 0) {
             if (registerNewUser(username, password)) newUser = true;
@@ -140,26 +120,25 @@ public class ClientHandler implements Runnable {
         if (newUser) {
             System.out.println("New user detected. Adding to persistant storage.");
             addNewUserToPersistantStorage(username, password, token);
+            SocketUtils.writeData(socket, "1");
         } else {
             // If the client exists, but the token is different, update the token
             System.out.println("User already exists. Updating token.");
             updateToken(username, token);
         }
 
+        // write to client
+        System.out.println("Sending token to client.");
+        SocketUtils.writeData(socket, token);
         return token;
     }
 
     private boolean registerNewUser(String username, String password) {
         // client will awnser if they want to add a new entry
-        String passwordConf;
         int authResult = 0;
-        try {
-            InputStream input = socket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-            passwordConf = reader.readLine().strip();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        // Read password confirmation from client
+        String passwordConf = SocketUtils.readData(socket);
 
         System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
 
@@ -176,20 +155,9 @@ public class ClientHandler implements Runnable {
         }
 
         // Respond to client
-        OutputStream output = null;
-        try {
-            output = socket.getOutputStream();
-            PrintWriter writer = new PrintWriter(output, true);
-            writer.println(authResult);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        SocketUtils.writeData(socket, String.valueOf(authResult));
 
-        try {
-            socket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        SocketUtils.closeSocket(socket);
         return false;
     }
 

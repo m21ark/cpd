@@ -1,10 +1,9 @@
 package game.logic;
 
+import game.client.SocketUtils;
 import game.protocols.CommunicationProtocol;
-import game.server.GameServer;
 import game.server.PlayingServer;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 import java.util.Random;
@@ -31,11 +30,7 @@ public class GameModel implements Runnable {
         // TODO: podemos meter que se n estiver disponível perde a vez e entra outro
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            try {
-                GameServer.sendToClient(connection, CommunicationProtocol.GAME_STARTING);
-            } catch (IOException e) {
-                e.printStackTrace(); // client left the game or connection error
-            }
+            SocketUtils.sendToClient(connection, CommunicationProtocol.GAME_STARTING);
         }
     }
 

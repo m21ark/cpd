@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -40,12 +39,6 @@ public class Client implements Serializable { // This is the client application 
 
     }
 
-    private static String processData(ByteBuffer buffer) {
-        buffer.flip();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
-        return new String(bytes);
-    }
 
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
         // Configure the socket channel to non-blocking mode
@@ -78,7 +71,7 @@ public class Client implements Serializable { // This is the client application 
                         }
 
                         // Process the data that was read
-                        String data = processData(buffer);
+                        String data = SocketUtils.processData(buffer);
                         System.out.println("Received data: " + data);
                     }
 
@@ -120,9 +113,11 @@ public class Client implements Serializable { // This is the client application 
         while (true) {
             Scanner scanner = new Scanner(System.in);
             System.out.print("Username: ");
-            username = scanner.nextLine();
+            username = scanner.nextLine().strip();
             System.out.print("Password: ");
-            String password = scanner.nextLine();
+            String password = scanner.nextLine().strip();
+
+            if (username.equals("exit")) System.exit(0);
 
             if (username.isEmpty() || password.isEmpty()) System.out.println("Username and password are required!");
             else {
@@ -133,21 +128,7 @@ public class Client implements Serializable { // This is the client application 
 
         switch (serverResult) {
             case 0 -> {
-
-                // Register
-                Scanner scanner = new Scanner(System.in);
-
-                System.out.println("Do you want to register? (y/n)");
-                String answer = scanner.nextLine();
-
-                if (answer.equals("y")) {
-                    System.out.print("Repeat Password: ");
-                    answer = scanner.nextLine();
-                } else answer = "CANCEL_NEW_USER";
-
-                // send answer to server
-                serverResult = serverAuthenticate(answer, "");
-
+                return registerUser();
             }
             case 1 -> System.out.println("Login successful!");
             case 2 -> System.out.println("Incorrect password.");
@@ -157,42 +138,56 @@ public class Client implements Serializable { // This is the client application 
         return serverResult == 1;
     }
 
+    private boolean registerUser() {
+
+        // Register
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Do you want to register? (y/n)");
+        String answer = scanner.nextLine().strip().toLowerCase();
+
+        if (answer.equals("y")) {
+            System.out.print("Repeat Password: ");
+            answer = scanner.nextLine().strip();
+        } else answer = "CANCEL_NEW_USER";
+
+        // send answer to server
+        SocketUtils.writeData(socketChannel, answer);
+
+        if (answer.equals("CANCEL_NEW_USER")) return false;
+
+        // final outcome from server's registering
+        int ret = Integer.parseInt(SocketUtils.readData(socketChannel));
+
+        if (ret == 1) {
+            System.out.println("Registration successful!");
+            return true;
+        }
+
+        System.out.println("Registration failed!");
+        return false;
+    }
+
     private int serverAuthenticate(String username, String password) {
 
         // send username and password to server
-        try {
-            OutputStream output = socketChannel.socket().getOutputStream();
-
-            output.write((username + "\n").getBytes(StandardCharsets.UTF_8));
-            output.write((password + "\n").getBytes(StandardCharsets.UTF_8));
-            output.flush();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        SocketUtils.writeData(socketChannel, username);
+        SocketUtils.writeData(socketChannel, password);
 
         // receive result from server
-        try {
-            InputStream input = socketChannel.socket().getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-            String result = reader.readLine();
-            return Integer.parseInt(result);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        return Integer.parseInt(SocketUtils.readData(socketChannel));
     }
 
     public int options() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("+------------------------+");
-        System.out.println("|   Please select an     |");
-        System.out.println("|        option:         |");
-        System.out.println("+------------------------+");
-        System.out.println("|   1 - Start a new game |");
-        System.out.println("|   2 - Exit             |");
-        System.out.println("+------------------------+");
+        System.out.println("+-------------------------+");
+        System.out.println("|    Please select an     |");
+        System.out.println("|         option:         |");
+        System.out.println("+-------------------------+");
+        System.out.println("|   1 - Start a new game  |");
+        System.out.println("|   2 - Exit              |");
+        System.out.println("+-------------------------+");
 
         try {
             return scanner.nextInt();
