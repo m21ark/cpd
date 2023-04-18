@@ -5,7 +5,6 @@ import game.server.GameServerInterface;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -25,7 +24,7 @@ public class Client implements Serializable { // This is the client application 
     private String token;
 
 
-    Client(String s, int i) throws IOException {
+    public Client(String s, int i) throws IOException {
         GameConfig config = new GameConfig();
 
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
@@ -56,6 +55,14 @@ public class Client implements Serializable { // This is the client application 
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
         return new String(bytes);
+    }
+
+    private void sendGuess(String guess) throws IOException {
+        // OutputStream output = socketChannel.socket().getOutputStream();
+        // PrintWriter writer = new PrintWriter(output, true);
+        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
+        System.out.println("Sending guess: " + guess);
+
     }
 
     public static String waitForGameStart(SocketChannel socketChannel) throws IOException {
@@ -129,8 +136,8 @@ public class Client implements Serializable { // This is the client application 
         socketChannel.close();
     }
 
-    private void playGame() {
-        Registry registry = null;
+    protected void playGame() {
+        Registry registry;
         try {
             registry = LocateRegistry.getRegistry("localhost", 1099);
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
@@ -147,6 +154,22 @@ public class Client implements Serializable { // This is the client application 
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public SocketChannel getSocketChannel() {
+        return socketChannel;
+    }
+
+    public void setSocketChannel(SocketChannel socketChannel) {
+        this.socketChannel = socketChannel;
+    }
+
+    public GamePlayer getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(GamePlayer player) {
+        this.player = player;
     }
 
     public static void main(String[] args) throws IOException {

@@ -1,10 +1,9 @@
 package game.server;
 
-import game.client.Client;
+
 import game.client.ClientHandler;
 import game.config.Configurations;
 import game.config.GameConfig;
-import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;

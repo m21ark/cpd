@@ -38,7 +38,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     PlayingServer() throws RemoteException {
         super();
         executorGameService = Executors.newFixedThreadPool(5);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) { // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razao o enunciado diz que tem de ser fixo
             games.add(new GameModel(new ArrayList<>()));
         }
     }
@@ -62,6 +62,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 }
                 return;
             }
-        }
+        } // TODO: if game not available ...
     }
 }
