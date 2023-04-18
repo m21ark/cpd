@@ -1,6 +1,7 @@
 package game.client;
 
 import game.config.GameConfig;
+import game.server.GameServer;
 import game.server.GameServerInterface;
 
 import java.io.*;
@@ -9,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -16,6 +18,7 @@ import java.rmi.registry.Registry;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class Client implements Serializable { // This is the client application runner.
 
@@ -24,17 +27,19 @@ public class Client implements Serializable { // This is the client application 
     private String token;
 
 
-    public Client(String s, int i) throws IOException {
+    public Client() throws IOException {
         GameConfig config = new GameConfig();
 
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
+
         try {
             socketChannel = SocketChannel.open(address);
         } catch (Exception e) {
             System.out.println("Server is not running");
             System.exit(0);
         }
-        player = new GamePlayer("Player", 0); // TODO... tem de se fazer a autenticaçãao e mudar isto
+
+
     }
 
     private static String processData(ByteBuffer buffer) {
@@ -44,7 +49,7 @@ public class Client implements Serializable { // This is the client application 
         return new String(bytes);
     }
 
-    public static String waitForGameStart(SocketChannel socketChannel) throws IOException {
+    public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
         // Configure the socket channel to non-blocking mode
         socketChannel.configureBlocking(false);
 
@@ -96,8 +101,68 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public static void main(String[] args) throws IOException {
-        Client client = new Client("Player 1", 1);
-        client.startGame();
+        Client client = new Client();
+
+        // Authenticate
+        if (client.authenticate()) {
+
+            // set player  player = new GamePlayer("Player", 0); // TODO... tem de se fazer a autenticaçãao e mudar isto
+
+            // Start game
+            client.startGame();
+        }
+
+    }
+
+    private boolean authenticate() {
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Username: ");
+        String username = scanner.nextLine();
+        System.out.print("Password: ");
+        String password = scanner.nextLine();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            System.out.println("Username and password are required!");
+            return false;
+        }
+
+        int result = serverAuthenticate(username, password);
+
+        switch (result) {
+            case 1 -> System.out.println("Login successful!");
+            case 2 -> System.out.println("Incorrect password.");
+            case 3 -> System.out.println("New user added.");
+            default -> System.out.println("Login failed.");
+        }
+
+        return result == 1 || result == 3;
+    }
+
+    private int serverAuthenticate(String username, String password) {
+
+        // send username and password to server
+        try {
+            OutputStream output = socketChannel.socket().getOutputStream();
+
+            output.write((username + "\n").getBytes(StandardCharsets.UTF_8));
+            output.write((password + "\n").getBytes(StandardCharsets.UTF_8));
+            output.flush();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // receive result from server
+        try {
+            InputStream input = socketChannel.socket().getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+            String result = reader.readLine();
+            return Integer.parseInt(result);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public int options() {

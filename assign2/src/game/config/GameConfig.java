@@ -26,4 +26,8 @@ public class GameConfig implements Configurations {
     public int getPort() {
         return Integer.parseInt(properties.getProperty("port"));
     }
+
+    public int getRMIReg() {
+        return Integer.parseInt(properties.getProperty("rmiReg"));
+    }
 }

@@ -7,4 +7,5 @@ import java.rmi.RemoteException;
 
 public interface GameServerInterface extends Remote {
     void queueGame(GamePlayer client, String token) throws RemoteException;
+
 }

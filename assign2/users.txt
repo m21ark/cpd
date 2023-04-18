@@ -1,0 +1,3 @@
+markito,pass123
+lia,naoLe
+rica,pobre

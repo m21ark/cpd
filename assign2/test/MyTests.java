@@ -51,7 +51,7 @@ public class MyTests {
         // create all clients ... does not start (on purpose) the game
         for (int i = 0; i < 10; i++) {
             try {
-                Client client = new Client("Test" + i, 0); // this is a mocked player
+                Client client = new Client(); // this is a mocked player
                 clients.add(client); // this is a mocked player
             } catch (IOException e) {
                 Assertions.fail("Could not create client");
