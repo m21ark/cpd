@@ -1,5 +1,7 @@
 package game.server;
 
+import game.protocols.CommunicationProtocol;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -47,7 +49,9 @@ public class ClientHandler implements Runnable {
         return "token" + Math.random() + socket.getLocalPort() + socket.getPort();
     }
 
-    public int authenticate(String username, String password) {
+    public int authenticate(String username, String password) throws IOException {
+
+        // TODO: falta um timout para o caso de o cliente nao responder
 
         // Check if the username and password match any existing entry
         for (String line : persistantUsers) {
@@ -57,34 +61,9 @@ public class ClientHandler implements Runnable {
             else if (fields[0].equals(username)) return 2; // Username exists but password is incorrect
         }
 
-
         return 0; // Username doesn't exist
-/*
-            // If the function didn't return yet, the username doesn't exist
-            // Ask the user if they want to add a new entry
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Username not found. Do you want to add a new user? (y/n)");
-            String answer = scanner.nextLine().toLowerCase();
 
-            if (answer.equals("y")) {
 
-                // Ask the user for the password again, this time with asterisks
-                System.out.print("Repeat Password: ");
-                String newPassword = new String(System.console().readPassword());
-
-                if (!password.equals(newPassword)) return 2; // Password repetition didn't match
-
-                // Append the new entry to the users.txt file
-                String newEntry = username + "," + newPassword;
-                FileWriter writer = new FileWriter(persistantUsersFile, true); // Append mode
-                writer.write(newEntry + System.lineSeparator()); // Add new line separator
-                writer.close();
-
-                return 3; // New entry added successfully
-            }
-
-            return 0; // User doesn't want to add a new entry
-*/
     }
 
     @Override
@@ -93,15 +72,16 @@ public class ClientHandler implements Runnable {
         // Authenticate client
         InputStream input = null;
         int authResult = 0;
+        String username = "", password = "";
+        boolean newUser = false;
 
         try {
             input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-            String username = reader.readLine();
-            String password = reader.readLine();
+            username = reader.readLine();
+            password = reader.readLine();
             System.out.println("Client connected with username : " + username + " and password : " + password);
             authResult = authenticate(username, password);
-
             System.out.println("Authentication result : " + authResult);
         } catch (IOException e) {
             e.printStackTrace();
@@ -118,22 +98,77 @@ public class ClientHandler implements Runnable {
         }
 
         // if auth fails, close socket for this client
-        if (authResult == 0 || authResult == 2) {
+        if (authResult == 2) {
             try {
                 socket.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             return;
+        } else if (authResult == 0) {
+
+            // client will awnser if they want to add a new entry
+            String passwordConf;
+            try {
+                input = socket.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                passwordConf = reader.readLine().strip();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf+ "| .");
+
+            if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
+                System.out.println("User doesn't want to add a new entry.");
+                authResult = 2;
+            } else if (!password.equals(passwordConf)) {
+                System.out.println("Passwords don't match. Expected |" + password + "| but got |" + passwordConf + "| .");
+                authResult = 2;
+            } else {
+                System.out.println("Password was confirmed.");
+                newUser = true;
+                authResult = 1;
+            }
+
+            // Respond to client
+            output = null;
+            try {
+                output = socket.getOutputStream();
+                PrintWriter writer = new PrintWriter(output, true);
+                writer.println(authResult);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (authResult != 1) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return;
+            }
+
+            // New entry added successfully
         }
 
         // generate token
         String token = generateRandomToken();
         System.out.println("Client connected with token : " + token);
 
+        // if new user, add to persistant storage
+        if (newUser) {
+            System.out.println("New user detected. Adding to persistant storage.");
+            addNewUserToPersistantStorage(username, password, token);
+        } else {
+            // If the client exists, but the token is different, update the token
+            System.out.println("User already exists. Updating token.");
+            updateToken(username, token);
+        }
+
         // add client to the server's list
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
-
 
         // write to client
         output = null;
@@ -148,6 +183,38 @@ public class ClientHandler implements Runnable {
             // );
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+    }
+
+    private void updateToken(String username, String token) {
+        // TODO: ADD LOCK HERE TO WRITE TO FILE
+
+        for (String line : persistantUsers) {
+            String[] fields = line.split(",");
+            fields[2] = token;
+            break;
+        }
+        System.out.println("Updated volatile token for user " + username);
+
+        // TODO: this is updating the list, but not the file
+    }
+
+    private void addNewUserToPersistantStorage(String username, String passwordConf, String token) {
+        // TODO: ADD LOCK HERE TO WRITE TO FILE
+
+        // Append the new entry to the users.txt file
+        String newEntry = username + "," + passwordConf + "," + token;
+        FileWriter writer = null; // Append mode
+
+        try {
+            writer = new FileWriter(persistantUsersFile, true);
+            writer.write(newEntry + System.lineSeparator()); // Add new line separator
+            writer.close();
+            System.out.println("New user added to persistant storage.");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
     }

@@ -1,3 +1,4 @@
-markito,pass123
-lia,naoLe
-rica,pobre
+markito,pass123,null
+lia,naoLe,null
+rica,pobre,null
+marko,123,token0.947027035780518808054406

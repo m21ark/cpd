@@ -1,7 +1,7 @@
 package game.protocols;
 
 public enum CommunicationProtocol {
-    NEW_GAME, GAME_STARTING, PLAY, Guess, QUIT, ERROR;
+    NEW_GAME, GAME_STARTING, PLAY, GUESS, QUIT, ERROR;
 
     @Override
     public String toString() {

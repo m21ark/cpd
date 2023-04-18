@@ -116,27 +116,47 @@ public class Client implements Serializable { // This is the client application 
 
     private boolean authenticate() {
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Username: ");
-        String username = scanner.nextLine();
-        System.out.print("Password: ");
-        String password = scanner.nextLine();
+        int serverResult;
+        String username;
 
-        if (username.isEmpty() || password.isEmpty()) {
-            System.out.println("Username and password are required!");
-            return false;
+        while (true) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Username: ");
+            username = scanner.nextLine();
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+
+            if (username.isEmpty() || password.isEmpty()) System.out.println("Username and password are required!");
+            else {
+                serverResult = serverAuthenticate(username, password);
+                break;
+            }
         }
 
-        int result = serverAuthenticate(username, password);
+        switch (serverResult) {
+            case 0 -> {
 
-        switch (result) {
+                // Register
+                Scanner scanner = new Scanner(System.in);
+
+                System.out.println("Do you want to register? (y/n)");
+                String answer = scanner.nextLine();
+
+                if (answer.equals("y")) {
+                    System.out.print("Repeat Password: ");
+                    answer = scanner.nextLine();
+                } else answer = "CANCEL_NEW_USER";
+
+                // send answer to server
+                serverResult = serverAuthenticate(answer, "");
+
+            }
             case 1 -> System.out.println("Login successful!");
             case 2 -> System.out.println("Incorrect password.");
-            case 3 -> System.out.println("New user added.");
             default -> System.out.println("Login failed.");
         }
 
-        return result == 1 || result == 3;
+        return serverResult == 1;
     }
 
     private int serverAuthenticate(String username, String password) {
@@ -192,9 +212,9 @@ public class Client implements Serializable { // This is the client application 
 
     public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
+        System.out.println("Waiting for token...");
         InputStream input = socketChannel.socket().getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-
         String token = reader.readLine();
         System.out.println("Your token is :" + token);
         this.token = token;
