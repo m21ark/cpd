@@ -1,10 +1,9 @@
 package game.server;
 
-import game.client.Client;
+
 import game.client.ClientHandler;
 import game.config.Configurations;
 import game.config.GameConfig;
-import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ public class GameServer {
 
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 
-    public GameServer(Configurations configurations) throws IOException {
+    public GameServer(Configurations configurations) {
         super();
         this.configurations = configurations;
     }
