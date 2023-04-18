@@ -30,6 +30,8 @@ public class GameModel implements Runnable {
             }
         }
 
+        // TODO: LIA : implement game logic
+
     }
 
     public List<PlayingServer.WrappedPlayerSocket> getGamePlayers() {

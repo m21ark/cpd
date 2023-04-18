@@ -36,7 +36,7 @@ public class GameServer {
 
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 
-    public GameServer(Configurations configurations) throws IOException {
+    public GameServer(Configurations configurations) {
         super();
         this.configurations = configurations;
     }
