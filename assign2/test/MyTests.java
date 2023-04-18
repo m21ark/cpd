@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import static junit.framework.TestCase.assertTrue;
-import static junit.framework.TestCase.fail;
 
 public class MyTests {
 
@@ -160,7 +158,7 @@ public class MyTests {
                         PlayingServer.WrappedPlayerSocket client = list.get(k);
                         int guess = k == list.size() - 1 ? winner + 1: winner;
                         try {
-                            Method privateMethod = client.getClass().getDeclaredMethod("sendGuess", String.class);
+                            Method privateMethod = _clients.get(k).getClass().getDeclaredMethod("sendGuess", String.class);
                             privateMethod.setAccessible(true);
                             privateMethod.invoke(_clients.get(k), String.valueOf(guess)); // de 0 a 99
                         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
