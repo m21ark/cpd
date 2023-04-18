@@ -1,14 +1,11 @@
 package game.server;
 
-import game.protocols.CommunicationProtocol;
-
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Scanner;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -68,6 +65,31 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
+        String token = authenticateUser();
+
+        if (token.equals("")) return; // Authentication failed
+
+        // add client to the server's list
+        GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
+
+        // write to client
+        OutputStream output = null;
+        try {
+            output = socket.getOutputStream();
+            PrintWriter writer = new PrintWriter(output, true);
+            writer.println(token);
+            // GameServer.playingServer.queueGame(
+            //         new PlayingServer.WrappedPlayerSocket(
+            //                 new GamePlayer("Player", 1), //tem de vir da autenticaçao
+            //                 socket)
+            // );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private String authenticateUser() {
 
         // Authenticate client
         InputStream input = null;
@@ -104,53 +126,10 @@ public class ClientHandler implements Runnable {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return;
+            return "";
         } else if (authResult == 0) {
-
-            // client will awnser if they want to add a new entry
-            String passwordConf;
-            try {
-                input = socket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-                passwordConf = reader.readLine().strip();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf+ "| .");
-
-            if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
-                System.out.println("User doesn't want to add a new entry.");
-                authResult = 2;
-            } else if (!password.equals(passwordConf)) {
-                System.out.println("Passwords don't match. Expected |" + password + "| but got |" + passwordConf + "| .");
-                authResult = 2;
-            } else {
-                System.out.println("Password was confirmed.");
-                newUser = true;
-                authResult = 1;
-            }
-
-            // Respond to client
-            output = null;
-            try {
-                output = socket.getOutputStream();
-                PrintWriter writer = new PrintWriter(output, true);
-                writer.println(authResult);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if (authResult != 1) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                return;
-            }
-
-            // New entry added successfully
+            if (registerNewUser(username, password)) newUser = true;
+            else return "";
         }
 
         // generate token
@@ -167,24 +146,51 @@ public class ClientHandler implements Runnable {
             updateToken(username, token);
         }
 
-        // add client to the server's list
-        GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
+        return token;
+    }
 
-        // write to client
-        output = null;
+    private boolean registerNewUser(String username, String password) {
+        // client will awnser if they want to add a new entry
+        String passwordConf;
+        int authResult = 0;
+        try {
+            InputStream input = socket.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+            passwordConf = reader.readLine().strip();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
+
+        if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
+            System.out.println("User doesn't want to add a new entry.");
+            authResult = 2;
+        } else if (!password.equals(passwordConf)) {
+            System.out.println("Passwords don't match. Expected |" + password + "| but got |" + passwordConf + "| .");
+            authResult = 2;
+        } else {
+            System.out.println("Password was confirmed.");
+            authResult = 1;
+            return true;
+        }
+
+        // Respond to client
+        OutputStream output = null;
         try {
             output = socket.getOutputStream();
             PrintWriter writer = new PrintWriter(output, true);
-            writer.println(token);
-            // GameServer.playingServer.queueGame(
-            //         new PlayingServer.WrappedPlayerSocket(
-            //                 new GamePlayer("Player", 1), //tem de vir da autenticaçao
-            //                 socket)
-            // );
+            writer.println(authResult);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        try {
+            socket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
     }
 
     private void updateToken(String username, String token) {

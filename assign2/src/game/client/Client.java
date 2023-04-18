@@ -1,7 +1,6 @@
 package game.client;
 
 import game.config.GameConfig;
-import game.server.GameServer;
 import game.server.GameServerInterface;
 
 import java.io.*;
@@ -18,7 +17,6 @@ import java.rmi.registry.Registry;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class Client implements Serializable { // This is the client application runner.
 
@@ -188,11 +186,13 @@ public class Client implements Serializable { // This is the client application 
     public int options() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Please select an option:");
-        System.out.println("------------------------");
-        System.out.println("1 - Start a new game");
-        System.out.println("2 - Exit");
-        System.out.println("------------------------");
+        System.out.println("+------------------------+");
+        System.out.println("|   Please select an     |");
+        System.out.println("|        option:         |");
+        System.out.println("+------------------------+");
+        System.out.println("|   1 - Start a new game |");
+        System.out.println("|   2 - Exit             |");
+        System.out.println("+------------------------+");
 
         try {
             return scanner.nextInt();

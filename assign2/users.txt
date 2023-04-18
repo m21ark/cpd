@@ -2,3 +2,4 @@ markito,pass123,null
 lia,naoLe,null
 rica,pobre,null
 marko,123,token0.947027035780518808054406
+mark,123,token0.5688375610342422808042852
