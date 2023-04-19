@@ -67,4 +67,22 @@ public class SocketUtils {
         }
     }
 
+    public static String extract(SocketChannel socketChannel) {
+        try {
+            // Read data from the channel
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            int bytesRead = socketChannel.read(buffer);
+
+            if (bytesRead == -1) {
+                socketChannel.close();
+                return null;
+            }
+
+            // Process the data that was read
+            return SocketUtils.processData(buffer);
+        } catch (IOException e) {
+            System.out.println("Error reading from socket: " + e.getMessage());
+            return null;
+        }
+    }
 }

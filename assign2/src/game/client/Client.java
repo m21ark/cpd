@@ -2,18 +2,13 @@ package game.client;
 
 import game.SocketUtils;
 import game.config.GameConfig;
-import game.server.GameServerInterface;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.rmi.NotBoundException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
@@ -59,19 +54,10 @@ public class Client implements Serializable { // This is the client application 
 
                 if (selectionKey.isReadable()) {
 
-                    if (selectionKey.isReadable()) {
-                        // Read data from the channel
-                        ByteBuffer buffer = ByteBuffer.allocate(1024);
-                        int bytesRead = socketChannel.read(buffer);
-                        if (bytesRead == -1) {
-                            socketChannel.close();
-                            continue;
-                        }
+                    String data = SocketUtils.extract(socketChannel);
+                    if (data == null) break;
+                    System.out.println("Received data: " + data);
 
-                        // Process the data that was read
-                        String data = SocketUtils.processData(buffer);
-                        System.out.println("Received data: " + data);
-                    }
 
                     // if (selectionKey.isWritable()) {
 
@@ -193,14 +179,6 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    private void sendGuess(String guess) {
-        // OutputStream output = socketChannel.socket().getOutputStream();
-        // PrintWriter writer = new PrintWriter(output, true);
-        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
-        System.out.println("Sending guess: " + guess);
-
-    }
-
     public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
         System.out.println("Waiting for token...");
@@ -214,24 +192,27 @@ public class Client implements Serializable { // This is the client application 
         while (option != 2) {
             option = this.options();
             if (option == 1) {
-                this.playGame();
                 waitForGameStart(socketChannel);
                 System.out.println("Game Starting...!");
-                // TODO: LIA ... aqui temos de fazer o jogo
+                playGame();
             }
         }
         socketChannel.close();
     }
 
     protected void playGame() {
-        Registry registry;
-        try {
-            registry = LocateRegistry.getRegistry("localhost", new GameConfig().getRMIReg());
-            GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
-            gameServer.queueGame(this.player, token);
-        } catch (IOException | NotBoundException e) {
-            e.printStackTrace();
-        }
+        String msg = SocketUtils.extract(socketChannel);
+
+        do {
+            if (msg == null) {
+                System.out.println("There was an error while playing the game.");
+                return;
+            }
+            System.out.println("Received game data: " + msg);
+        } while (!msg.equals("GAME_STARTED"));
+
+        System.out.println("Game started! Let's play!");
+        // TODO: Lia
     }
 
     public String getToken() {

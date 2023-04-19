@@ -25,12 +25,13 @@ public class GameModel implements Runnable {
         return NR_MAX_PLAYERS;
     }
 
-    private void notifyPlayers() {
-        // notify clients to start game ...
+    private void notifyPlayers(CommunicationProtocol protocol) {
         // TODO: podemos meter que se n estiver disponível perde a vez e entra outro
+
+        System.out.println("Notifying clients: " + protocol.name());
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            SocketUtils.sendToClient(connection, CommunicationProtocol.GAME_STARTING);
+            SocketUtils.sendToClient(connection, protocol);
         }
     }
 
@@ -39,20 +40,19 @@ public class GameModel implements Runnable {
     }
 
     private void gameLoop() {
+        notifyPlayers(CommunicationProtocol.GAME_STARTED);
+
         // TODO: LIA
     }
 
     @Override
     public void run() {
         System.out.println("Game playground");
-        // TODO: Add a maximum time for the game to end
+        // TODO: Add max timeout to the game
 
-        notifyPlayers();
+        notifyPlayers(CommunicationProtocol.GAME_STARTING);
 
         gameLoop();
-
-        // TODO: LIA : implement game logic
-
     }
 
     public List<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
