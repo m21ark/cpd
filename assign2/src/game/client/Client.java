@@ -46,6 +46,7 @@ public class Client implements Serializable { // This is the client application 
         Selector selector = Selector.open();
         SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ); // registered with the Selector for read events
 
+        System.out.println("Waiting for game to start ...");
         while (true) {
 
             int readyChannels = selector.select(); // await for events (blocking)
@@ -192,7 +193,7 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    private void sendGuess(String guess) throws IOException {
+    private void sendGuess(String guess) {
         // OutputStream output = socketChannel.socket().getOutputStream();
         // PrintWriter writer = new PrintWriter(output, true);
         // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
