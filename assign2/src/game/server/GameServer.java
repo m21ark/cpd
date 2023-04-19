@@ -69,14 +69,14 @@ public class GameServer {
         while (serverSocket.isOpen()) {
             SocketChannel socketChannel = serverSocket.accept();
             if (socketChannel != null) {
-                executorService.submit(new ClientHandler(socketChannel.socket()) // TODO: VER ISTO: isto garante que n está sempre a executar uma nova thread?
+                executorService.submit(new ClientHandler(socketChannel.socket())
                 );
             } else {
-                try {
-                    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU) // TODO tirar fora dps
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                //try {
+                //    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU) // TODO tirar fora dps
+                //} catch (InterruptedException e) {
+                //    e.printStackTrace();
+                //}
             }
         }
     }

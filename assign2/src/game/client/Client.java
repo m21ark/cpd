@@ -7,6 +7,7 @@ import game.server.GameServerInterface;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -38,18 +39,29 @@ public class Client implements Serializable { // This is the client application 
 
     }
 
+    private void sendGuess(String guess) throws IOException {
+        // OutputStream output = socketChannel.socket().getOutputStream();
+        // PrintWriter writer = new PrintWriter(output, true);
+        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
+        System.out.println("Sending guess: " + guess);
+
+    }
+
+
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
 
         // register a SocketChannel for reading data asynchronously (non-blocking)
         socketChannel.configureBlocking(false);
+
         Selector selector = Selector.open();
-        SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ); // registered with the Selector for read events
+        SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ);
 
-        System.out.println("Waiting for game to start ...");
         while (true) {
-
-            int readyChannels = selector.select(); // await for events (blocking)
-
+            int readyChannels = selector.select();
+            if (readyChannels == 0) {
+                continue;
+            }
+            // TODO: add timeout
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
 
@@ -58,17 +70,26 @@ public class Client implements Serializable { // This is the client application 
 
                 if (selectionKey.isReadable()) {
 
-                    String data = SocketUtils.extract(socketChannel);
-                    if (data == null) break;
-                    System.out.println("Received data: " + data);
+                    if (selectionKey.isReadable()) {
+                        // Read data from the channel
+                        ByteBuffer buffer = ByteBuffer.allocate(1024);
+                        int bytesRead = socketChannel.read(buffer);
+                        if (bytesRead == -1) {
+                            socketChannel.close();
+                            continue;
+                        }
 
+                        // Process the data that was read
+                        String data = SocketUtils.processData(buffer);
+                        System.out.println("Received data: " + data);
+                    }
 
-                    // if (selectionKey.isWritable()) {
+                    //if (selectionKey.isWritable()) {
 
                     // String message = "Hello, world!";
                     // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
                     // socketChannel.write(buffer);
-
+//
                     //
                     // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
                     //}
@@ -77,21 +98,10 @@ public class Client implements Serializable { // This is the client application 
                 keyIterator.remove();
             }
         }
-    }
 
-    public static void main(String[] args) throws IOException {
-        Client client = new Client();
+}
 
-        // Authenticate
-        if (client.authenticate()) {
-
-            // Start game
-            client.startGame();
-        }
-
-    }
-
-    protected void playGame2() {
+    protected void playGame() {
         Registry registry;
         try {
             registry = LocateRegistry.getRegistry("localhost", new GameConfig().getRMIReg());
@@ -207,7 +217,7 @@ public class Client implements Serializable { // This is the client application 
         while (option != 2) {
             option = this.options();
             if (option == 1) {
-                playGame2();
+                playGame();
                 waitForGameStart(socketChannel);
                 System.out.println("Game Starting...!");
                 gameLoop();
@@ -231,6 +241,18 @@ public class Client implements Serializable { // This is the client application 
         System.out.println("Game started! Let's play!");
 
         // TODO: Lia
+    }
+
+    public static void main(String[] args) throws IOException {
+        Client client = new Client();
+
+        // Authenticate
+        if (client.authenticate()) {
+
+            // Start game
+            client.startGame();
+        }
+
     }
 
     public void sendGuess(int guess) {

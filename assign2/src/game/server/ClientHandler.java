@@ -80,13 +80,6 @@ public class ClientHandler implements Runnable {
         System.out.println("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
 
-        GamePlayer player = new GamePlayer(this.user, 1);
-
-        try {
-            GameServer.playingServer.queueGame(new PlayingServer.WrappedPlayerSocket(player, socket), token);
-        } catch (RemoteException e) {
-            System.out.println("Could not queue game for player " + player.getName());
-        }
     }
 
     private String authenticateUser() {
