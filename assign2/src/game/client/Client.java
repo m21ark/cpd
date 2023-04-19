@@ -39,6 +39,21 @@ public class Client implements Serializable { // This is the client application 
 
     }
 
+    public Client(String s, int i) throws IOException {
+        GameConfig config = new GameConfig();
+
+        InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
+
+        try {
+            socketChannel = SocketChannel.open(address);
+        } catch (Exception e) {
+            System.out.println("Server is not running");
+            System.exit(0);
+        }
+
+        player = new GamePlayer(s, i);
+    }
+
     private void sendGuess(String guess) throws IOException {
         // OutputStream output = socketChannel.socket().getOutputStream();
         // PrintWriter writer = new PrintWriter(output, true);

@@ -85,7 +85,6 @@ public class ClientHandler implements Runnable {
     private String authenticateUser() {
 
         // Authenticate client
-        InputStream input = null;
         int authResult;
         String username, password;
         boolean newUser = false;
