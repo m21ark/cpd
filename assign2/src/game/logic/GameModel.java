@@ -48,6 +48,11 @@ public class GameModel implements Runnable {
         // TODO: LIA
     }
 
+    public void endGame(){
+        // notifyPlayers(CommunicationProtocol.GAME_END);
+        // TODO: LIA
+    }
+
     @Override
     public void run() {
         System.out.println("Game playground");
@@ -56,6 +61,8 @@ public class GameModel implements Runnable {
         notifyPlayers(CommunicationProtocol.GAME_STARTED);
 
         gameLoop();
+
+        endGame();
     }
 
     public List<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
