@@ -3,7 +3,8 @@ package game.client;
 import game.config.GameConfig;
 import game.server.GameServerInterface;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -39,17 +40,19 @@ public class Client implements Serializable { // This is the client application 
 
     }
 
-
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
-        // Configure the socket channel to non-blocking mode
-        socketChannel.configureBlocking(false);
 
+        // register a SocketChannel for reading data asynchronously (non-blocking)
+        socketChannel.configureBlocking(false);
         Selector selector = Selector.open();
-        SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ);
+        SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ); // registered with the Selector for read events
 
         while (true) {
+
+            // await for events
             int readyChannels = selector.select();
             if (readyChannels == 0) {
+                System.out.println("batata");
                 continue;
             }
 
@@ -96,8 +99,6 @@ public class Client implements Serializable { // This is the client application 
 
         // Authenticate
         if (client.authenticate()) {
-
-            // set player  player = new GamePlayer("Player", 0); // TODO... tem de se fazer a autenticaçãao e mudar isto
 
             // Start game
             client.startGame();
@@ -208,9 +209,7 @@ public class Client implements Serializable { // This is the client application 
     public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
         System.out.println("Waiting for token...");
-        InputStream input = socketChannel.socket().getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-        String token = reader.readLine();
+        String token = SocketUtils.readData(socketChannel);
         System.out.println("Your token is :" + token);
         this.token = token;
 

@@ -30,26 +30,23 @@ public class SocketUtils {
     }
 
     public static String readData(Socket socket) {
-        InputStream input = null;
-        String result = null;
         try {
-            input = socket.getInputStream();
+            InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-            result = reader.readLine();
+            return reader.readLine();
         } catch (IOException e) {
-            System.out.println("Error reading from socket!");
+            System.err.println("Error reading from socket: " + e.getMessage());
+            return null;
         }
-        return result;
     }
 
     public static void writeData(Socket socket, String data) {
-        OutputStream output = null;
         try {
-            output = socket.getOutputStream();
+            OutputStream output = new BufferedOutputStream(socket.getOutputStream());
             output.write((data + "\n").getBytes(StandardCharsets.UTF_8));
             output.flush();
         } catch (IOException e) {
-            System.out.println("Error writing to socket!");
+            System.err.println("Error writing to socket: " + e.getMessage());
         }
     }
 

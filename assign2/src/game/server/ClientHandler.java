@@ -74,6 +74,8 @@ public class ClientHandler implements Runnable {
 
         if (token.equals("")) return; // Authentication failed
 
+        System.out.println("HERE");
+
         // add client to the server's list
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
 
