@@ -51,8 +51,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 }
                 return;
             }
+
         }
 
+        // todo: notificar o jogador que n há jogos disponiveis
         System.out.println("No games available");
     }
 

@@ -31,7 +31,11 @@ public class GameModel implements Runnable {
         System.out.println("Notifying clients: " + protocol.name());
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            SocketUtils.sendToClient(connection, protocol);
+            if (connection.isConnected()){
+                SocketUtils.sendToClient(connection, protocol);
+            }else{
+                gamePlayers.remove(gamePlayer); // todo should they be removed?
+            }
         }
     }
 

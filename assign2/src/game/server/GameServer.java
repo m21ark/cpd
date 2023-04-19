@@ -45,7 +45,6 @@ public class GameServer {
         gameServer.start();
     }
 
-
     public void init() {
         // var boundedQueue = new ArrayBlockingQueue<Runnable>(1000);
         // new ThreadPoolExecutor(10, 20, 60, SECONDS, boundedQueue, new AbortPolicy());
@@ -74,7 +73,7 @@ public class GameServer {
                 );
             } else {
                 try {
-                    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU)
+                    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU) // TODO tirar fora dps
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

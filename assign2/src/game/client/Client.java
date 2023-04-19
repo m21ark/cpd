@@ -2,6 +2,7 @@ package game.client;
 
 import game.SocketUtils;
 import game.config.GameConfig;
+import game.server.GameServerInterface;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -9,6 +10,9 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.rmi.NotBoundException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
@@ -85,6 +89,17 @@ public class Client implements Serializable { // This is the client application 
             client.startGame();
         }
 
+    }
+
+    protected void playGame2() {
+        Registry registry;
+        try {
+            registry = LocateRegistry.getRegistry("localhost", new GameConfig().getRMIReg());
+            GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
+            gameServer.queueGame(this.player, token);
+        } catch (IOException | NotBoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private boolean authenticate() {
@@ -192,15 +207,17 @@ public class Client implements Serializable { // This is the client application 
         while (option != 2) {
             option = this.options();
             if (option == 1) {
+                playGame2();
                 waitForGameStart(socketChannel);
                 System.out.println("Game Starting...!");
-                playGame();
+                gameLoop();
             }
         }
         socketChannel.close();
     }
 
-    protected void playGame() {
+    // TODO: passar para wait for game start RICARDO
+    protected void gameLoop() {
         String msg = SocketUtils.extract(socketChannel);
 
         do {
@@ -212,7 +229,12 @@ public class Client implements Serializable { // This is the client application 
         } while (!msg.equals("GAME_STARTED"));
 
         System.out.println("Game started! Let's play!");
+
         // TODO: Lia
+    }
+
+    public void sendGuess(int guess) {
+        SocketUtils.writeData(socketChannel, String.valueOf(guess));
     }
 
     public String getToken() {
