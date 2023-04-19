@@ -2,6 +2,7 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.logic.GameModel;
+import game.protocols.CommunicationProtocol;
 
 import java.net.Socket;
 import java.rmi.RemoteException;
@@ -38,6 +39,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                     executorGameService.submit(game);
                 } else {
                     System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
+                    game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
                     // TODO: adicionar timeout para o caso de n haver mais jogadores
                     // todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }

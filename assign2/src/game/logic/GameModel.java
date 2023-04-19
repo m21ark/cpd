@@ -25,14 +25,14 @@ public class GameModel implements Runnable {
         return NR_MAX_PLAYERS;
     }
 
-    private void notifyPlayers(CommunicationProtocol protocol) {
+    public void notifyPlayers(CommunicationProtocol protocol, String... args) {
         // TODO: podemos meter que se n estiver disponível perde a vez e entra outro
 
         System.out.println("Notifying clients: " + protocol.name());
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected()){
-                SocketUtils.sendToClient(connection, protocol);
+                SocketUtils.sendToClient(connection, protocol, args);
             }else{
                 gamePlayers.remove(gamePlayer); // todo should they be removed?
             }

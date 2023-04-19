@@ -67,9 +67,9 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("Game started. Time to play!");
             return true;
         } else {
-            if (data.startsWith("GAME_UPDATE")) {
+            if (data.startsWith("QUEUE_UPDATE")) {
                 String[] parts = data.split(" ");
-                System.out.println("There are " + parts[1] + " players in the game lobby.");
+                System.out.println("There are " + parts[1].split("\\n")[0] + " players in the game lobby.");
             }
         }
         return false;

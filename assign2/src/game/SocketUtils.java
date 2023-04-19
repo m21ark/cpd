@@ -55,8 +55,8 @@ public class SocketUtils {
         }
     }
 
-    public static void sendToClient(Socket connection, CommunicationProtocol message) {
-        SocketUtils.writeData(connection, message.toString());
+    public static void sendToClient(Socket connection, CommunicationProtocol message, String... args) {
+        SocketUtils.writeData(connection, message.toString() + " " + String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {
