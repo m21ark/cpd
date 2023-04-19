@@ -44,7 +44,6 @@ public class GameModel implements Runnable {
     }
 
     private void gameLoop() {
-        notifyPlayers(CommunicationProtocol.GAME_STARTED);
 
         // TODO: LIA
     }
@@ -54,7 +53,7 @@ public class GameModel implements Runnable {
         System.out.println("Game playground");
         // TODO: Add max timeout to the game
 
-        notifyPlayers(CommunicationProtocol.GAME_STARTING);
+        notifyPlayers(CommunicationProtocol.GAME_STARTED);
 
         gameLoop();
     }

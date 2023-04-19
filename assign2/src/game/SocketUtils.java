@@ -31,11 +31,11 @@ public class SocketUtils {
 
     public static String readData(Socket socket) {
         try {
-            System.out.println("Reading from socket...");
+            //System.out.println("Reading from socket...");
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
             String ret = reader.readLine();
-            System.out.println("Read from socket: " + ret);
+            //System.out.println("Read from socket: " + ret);
             return ret;
         } catch (IOException e) {
             System.err.println("Error reading from socket: " + e.getMessage());
@@ -45,11 +45,11 @@ public class SocketUtils {
 
     public static void writeData(Socket socket, String data) {
         try {
-            System.out.println("Writing to socket: " + data);
+            //System.out.println("Writing to socket: " + data);
             OutputStream output = new BufferedOutputStream(socket.getOutputStream());
             output.write((data + "\n").getBytes(StandardCharsets.UTF_8));
             output.flush();
-            System.out.println("Wrote to socket: " + data);
+            //System.out.println("Wrote to socket: " + data);
         } catch (IOException e) {
             System.err.println("Error writing to socket: " + e.getMessage());
         }

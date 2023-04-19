@@ -69,7 +69,8 @@ public class GameServer {
         while (serverSocket.isOpen()) {
             SocketChannel socketChannel = serverSocket.accept();
             if (socketChannel != null) {
-                executorService.submit(new ClientHandler(socketChannel.socket())
+                executorService.submit(
+                        new ClientHandler(socketChannel.socket())
                 );
             } else {
                 //try {

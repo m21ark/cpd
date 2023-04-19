@@ -47,6 +47,19 @@ public class Client implements Serializable { // This is the client application 
 
     }
 
+    public static boolean dealWithServerMessages(String data) {
+        if (data.startsWith("GAME_STARTED")) {
+            System.out.println("Game started. Time to play!");
+            return true;
+        } else {
+            if (data.startsWith("GAME_UPDATE")) {
+                String[] parts = data.split(" ");
+                System.out.println("There are " + parts[1] + " players in the game lobby.");
+            }
+        }
+        return false;
+    }
+
 
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
 
@@ -72,16 +85,12 @@ public class Client implements Serializable { // This is the client application 
 
                     if (selectionKey.isReadable()) {
                         // Read data from the channel
-                        ByteBuffer buffer = ByteBuffer.allocate(1024);
-                        int bytesRead = socketChannel.read(buffer);
-                        if (bytesRead == -1) {
-                            socketChannel.close();
-                            continue;
+                        String data = SocketUtils.extract(socketChannel);
+                        if (data == null) break;
+                        if (dealWithServerMessages(data)) {
+                            return;
                         }
 
-                        // Process the data that was read
-                        String data = SocketUtils.processData(buffer);
-                        System.out.println("Received data: " + data);
                     }
 
                     //if (selectionKey.isWritable()) {
@@ -206,11 +215,8 @@ public class Client implements Serializable { // This is the client application 
 
     public synchronized void startGame() throws IOException {
         System.out.println("Welcome to the game!");
-        System.out.println("Waiting for token...");
-        String token = SocketUtils.readData(socketChannel);
-        System.out.println("Your token is :" + token);
 
-        this.token = token;
+        this.token = SocketUtils.readData(socketChannel);
         this.player = new GamePlayer(this.token, 0);
 
         int option = 0;
@@ -219,7 +225,6 @@ public class Client implements Serializable { // This is the client application 
             if (option == 1) {
                 playGame();
                 waitForGameStart(socketChannel);
-                System.out.println("Game Starting...!");
                 gameLoop();
             }
         }
@@ -230,15 +235,6 @@ public class Client implements Serializable { // This is the client application 
     protected void gameLoop() {
         String msg = SocketUtils.extract(socketChannel);
 
-        do {
-            if (msg == null) {
-                System.out.println("There was an error while playing the game.");
-                return;
-            }
-            System.out.println("Received game data: " + msg);
-        } while (!msg.equals("GAME_STARTED"));
-
-        System.out.println("Game started! Let's play!");
 
         // TODO: Lia
     }
