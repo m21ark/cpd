@@ -1,5 +1,6 @@
 package game.client;
 
+import game.SocketUtils;
 import game.config.GameConfig;
 import game.server.GameServerInterface;
 
@@ -11,7 +12,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Iterator;
@@ -37,7 +37,6 @@ public class Client implements Serializable { // This is the client application 
             System.exit(0);
         }
 
-
     }
 
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
@@ -49,12 +48,7 @@ public class Client implements Serializable { // This is the client application 
 
         while (true) {
 
-            // await for events
-            int readyChannels = selector.select();
-            if (readyChannels == 0) {
-                System.out.println("batata");
-                continue;
-            }
+            int readyChannels = selector.select(); // await for events (blocking)
 
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
@@ -78,12 +72,12 @@ public class Client implements Serializable { // This is the client application 
                         System.out.println("Received data: " + data);
                     }
 
-                    //if (selectionKey.isWritable()) {
+                    // if (selectionKey.isWritable()) {
 
                     // String message = "Hello, world!";
                     // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
                     // socketChannel.write(buffer);
-//
+
                     //
                     // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
                     //}
@@ -211,7 +205,9 @@ public class Client implements Serializable { // This is the client application 
         System.out.println("Waiting for token...");
         String token = SocketUtils.readData(socketChannel);
         System.out.println("Your token is :" + token);
+
         this.token = token;
+        this.player = new GamePlayer(this.token, 0);
 
         int option = 0;
         while (option != 2) {
@@ -220,6 +216,7 @@ public class Client implements Serializable { // This is the client application 
                 this.playGame();
                 waitForGameStart(socketChannel);
                 System.out.println("Game Starting...!");
+                // TODO: LIA ... aqui temos de fazer o jogo
             }
         }
         socketChannel.close();
@@ -228,13 +225,12 @@ public class Client implements Serializable { // This is the client application 
     protected void playGame() {
         Registry registry;
         try {
-            registry = LocateRegistry.getRegistry("localhost", 1099);
+            registry = LocateRegistry.getRegistry("localhost", new GameConfig().getRMIReg());
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
             gameServer.queueGame(this.player, token);
-        } catch (RemoteException | NotBoundException e) {
+        } catch (IOException | NotBoundException e) {
             e.printStackTrace();
         }
-
     }
 
     public String getToken() {

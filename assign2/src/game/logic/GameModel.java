@@ -1,6 +1,6 @@
 package game.logic;
 
-import game.client.SocketUtils;
+import game.SocketUtils;
 import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
 

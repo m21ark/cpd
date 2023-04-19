@@ -1,6 +1,7 @@
 package game.server;
 
-import game.client.SocketUtils;
+import game.SocketUtils;
+import game.client.GamePlayer;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -10,12 +11,15 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.List;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private File persistantUsersFile;
     private List<String> persistantUsers; // Format: username:password:token  (token is optional)
+
+    private String user;
 
     // should every handler have its own version of the file?
 
@@ -71,28 +75,26 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         String token = authenticateUser();
-
         if (token.equals("")) return; // Authentication failed
 
-        System.out.println("HERE");
-
-        // add client to the server's list
+        System.out.println("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
 
+        GamePlayer player = new GamePlayer(this.user, 1);
 
-        // GameServer.playingServer.queueGame(
-        //         new PlayingServer.WrappedPlayerSocket(
-        //                 new GamePlayer("Player", 1), //tem de vir da autenticaçao
-        //                 socket)
-        // );
+        try {
+            GameServer.playingServer.queueGame(new PlayingServer.WrappedPlayerSocket(player, socket), token);
+        } catch (RemoteException e) {
+            System.out.println("Could not queue game for player " + player.getName());
+        }
     }
 
     private String authenticateUser() {
 
         // Authenticate client
         InputStream input = null;
-        int authResult = 0;
-        String username = "", password = "";
+        int authResult;
+        String username, password;
         boolean newUser = false;
 
         // Read username and password from client and try to authenticate
@@ -129,8 +131,10 @@ public class ClientHandler implements Runnable {
             updateToken(username, token);
         }
 
+        this.user = username;
+
         // write to client
-        System.out.println("Sending token to client.");
+        System.out.println("Sending token to client: " + username + " <-> " + token);
         SocketUtils.writeData(socket, token);
         return token;
     }

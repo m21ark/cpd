@@ -1,9 +1,7 @@
 package game.server;
 
-import game.client.SocketUtils;
 import game.config.Configurations;
 import game.config.GameConfig;
-import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
