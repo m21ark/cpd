@@ -2,6 +2,7 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.config.GameConfig;
+import game.logic.GameHeap;
 import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
 
@@ -17,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
-    private final List<GameModel> games = new ArrayList<>();
+    private static final GameHeap games = new GameHeap();
     private final ExecutorService executorGameService;
     public static Queue<WrappedPlayerSocket> queueToPlay = new LinkedList<>();
 
@@ -27,14 +28,25 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razao o enunciado diz que tem de ser fixo
         executorGameService = Executors.newFixedThreadPool(5);
 
-        for (int i = 0; i < 5; i++) games.add(new GameModel(new ArrayList<>()));
+        for (int i = 0; i < 5; i++) games.addGame(new GameModel(new ArrayList<>()));
     }
     private boolean rankMode(GamePlayer client, String token) {
         //TODO: implementar
         return false;
     }
 
+    public static void resetHeap(GameModel gameModel){
+        games.getHeap().remove(gameModel);
+        games.getHeap().add(gameModel);
+    }
+
+
     private boolean simpleMode(GamePlayer client, String token) {
+
+        // this is a heap, so the first game is the one with the most players and available
+        // this was done to improve performance as a simple list would require a linear search
+        // if all games except one are full, a list would require a linear search to find the game available
+        // now we just need to check the first game
         for (GameModel game : games) {
             if (game.isAvailable()) {
                 game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));

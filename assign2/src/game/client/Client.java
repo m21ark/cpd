@@ -244,7 +244,6 @@ public class Client implements Serializable { // This is the client application 
         this.token = SocketUtils.readData(socketChannel);
     }
 
-    // TODO: passar para wait for game start RICARDO
     protected void gameLoop() {
         String msg = SocketUtils.extract(socketChannel);
 

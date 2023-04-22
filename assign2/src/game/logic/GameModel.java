@@ -26,15 +26,14 @@ public class GameModel implements Runnable {
     }
 
     public void notifyPlayers(CommunicationProtocol protocol, String... args) {
-        // TODO: podemos meter que se n estiver disponível perde a vez e entra outro
 
         System.out.println("Notifying clients: " + protocol.name());
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            if (connection.isConnected()){
+            if (connection.isConnected() && !connection.isClosed()) {
                 SocketUtils.sendToClient(connection, protocol, args);
             }else{
-                gamePlayers.remove(gamePlayer); // todo should they be removed?
+                gamePlayers.remove(gamePlayer); // todo should they be removed? ...  add lock
             }
         }
     }
@@ -83,9 +82,14 @@ public class GameModel implements Runnable {
 
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
+        PlayingServer.resetHeap(this);
     }
 
     public boolean isFull() {
         return gamePlayers.size() == NR_MAX_PLAYERS;
+    }
+
+    public int getCurrentPlayers() {
+        return gamePlayers.size();
     }
 }
