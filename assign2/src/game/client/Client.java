@@ -26,7 +26,7 @@ public class Client implements Serializable { // This is the client application 
 
 
     public Client() throws IOException {
-        GameConfig config = new GameConfig();
+        GameConfig config = GameConfig.getInstance();
 
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
 
@@ -40,7 +40,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public Client(String s, int i) throws IOException {
-        GameConfig config = new GameConfig();
+        GameConfig config = GameConfig.getInstance();
 
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
 
@@ -121,7 +121,7 @@ public class Client implements Serializable { // This is the client application 
     protected void playGame() {
         Registry registry;
         try {
-            registry = LocateRegistry.getRegistry("localhost", new GameConfig().getRMIReg());
+            registry = LocateRegistry.getRegistry("localhost", GameConfig.getInstance().getRMIReg());
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
             gameServer.queueGame(this.player, token);
         } catch (IOException | NotBoundException e) {

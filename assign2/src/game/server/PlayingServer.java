@@ -9,12 +9,14 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
     private final List<GameModel> games = new ArrayList<>();
     private final ExecutorService executorGameService;
+    public static Queue<WrappedPlayerSocket> queueToPlay;
 
     PlayingServer() throws RemoteException {
         super();
@@ -48,8 +50,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         }
 
-        // todo: notificar o jogador que n há jogos disponiveis
-        System.out.println("No games available");
+        System.out.println("No games available, player will be set to a queue");
+        // latter the game is responsible for removing the player from the queue and add it to the game
     }
 
     public static class WrappedPlayerSocket extends GamePlayer {

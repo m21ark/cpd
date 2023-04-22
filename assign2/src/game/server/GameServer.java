@@ -47,7 +47,7 @@ public class GameServer {
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
         }else {
-            configurations = new GameConfig();
+            configurations = GameConfig.getInstance();
         }
         GameServer gameServer = new GameServer(configurations);
         gameServer.start();
@@ -96,7 +96,7 @@ public class GameServer {
         openServerSocket();
 
         // Start the RMI registry
-        int RMIPort = new GameConfig().getRMIReg();
+        int RMIPort = GameConfig.getInstance().getRMIReg();
         Registry registry = LocateRegistry.createRegistry(RMIPort);
 
         // Create an instance of the remote object and bind it to the registry

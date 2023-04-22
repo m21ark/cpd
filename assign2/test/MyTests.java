@@ -53,6 +53,7 @@ public class MyTests {
         for (int i = 0; i < 10; i++) {
             try {
                 Client client = new Client("Test" + i, 0); // this is a mocked player
+                client.getTokenFromServer();
                 clients.add(client); // this is a mocked player
             } catch (IOException e) {
                 Assertions.fail("Could not create client");
