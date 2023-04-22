@@ -34,6 +34,7 @@ public class GameModel implements Runnable {
                 SocketUtils.sendToClient(connection, protocol, args);
             }else{
                 gamePlayers.remove(gamePlayer); // todo should they be removed? ...  add lock
+                PlayingServer.games.updateHeap(this);
             }
         }
     }
@@ -51,6 +52,7 @@ public class GameModel implements Runnable {
         // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
         gamePlayers.clear(); // TODO: lock de escrita
+        PlayingServer.games.updateHeap(this);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
@@ -82,7 +84,7 @@ public class GameModel implements Runnable {
 
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
-        PlayingServer.resetHeap(this);
+        PlayingServer.games.updateHeap(this);
     }
 
     public boolean isFull() {

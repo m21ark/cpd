@@ -50,7 +50,7 @@ public class MyTests {
         // start multiple games
         System.out.println("Server started");
         // create all clients ... does not start (on purpose) the game
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1000; i++) {
             try {
                 Client client = new Client("Test" + i, 0); // this is a mocked player
                 client.getTokenFromServer();
@@ -61,7 +61,7 @@ public class MyTests {
         }
 
         Client client;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 500; i++) {
             client = clients.get(i);
             try {
                 Method privateMethod = client.getClass().getDeclaredMethod("playGame");
@@ -77,7 +77,7 @@ public class MyTests {
     @Test
     public void spamGamePlaysInRow() {
 
-        for (int i = 0; i < 5; i++) { // MAX numbers of tries ... make this more modular
+        for (int i = 0; i < 500; i++) { // MAX numbers of tries ... make this more modular
             for (Client client : clients) {
                 try {
                     Method privateMethod = client.getClass().getDeclaredMethod("sendGuess", String.class);
@@ -100,7 +100,7 @@ public class MyTests {
         for (int i = 0; i < 3; i++) {
             int finalI = i;
             threads.add(new Thread(() -> { // TODO: test this better when game is working
-                for (int j = 0; j < 5; j++) { // MAX numbers of tries ... make this more modular
+                for (int j = 0; j < 500; j++) { // MAX numbers of tries ... make this more modular
                     for (int k = 0; k < clients.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
                         Client client = clients.get(k);
@@ -155,7 +155,7 @@ public class MyTests {
         for (int i = 0; i < 3; i++) {
             int finalI = i;
             threads.add(new Thread(() -> { // TODO: test this better when game is working
-                for (int j = 0; j < 5; j++) { // MAX numbers of tries ... make this more modular
+                for (int j = 0; j < 500; j++) { // MAX numbers of tries ... make this more modular
                     for (int k = 0; k < list.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
                         PlayingServer.WrappedPlayerSocket client = list.get(k);

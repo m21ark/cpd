@@ -12,13 +12,12 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
-    private static final GameHeap games = new GameHeap();
+    public static final GameHeap games = new GameHeap();
     private final ExecutorService executorGameService;
     public static Queue<WrappedPlayerSocket> queueToPlay = new LinkedList<>();
 
@@ -28,18 +27,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razao o enunciado diz que tem de ser fixo
         executorGameService = Executors.newFixedThreadPool(5);
 
-        for (int i = 0; i < 5; i++) games.addGame(new GameModel(new ArrayList<>()));
+        for (int i = 0; i < 500; i++) games.addGame(new GameModel(new ArrayList<>()));
     }
     private boolean rankMode(GamePlayer client, String token) {
         //TODO: implementar
         return false;
     }
-
-    public static void resetHeap(GameModel gameModel){
-        games.getHeap().remove(gameModel);
-        games.getHeap().add(gameModel);
-    }
-
 
     private boolean simpleMode(GamePlayer client, String token) {
 
@@ -71,6 +64,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // latter the game is responsible for removing the player from the queue and add it to the game
         // probably it should not be a queue has in rank mode the order is not that important and we dont want
         // to discard some players
+
         queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
     }
 

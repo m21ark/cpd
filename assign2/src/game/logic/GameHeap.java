@@ -3,9 +3,12 @@ package game.logic;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.PriorityQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class GameHeap implements Iterable<GameModel>{
     private final PriorityQueue<GameModel> heap;
+    private ReadWriteLock lock;
 
     public GameHeap() {
         Comparator<GameModel> comparator = (g1, g2) -> {
@@ -22,18 +25,34 @@ public class GameHeap implements Iterable<GameModel>{
             return Integer.compare(g2.getCurrentPlayers(), g1.getCurrentPlayers());
         };
         heap = new PriorityQueue<>(comparator);
+        lock = new ReentrantReadWriteLock();
     }
-
+    // TODO: accrescentar locks de escrita/leitura aqui em baixo
     public void addGame(GameModel game) {
-        heap.offer(game);
+        lock.writeLock().lock();
+        try {
+            heap.offer(game);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public GameModel getGameWithMostPlayers() {
-        return heap.peek();
+        lock.writeLock().lock();
+        try {
+            return heap.peek();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public GameModel removeGameWithMostPlayers() {
-        return heap.poll();
+        lock.writeLock().lock();
+        try {
+            return heap.poll();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
@@ -42,10 +61,23 @@ public class GameHeap implements Iterable<GameModel>{
     }
 
     public int getSize() {
-        return heap.size();
+        lock.readLock().lock();
+        try {
+            return heap.size();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
-    public PriorityQueue<GameModel> getHeap() {
-        return heap;
+    public void updateHeap(GameModel gameModel) {
+        lock.writeLock().lock();
+        try {
+            heap.remove(gameModel);
+            heap.add(gameModel);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
+
+
 }

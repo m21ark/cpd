@@ -266,7 +266,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     private void sendGuess(String guess) {
-        SocketUtils.writeData(socketChannel, guess);
+        // SocketUtils.writeData(socketChannel, guess);
     }
 
     public String getToken() {
