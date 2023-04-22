@@ -1,5 +1,6 @@
 import game.client.Client;
 import game.logic.GameModel;
+import game.logic.MyConcurrentList;
 import game.server.GameServer;
 import game.server.PlayingServer;
 import org.junit.jupiter.api.Assertions;
@@ -132,7 +133,7 @@ public class MyTests {
 
     @Test
     public void gameWinnerInConcurrentTest() {
-        List<PlayingServer.WrappedPlayerSocket> list = new ArrayList<>();
+        MyConcurrentList<PlayingServer.WrappedPlayerSocket> list = new MyConcurrentList<>();
         List<Client> _clients = MyTests.clients.stream().limit(GameModel.getNrMaxPlayers()).collect(Collectors.toList());
         long limit = GameModel.getNrMaxPlayers();
         for (Client client : clients) {

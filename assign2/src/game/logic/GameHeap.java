@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class GameHeap implements Iterable<GameModel>{
     private final PriorityQueue<GameModel> heap;
-    private ReadWriteLock lock;
+    private final ReadWriteLock lock;
 
     public GameHeap() {
         Comparator<GameModel> comparator = (g1, g2) -> {
@@ -25,9 +25,9 @@ public class GameHeap implements Iterable<GameModel>{
             return Integer.compare(g2.getCurrentPlayers(), g1.getCurrentPlayers());
         };
         heap = new PriorityQueue<>(comparator);
-        lock = new ReentrantReadWriteLock();
+        lock = new ReentrantReadWriteLock(true);
     }
-    // TODO: accrescentar locks de escrita/leitura aqui em baixo
+
     public void addGame(GameModel game) {
         lock.writeLock().lock();
         try {

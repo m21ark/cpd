@@ -4,6 +4,7 @@ import game.client.GamePlayer;
 import game.config.GameConfig;
 import game.logic.GameHeap;
 import game.logic.GameModel;
+import game.logic.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razao o enunciado diz que tem de ser fixo
         executorGameService = Executors.newFixedThreadPool(5);
 
-        for (int i = 0; i < 500; i++) games.addGame(new GameModel(new ArrayList<>()));
+        for (int i = 0; i < 5; i++) games.addGame(new GameModel(new MyConcurrentList<>()));
     }
     private boolean rankMode(GamePlayer client, String token) {
         //TODO: implementar

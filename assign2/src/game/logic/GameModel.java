@@ -15,9 +15,9 @@ public class GameModel implements Runnable {
     private static final int MAX_GUESS = 100;
     private static final int MAX_NR_GUESS = 100;
     private final int gameWinner = new Random().nextInt(MAX_GUESS);
-    private List<PlayingServer.WrappedPlayerSocket> gamePlayers;
+    private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
-    public GameModel(List<PlayingServer.WrappedPlayerSocket> gamePlayers) {
+    public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
     }
 
@@ -33,6 +33,7 @@ public class GameModel implements Runnable {
             if (connection.isConnected() && !connection.isClosed()) {
                 SocketUtils.sendToClient(connection, protocol, args);
             }else{
+                // este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
                 gamePlayers.remove(gamePlayer); // todo should they be removed? ...  add lock
                 PlayingServer.games.updateHeap(this);
             }
@@ -70,11 +71,11 @@ public class GameModel implements Runnable {
         endGame();
     }
 
-    public List<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
+    public MyConcurrentList<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
         return gamePlayers;
     }
 
-    public void setGamePlayers(List<PlayingServer.WrappedPlayerSocket> gamePlayers) {
+    public void setGamePlayers(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
     }
 
