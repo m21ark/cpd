@@ -15,11 +15,10 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public class ClientHandler implements Runnable {
+    public static boolean DEBUG_MODE = false;
     private final Socket socket;
     private File persistantUsersFile;
     private List<String> persistantUsers; // Format: username:password:token  (token is optional)
-
-    private String user;
 
     // should every handler have its own version of the file?
 
@@ -74,8 +73,15 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        String token = authenticateUser();
-        if (token.equals("")) return; // Authentication failed
+        String token;
+        if (DEBUG_MODE) {
+            token = generateRandomToken();
+            SocketUtils.writeData(socket, token);
+        }else {
+            token = authenticateUser();
+            if (token.equals("")) return; // Authentication failed
+        }
+
 
         System.out.println("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
@@ -123,7 +129,6 @@ public class ClientHandler implements Runnable {
             updateToken(username, token);
         }
 
-        this.user = username;
 
         // write to client
         System.out.println("Sending token to client: " + username + " <-> " + token);

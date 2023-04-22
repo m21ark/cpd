@@ -8,7 +8,16 @@ import java.util.Properties;
 
 public class GameConfig implements Configurations {
     private final Properties properties;
+    private boolean testMode = false;
     File config = new File("assign2/src/resources/config.properties"); // TODO: VER ISTO
+
+    public GameConfig(boolean testMode) throws IOException {
+        // load configurations
+        this.testMode = testMode;
+        properties = new Properties();
+        InputStream inputStream = new FileInputStream(config);
+        properties.load(inputStream);
+    }
 
     public GameConfig() throws IOException {
         // load configurations
@@ -29,5 +38,10 @@ public class GameConfig implements Configurations {
 
     public int getRMIReg() {
         return Integer.parseInt(properties.getProperty("rmiReg"));
+    }
+
+    @Override
+    public boolean isTestMode() {
+        return testMode;
     }
 }

@@ -22,7 +22,8 @@ public class MyTests {
 
     @BeforeAll
     public static void setup() {
-        String[] args = new String[0];
+        String[] args = new String[1];
+        args[0] = "-debug";
         // start server on a different thread
         new Thread(() -> {
             try {
@@ -66,6 +67,7 @@ public class MyTests {
                 privateMethod.setAccessible(true);
                 privateMethod.invoke(client);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
                 Assertions.fail("Could not create a game");
             }
         }

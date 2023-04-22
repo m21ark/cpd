@@ -6,4 +6,6 @@ public interface Configurations {
     int getPort();
 
     int getRMIReg();
+
+    boolean isTestMode();
 }

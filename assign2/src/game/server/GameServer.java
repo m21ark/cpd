@@ -10,6 +10,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +41,14 @@ public class GameServer {
 
     public static void main(String[] args) throws IOException {
         LOGGER.setLevel(Level.CONFIG);
-        Configurations configurations = new GameConfig();
+        Configurations configurations;
+        if (Arrays.stream(args).toList().contains("-debug")) {
+            LOGGER.setLevel(Level.ALL);
+            configurations = new GameConfig(true);
+            ClientHandler.DEBUG_MODE = true;
+        }else {
+            configurations = new GameConfig();
+        }
         GameServer gameServer = new GameServer(configurations);
         gameServer.start();
     }
