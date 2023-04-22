@@ -1,13 +1,16 @@
 package game.server;
 
 import game.client.GamePlayer;
+import game.config.GameConfig;
 import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -16,7 +19,7 @@ import java.util.concurrent.Executors;
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
     private final List<GameModel> games = new ArrayList<>();
     private final ExecutorService executorGameService;
-    public static Queue<WrappedPlayerSocket> queueToPlay;
+    public static Queue<WrappedPlayerSocket> queueToPlay = new LinkedList<>();
 
     PlayingServer() throws RemoteException {
         super();
@@ -26,13 +29,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         for (int i = 0; i < 5; i++) games.add(new GameModel(new ArrayList<>()));
     }
+    private boolean rankMode(GamePlayer client, String token) {
+        //TODO: implementar
+        return false;
+    }
 
-    @Override
-    public void queueGame(GamePlayer client, String token) throws RemoteException {
-
-        // TODO: detetar se o player desistiu da queue
-        System.out.println("Added player to queue");
-
+    private boolean simpleMode(GamePlayer client, String token) {
         for (GameModel game : games) {
             if (game.isAvailable()) {
                 game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
@@ -45,13 +47,46 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                     // TODO: adicionar timeout para o caso de n haver mais jogadores
                     // todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
-                return;
+                return true;
             }
-
         }
+        return false;
+    }
 
+    public void addToQueue(GamePlayer client, String token) {
+        // TODO: add lock
         System.out.println("No games available, player will be set to a queue");
         // latter the game is responsible for removing the player from the queue and add it to the game
+        // probably it should not be a queue has in rank mode the order is not that important and we dont want
+        // to discard some players
+        queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+    }
+
+    @Override
+    public void queueGame(GamePlayer client, String token) throws RemoteException {
+
+        // TODO: detetar se o player desistiu da queue
+        System.out.println("Added player to queue");
+
+        String mode = "";
+        boolean gamesAvailable;
+        try {
+            mode = GameConfig.getInstance().getMode();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (mode.equals("Simple")) {
+            gamesAvailable = simpleMode(client, token);
+        } else {
+            gamesAvailable = rankMode(client, token);
+        }
+
+        if (!gamesAvailable) {
+            addToQueue(client, token);
+            // TODO: send message to client that he is in queue, waiting for games to end ... NOT priority
+        }
+
     }
 
     public static class WrappedPlayerSocket extends GamePlayer {

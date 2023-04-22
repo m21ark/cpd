@@ -51,6 +51,10 @@ public class GameModel implements Runnable {
     public void endGame(){
         // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
+        gamePlayers.clear(); // TODO: lock de escrita
+        // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
+        // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
+        // o gameconfig é um singleton e tem o modo de jogo definido
     }
 
     @Override
