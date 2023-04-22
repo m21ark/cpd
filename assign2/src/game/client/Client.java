@@ -54,13 +54,6 @@ public class Client implements Serializable { // This is the client application 
         player = new GamePlayer(s, i);
     }
 
-    private void sendGuess(String guess) throws IOException {
-        // OutputStream output = socketChannel.socket().getOutputStream();
-        // PrintWriter writer = new PrintWriter(output, true);
-        // writer.println(guess); .... TODO: LIA ... o copilot sugeriu isto mas n testei
-        System.out.println("Sending guess: " + guess);
-
-    }
 
     public static boolean dealWithServerMessages(String data) {
         if (data.startsWith("GAME_STARTED")) {
@@ -161,7 +154,8 @@ public class Client implements Serializable { // This is the client application 
             case 0 -> {
                 return registerUser();
             }
-            case 1 -> System.out.println("Login successful!");
+            case 1 -> {System.out.println("Login successful!");
+                this.player = new GamePlayer(username, 0);}
             case 2 -> System.out.println("Incorrect password.");
             default -> System.out.println("Login failed.");
         }
@@ -228,11 +222,11 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    public synchronized void startGame() throws IOException {
+    public void startGame() throws IOException {
         System.out.println("Welcome to the game!");
 
-        this.token = SocketUtils.readData(socketChannel);
-        this.player = new GamePlayer(this.token, 0);
+        //this.token = SocketUtils.readData(socketChannel);
+        //
 
         int option = 0;
         while (option != 2) {
@@ -244,6 +238,10 @@ public class Client implements Serializable { // This is the client application 
             }
         }
         socketChannel.close();
+    }
+
+    public void getTokenFromServer() {
+        this.token = SocketUtils.readData(socketChannel);
     }
 
     // TODO: passar para wait for game start RICARDO
@@ -260,14 +258,16 @@ public class Client implements Serializable { // This is the client application 
         // Authenticate
         if (client.authenticate()) {
 
+            // Get token from server
+            client.getTokenFromServer();
             // Start game
             client.startGame();
         }
 
     }
 
-    public void sendGuess(int guess) {
-        SocketUtils.writeData(socketChannel, String.valueOf(guess));
+    private void sendGuess(String guess) {
+        SocketUtils.writeData(socketChannel, guess);
     }
 
     public String getToken() {
