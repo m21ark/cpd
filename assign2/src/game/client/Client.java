@@ -78,6 +78,11 @@ public class Client implements Serializable { // This is the client application 
 
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
 
+        /*
+        Take a look at the following Java NIO tutorial:
+        https://jenkov.com/tutorials/java-nio/selectors.html
+         */
+
         // register a SocketChannel for reading data asynchronously (non-blocking)
         socketChannel.configureBlocking(false);
 
@@ -97,27 +102,22 @@ public class Client implements Serializable { // This is the client application 
                 SelectionKey selectionKey = keyIterator.next();
 
                 if (selectionKey.isReadable()) {
-
-                    if (selectionKey.isReadable()) {
-                        // Read data from the channel
-                        String data = SocketUtils.extract(socketChannel);
-                        if (data == null) break;
-                        if (dealWithServerMessages(data)) {
-                            return;
-                        }
-
+                    // Read data from the channel
+                    String data = SocketUtils.extract(socketChannel);
+                    if (data == null) break;
+                    if (dealWithServerMessages(data)) {
+                        return;
                     }
-
-                    //if (selectionKey.isWritable()) {
-
-                    // String message = "Hello, world!";
-                    // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-                    // socketChannel.write(buffer);
-//
-                    //
-                    // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
-                    //}
                 }
+
+                //if (selectionKey.isWritable()) {
+
+                // String message = "Hello, world!";
+                // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+                // socketChannel.write(buffer);
+                //
+                // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
+                //}
 
                 keyIterator.remove();
             }
