@@ -152,7 +152,10 @@ public class Client implements Serializable { // This is the client application 
 
         switch (serverResult) {
             case 0 -> {
-                return registerUser();
+                if (registerUser())
+                    this.player = new GamePlayer(username, 0);
+                else return false;
+                return true;
             }
             case 1 -> {System.out.println("Login successful!");
                 this.player = new GamePlayer(username, 0);}

@@ -38,6 +38,7 @@ public class SocketUtils {
             //System.out.println("Read from socket: " + ret);
             return ret;
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Error reading from socket: " + e.getMessage());
             return null;
         }
@@ -51,6 +52,7 @@ public class SocketUtils {
             output.flush();
             //System.out.println("Wrote to socket: " + data);
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Error writing to socket: " + e.getMessage());
         }
     }

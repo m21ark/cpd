@@ -160,7 +160,6 @@ public class ClientHandler implements Runnable {
         // Respond to client
         SocketUtils.writeData(socket, String.valueOf(authResult));
 
-        SocketUtils.closeSocket(socket);
         return false;
     }
 
