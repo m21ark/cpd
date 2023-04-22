@@ -2,25 +2,22 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.config.GameConfig;
-import game.logic.GameHeap;
+import game.logic.structures.GameHeap;
 import game.logic.GameModel;
-import game.logic.MyConcurrentList;
+import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 
 import java.io.IOException;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
     public static final GameHeap games = new GameHeap();
     private final ExecutorService executorGameService;
-    public static Queue<WrappedPlayerSocket> queueToPlay = new LinkedList<>();
+    public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
 
     PlayingServer() throws RemoteException {
         super();
@@ -60,7 +57,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     }
 
     public void addToQueue(GamePlayer client, String token) {
-        // TODO: add lock
         System.out.println("No games available, player will be set to a queue");
         // latter the game is responsible for removing the player from the queue and add it to the game
         // probably it should not be a queue has in rank mode the order is not that important and we dont want

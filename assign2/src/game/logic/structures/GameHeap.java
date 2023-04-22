@@ -1,4 +1,6 @@
-package game.logic;
+package game.logic.structures;
+
+import game.logic.GameModel;
 
 import java.util.Comparator;
 import java.util.Iterator;

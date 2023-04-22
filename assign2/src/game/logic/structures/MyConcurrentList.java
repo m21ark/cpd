@@ -1,4 +1,4 @@
-package game.logic;
+package game.logic.structures;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,19 +14,19 @@ public class MyConcurrentList<E> implements Iterable<E>{
         elements = new ArrayList<>();
     }
 
-    public void add(E player) {
+    public void add(E element) {
         lock.writeLock().lock();
         try {
-            elements.add(player);
+            elements.add(element);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    public void remove(E player) {
+    public void remove(E element) {
         lock.writeLock().lock();
         try {
-            elements.remove(player);
+            elements.remove(element);
         } finally {
             lock.writeLock().unlock();
         }
@@ -59,10 +59,19 @@ public class MyConcurrentList<E> implements Iterable<E>{
         }
     }
 
-    public boolean contains(E player) {
+    public boolean contains(E element) {
         lock.readLock().lock();
         try {
-            return elements.contains(player);
+            return elements.contains(element);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public E front() {
+        lock.readLock().lock();
+        try {
+            return elements.get(0);
         } finally {
             lock.readLock().unlock();
         }

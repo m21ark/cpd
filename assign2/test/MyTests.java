@@ -1,6 +1,6 @@
 import game.client.Client;
 import game.logic.GameModel;
-import game.logic.MyConcurrentList;
+import game.logic.structures.MyConcurrentList;
 import game.server.GameServer;
 import game.server.PlayingServer;
 import org.junit.jupiter.api.Assertions;

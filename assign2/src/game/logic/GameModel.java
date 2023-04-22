@@ -1,11 +1,11 @@
 package game.logic;
 
 import game.SocketUtils;
+import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
 
 import java.net.Socket;
-import java.util.List;
 import java.util.Random;
 
 public class GameModel implements Runnable {
@@ -34,7 +34,7 @@ public class GameModel implements Runnable {
                 SocketUtils.sendToClient(connection, protocol, args);
             }else{
                 // este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
-                gamePlayers.remove(gamePlayer); // todo should they be removed? ...  add lock
+                gamePlayers.remove(gamePlayer); // todo should they be removed?
                 PlayingServer.games.updateHeap(this);
             }
         }
@@ -52,7 +52,7 @@ public class GameModel implements Runnable {
     public void endGame(){
         // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
-        gamePlayers.clear(); // TODO: lock de escrita
+        gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado

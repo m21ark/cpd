@@ -24,7 +24,7 @@ public class GameServer {
 
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
     public static PlayingServer playingServer;
-    public static Map<String, Socket> clients = new HashMap<>();
+    public static Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
     private ExecutorService executorService;
     private ServerSocketChannel serverSocket;
