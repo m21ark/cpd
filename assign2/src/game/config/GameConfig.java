@@ -9,15 +9,8 @@ import java.util.Properties;
 public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
+    File config = new File("src/resources/config.properties"); // TODO: VER ISTO
     private boolean testMode = false;
-    File config = new File("assign2/src/resources/config.properties"); // TODO: VER ISTO
-
-    public static GameConfig getInstance() throws IOException {
-        if (instance == null) {
-            instance = new GameConfig(false);
-        }
-        return instance;
-    }
 
     public GameConfig(boolean testMode) throws IOException {
         // load configurations
@@ -28,6 +21,12 @@ public class GameConfig implements Configurations {
         instance = this;
     }
 
+    public static GameConfig getInstance() throws IOException {
+        if (instance == null) {
+            instance = new GameConfig(false);
+        }
+        return instance;
+    }
 
     @Override
     public String getAddress() {

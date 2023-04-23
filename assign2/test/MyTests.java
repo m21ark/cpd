@@ -4,9 +4,9 @@ import game.logic.structures.MyConcurrentList;
 import game.server.GameServer;
 import game.server.PlayingServer;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

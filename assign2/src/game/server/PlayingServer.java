@@ -2,8 +2,8 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.config.GameConfig;
-import game.logic.structures.GameHeap;
 import game.logic.GameModel;
+import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 
@@ -16,8 +16,8 @@ import java.util.concurrent.Executors;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
     public static final GameHeap games = new GameHeap();
-    private final ExecutorService executorGameService;
     public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
+    private final ExecutorService executorGameService;
 
     PlayingServer() throws RemoteException {
         super();
@@ -27,8 +27,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         for (int i = 0; i < 5; i++) games.addGame(new GameModel(new MyConcurrentList<>()));
     }
+
     private boolean rankMode(GamePlayer client, String token) {
-        //TODO: implementar
+
+        // This mode uses the player's rank to determine the order of the players in the game
+        // Todo: implementar o rank mode
+
         return false;
     }
 
@@ -59,7 +63,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public void addToQueue(GamePlayer client, String token) {
         System.out.println("No games available, player will be set to a queue");
         // latter the game is responsible for removing the player from the queue and add it to the game
-        // probably it should not be a queue has in rank mode the order is not that important and we dont want
+        // probably it should not be a queue has in rank mode the order is not that important, and we don't want
         // to discard some players
 
         queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
@@ -79,11 +83,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             e.printStackTrace();
         }
 
-        if (mode.equals("Simple")) {
-            gamesAvailable = simpleMode(client, token);
-        } else {
-            gamesAvailable = rankMode(client, token);
-        }
+        if (mode.equals("Simple")) gamesAvailable = simpleMode(client, token);
+        else gamesAvailable = rankMode(client, token);
 
         if (!gamesAvailable) {
             addToQueue(client, token);

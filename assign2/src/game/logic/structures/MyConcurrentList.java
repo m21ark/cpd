@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class MyConcurrentList<E> implements Iterable<E>{
+public class MyConcurrentList<E> implements Iterable<E> {
     private final List<E> elements;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 

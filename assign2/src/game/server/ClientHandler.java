@@ -1,17 +1,14 @@
 package game.server;
 
 import game.SocketUtils;
-import game.client.GamePlayer;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.util.List;
 
 public class ClientHandler implements Runnable {
@@ -55,9 +52,7 @@ public class ClientHandler implements Runnable {
     }
 
     public int authenticate(String username, String password) {
-
         // TODO: falta um timout para o caso de o cliente nao responder
-
         // Check if the username and password match any existing entry
         for (String line : persistantUsers) {
             String[] fields = line.split(",");
@@ -65,10 +60,7 @@ public class ClientHandler implements Runnable {
                 return 1; // Credentials match an existing entry
             else if (fields[0].equals(username)) return 2; // Username exists but password is incorrect
         }
-
         return 0; // Username doesn't exist
-
-
     }
 
     @Override
@@ -77,15 +69,12 @@ public class ClientHandler implements Runnable {
         if (DEBUG_MODE) {
             token = generateRandomToken();
             SocketUtils.writeData(socket, token);
-        }else {
+        } else {
             token = authenticateUser();
             if (token.equals("")) return; // Authentication failed
         }
-
-
         System.out.println("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
-
     }
 
     private String authenticateUser() {
@@ -129,7 +118,6 @@ public class ClientHandler implements Runnable {
             updateToken(username, token);
         }
 
-
         // write to client
         System.out.println("Sending token to client: " + username + " <-> " + token);
         SocketUtils.writeData(socket, token);
@@ -142,6 +130,11 @@ public class ClientHandler implements Runnable {
 
         // Read password confirmation from client
         String passwordConf = SocketUtils.readData(socket);
+
+        if (passwordConf == null) {
+            System.out.println("Client closed connection.");
+            return false;
+        }
 
         System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
 
@@ -159,7 +152,6 @@ public class ClientHandler implements Runnable {
 
         // Respond to client
         SocketUtils.writeData(socket, String.valueOf(authResult));
-
         return false;
     }
 
