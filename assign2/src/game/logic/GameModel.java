@@ -32,9 +32,9 @@ public class GameModel implements Runnable {
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
                 SocketUtils.sendToClient(connection, protocol, args);
-            }else{
-                // este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
-                gamePlayers.remove(gamePlayer); // todo should they be removed?
+            } else {
+                // TODO: este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
+                gamePlayers.remove(gamePlayer); // todo: should they be removed?
                 PlayingServer.games.updateHeap(this);
             }
         }
@@ -49,7 +49,7 @@ public class GameModel implements Runnable {
         // TODO: LIA
     }
 
-    public void endGame(){
+    public void endGame() {
         // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
         gamePlayers.clear();
@@ -95,4 +95,17 @@ public class GameModel implements Runnable {
     public int getCurrentPlayers() {
         return gamePlayers.size();
     }
+
+    public int getRank() {
+
+        if (gamePlayers.size() == 0)
+            return 0;
+
+        // Game rank is the mean of the players' ranks
+        int sum = 0;
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
+            sum += gamePlayer.getRank();
+        return sum / gamePlayers.size();
+    }
+
 }

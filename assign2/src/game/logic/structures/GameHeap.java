@@ -8,7 +8,7 @@ import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class GameHeap implements Iterable<GameModel>{
+public class GameHeap implements Iterable<GameModel> {
     private final PriorityQueue<GameModel> heap;
     private final ReadWriteLock lock;
 
@@ -82,4 +82,27 @@ public class GameHeap implements Iterable<GameModel>{
     }
 
 
+    public GameModel getGameWithClosestRank(int rank, int rankDelta) {
+        lock.writeLock().lock();
+        try {
+            GameModel closestGame = null;
+            int closestRank = Integer.MAX_VALUE;
+
+            for (GameModel game : heap)
+                if (game.isAvailable()) {
+                    int gameRank = game.getRank();
+                    if (Math.abs(gameRank - rank) < closestRank) {
+                        closestRank = Math.abs(gameRank - rank);
+                        closestGame = game;
+                    }
+                }
+
+            // only return a game if the rank difference is less than the current rank delta
+            if (closestGame != null && closestRank <= rankDelta) return closestGame;
+            else return null;
+
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 }

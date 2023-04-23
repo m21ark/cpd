@@ -9,25 +9,29 @@ import java.util.Properties;
 public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
+    File config = new File("src/resources/config.properties"); // TODO: VER ISTO
     private boolean testMode = false;
-    File config = new File("assign2/src/resources/config.properties"); // TODO: VER ISTO
 
-    public static GameConfig getInstance() throws IOException {
+    public GameConfig(boolean testMode) {
+        // load configurations
+        this.testMode = testMode;
+        properties = new Properties();
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(config);
+            properties.load(inputStream);
+            instance = this;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static GameConfig getInstance() {
         if (instance == null) {
             instance = new GameConfig(false);
         }
         return instance;
     }
-
-    public GameConfig(boolean testMode) throws IOException {
-        // load configurations
-        this.testMode = testMode;
-        properties = new Properties();
-        InputStream inputStream = new FileInputStream(config);
-        properties.load(inputStream);
-        instance = this;
-    }
-
 
     @Override
     public String getAddress() {
@@ -51,5 +55,13 @@ public class GameConfig implements Configurations {
     @Override
     public String getMode() {
         return properties.getProperty("mode");
+    }
+
+    public int getBaseRankDelta() {
+        return Integer.parseInt(properties.getProperty("baseRankDelta"));
+    }
+
+    public int getMaxRankDelta() {
+        return Integer.parseInt(properties.getProperty("maxRankDelta"));
     }
 }

@@ -32,7 +32,6 @@ public class GameServer {
     public GameServer(Configurations configurations) {
         super();
         this.configurations = configurations;
-
     }
 
     public static Socket getSocket(String token) {
@@ -46,9 +45,8 @@ public class GameServer {
             LOGGER.setLevel(Level.ALL);
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
-        }else {
-            configurations = GameConfig.getInstance();
-        }
+        } else configurations = GameConfig.getInstance();
+
         GameServer gameServer = new GameServer(configurations);
         gameServer.start();
     }
@@ -76,11 +74,9 @@ public class GameServer {
         LOGGER.info("Waiting for connections...");
         while (serverSocket.isOpen()) {
             SocketChannel socketChannel = serverSocket.accept();
-            if (socketChannel != null) {
-                executorService.submit(
-                        new ClientHandler(socketChannel.socket())
-                );
-            } else {
+            if (socketChannel != null)
+                executorService.submit(new ClientHandler(socketChannel.socket()));
+            else {
                 //try {
                 //    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU) // TODO tirar fora dps
                 //} catch (InterruptedException e) {
