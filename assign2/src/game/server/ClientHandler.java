@@ -87,9 +87,11 @@ public class ClientHandler implements Runnable {
         boolean newUser = false;
 
         // Read username and password from client and try to authenticate
-        username = SocketUtils.readData(socket);
-        System.out.println("Client connected with username : " + username);
-        password = SocketUtils.readData(socket);
+        String username_password = SocketUtils.readData(socket);
+
+        username = username_password.split(",")[0];
+        password = username_password.split(",")[1];
+
         System.out.println("Client connected with username : " + username + " and password : " + password);
         authResult = authenticate(username, password);
         System.out.println("Authentication result : " + authResult);

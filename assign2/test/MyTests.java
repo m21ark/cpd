@@ -198,33 +198,9 @@ public class MyTests {
     }
 
     @Test
-    public void authInRow() throws IOException {
-        /*
-        This test is a bit slow, has the auth is updating the users.txt file over and over again
-         */
-
-        GameConfig.instance = new GameConfig(false); // resetting the config to development environment
-        ClientHandler.DEBUG_MODE = false;
-
-
-        for (int i = 0; i < 500; i++) {
-            Client client = new Client();
-            try {
-                Method privateMethod = client.getClass().getDeclaredMethod("serverAuthenticate", String.class, String.class);
-                privateMethod.setAccessible(true);
-                int returnCode = (int) privateMethod.invoke(client, "l", "l");
-                Assertions.assertEquals(1, returnCode);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-    @Test
     public void authenticateClientConcurrent() {
 
-        GameConfig.instance = new GameConfig(false); // resetting the config to development environment
+        GameConfig.instance = new GameConfig(false); // resetting the config to production environment
         ClientHandler.DEBUG_MODE = false;
 
         List<Thread> threads = new ArrayList<>();
@@ -232,7 +208,7 @@ public class MyTests {
         // create 3 threads and start them
         for (int i = 0; i < 3; i++) {
             int finalI = i;
-            threads.add(new Thread(() -> { // TODO: test this better when game is working
+            threads.add(new Thread(() -> {
                 for (int j = 0; j < NUM_OF_CLIENTS; j++) { // MAX numbers of tries ... make this more modular
                     if (j % 3 != finalI) continue; // Dealing with the threads concurrency
                     Client client = null;
@@ -273,6 +249,33 @@ public class MyTests {
             Assertions.assertEquals(1, returnCode);
         }
         Assertions.assertEquals(NUM_OF_CLIENTS, returnCodes.size());
+        GameConfig.instance = new GameConfig(true); // resetting the config to development environment
+        ClientHandler.DEBUG_MODE = true;
+    }
+
+    @Test
+    public void authInRow() throws IOException {
+        /*
+        This test is a bit slow, has the auth is updating the users.txt file over and over again
+         */
+
+        GameConfig.instance = new GameConfig(false); // resetting the config to production environment
+        ClientHandler.DEBUG_MODE = false;
+
+
+        for (int i = 0; i < 500; i++) {
+            Client client = new Client();
+            try {
+                Method privateMethod = client.getClass().getDeclaredMethod("serverAuthenticate", String.class, String.class);
+                privateMethod.setAccessible(true);
+                int returnCode = (int) privateMethod.invoke(client, "l", "l");
+                Assertions.assertEquals(1, returnCode);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        GameConfig.instance = new GameConfig(true); // resetting the config to development environment
+        ClientHandler.DEBUG_MODE = true;
     }
 
 }
