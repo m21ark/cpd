@@ -1,6 +1,8 @@
 import game.client.Client;
+import game.config.GameConfig;
 import game.logic.GameModel;
 import game.logic.structures.MyConcurrentList;
+import game.server.ClientHandler;
 import game.server.GameServer;
 import game.server.PlayingServer;
 import org.junit.jupiter.api.Assertions;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class MyTests {
 
+    static int NUM_OF_CLIENTS = 100;
     static ArrayList<Client> clients = new ArrayList<>();
 
     @BeforeAll
@@ -194,6 +197,88 @@ public class MyTests {
         // Assertions.assertEquals(gamemodel.getWinner(), list.getLast ...);
     }
 
+    @Test
+    public void authInRow() throws IOException {
+        /*
+        This test is a bit slow, has the auth is updating the users.txt file over and over again
+         */
+        try {
+            GameConfig.instance = new GameConfig(false); // resetting the config to development environment
+            ClientHandler.DEBUG_MODE = false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < 500; i++) {
+            Client client = new Client();
+            try {
+                Method privateMethod = client.getClass().getDeclaredMethod("serverAuthenticate", String.class, String.class);
+                privateMethod.setAccessible(true);
+                int returnCode = (int) privateMethod.invoke(client, "l", "l");
+                Assertions.assertEquals(1, returnCode);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    @Test
+    public void authenticateClientConcurrent() {
+        try {
+            GameConfig.instance = new GameConfig(false); // resetting the config to development environment
+            ClientHandler.DEBUG_MODE = false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        List<Thread> threads = new ArrayList<>();
+        MyConcurrentList<Integer> returnCodes = new MyConcurrentList<>();
+        // create 3 threads and start them
+        for (int i = 0; i < 3; i++) {
+            int finalI = i;
+            threads.add(new Thread(() -> { // TODO: test this better when game is working
+                for (int j = 0; j < NUM_OF_CLIENTS; j++) { // MAX numbers of tries ... make this more modular
+                    if (j % 3 != finalI) continue; // Dealing with the threads concurrency
+                    Client client = null;
+                    try {
+                        client = new Client();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        assert client != null;
+                        Method privateMethod = client.getClass().getDeclaredMethod("serverAuthenticate", String.class, String.class);
+                        privateMethod.setAccessible(true);
+                        int returnCode = (int) privateMethod.invoke(client, "l", "l");
+                        Assertions.assertEquals(1, returnCode);
+                        returnCodes.add(returnCode);
+                    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }));
+        }
+
+        // start all threads
+        for (Thread t : threads) {
+            t.start();
+        }
+
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        for (int returnCode : returnCodes) {
+            Assertions.assertEquals(1, returnCode);
+        }
+        Assertions.assertEquals(NUM_OF_CLIENTS, returnCodes.size());
+    }
 
 }
 

@@ -200,6 +200,11 @@ public class Client implements Serializable { // This is the client application 
 
         // send username and password to server
         SocketUtils.writeData(socketChannel, username);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         SocketUtils.writeData(socketChannel, password);
 
         // receive result from server
