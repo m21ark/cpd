@@ -32,7 +32,6 @@ public class GameServer {
     public GameServer(Configurations configurations) {
         super();
         this.configurations = configurations;
-
     }
 
     public static Socket getSocket(String token) {

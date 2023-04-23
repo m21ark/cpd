@@ -114,11 +114,7 @@ public class ClientHandler implements Runnable {
             System.out.println("New user detected. Adding to persistant storage.");
             addNewUserToPersistantStorage(username, password, token);
             SocketUtils.writeData(socket, "1");
-        } else {
-            // If the client exists, but the token is different, update the token
-            System.out.println("User already exists. Updating token.");
-            updateToken(username, token);
-        }
+        } else System.out.println("User already exists.");
 
         // write to client
         System.out.println("Sending token to client: " + username + " <-> " + token);
@@ -157,24 +153,28 @@ public class ClientHandler implements Runnable {
         return false;
     }
 
-    private void updateToken(String username, String token) {
+
+    private void updateRank(String username, int rank) {
         // TODO: ADD LOCK HERE TO WRITE TO FILE
 
         for (String line : persistantUsers) {
             String[] fields = line.split(",");
-            fields[2] = token;
+            fields[3] = String.valueOf(rank);
             break;
         }
-        System.out.println("Updated volatile token for user " + username);
+
+        System.out.println("Updated volatile rank for user " + username);
 
         // TODO: this is updating the list, but not the file
     }
+
 
     private void addNewUserToPersistantStorage(String username, String passwordConf, String token) {
         // TODO: ADD LOCK HERE TO WRITE TO FILE
 
         // Append the new entry to the users.txt file
-        String newEntry = username + "," + passwordConf + "," + token;
+        // Format: username,password,token,rank
+        String newEntry = username + "," + passwordConf + "," + token + "," + 0;
         FileWriter writer = null; // Append mode
 
         try {

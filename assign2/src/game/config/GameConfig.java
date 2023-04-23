@@ -57,7 +57,7 @@ public class GameConfig implements Configurations {
         return properties.getProperty("mode");
     }
 
-    public int getRankDelta() {
+    public int getBaseRankDelta() {
         return Integer.parseInt(properties.getProperty("baseRankDelta"));
     }
 

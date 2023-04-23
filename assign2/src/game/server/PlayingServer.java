@@ -7,7 +7,6 @@ import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -32,11 +31,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         // This mode uses the player's rank to determine the order of the players in the game
 
-        int rankDelta = GameConfig.getInstance().getRankDelta();
+        int rankDelta = GameConfig.getInstance().getBaseRankDelta();
         GameModel game;
 
         // try to find a game with the given rank tolerance
         while (true) {
+            System.out.println("Rank delta: " + rankDelta);
             game = games.getGameWithClosestRank(client.getRank(), rankDelta);
             if (game != null) break; // found a game with the given rank tolerance
             rankDelta *= 2; // increase the tolerance
@@ -45,6 +45,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 // if the tolerance is too big, just add the player to the queue
                 // the player will be added to a game when a game with the given tolerance is available
                 queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+                System.out.println("Player added to queue due to rank tolerance");
                 // todo: maybe call simpleMode() here instead?
                 return false;
             }
@@ -80,8 +81,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 } else {
                     System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
                     game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
-                    // TODO: adicionar timeout para o caso de n haver mais jogadores
-                    // todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
+                    //TODO: adicionar timeout para o caso de n haver mais jogadores
+                    //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
                 return true;
             }
@@ -104,13 +105,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // TODO: detetar se o player desistiu da queue
         System.out.println("Added player to queue");
 
-        String mode = "";
         boolean gamesAvailable;
-        try {
-            mode = GameConfig.getInstance().getMode();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String mode = GameConfig.getInstance().getMode();
 
         if (mode.equals("Simple")) gamesAvailable = simpleMode(client, token);
         else gamesAvailable = rankMode(client, token);

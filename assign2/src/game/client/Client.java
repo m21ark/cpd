@@ -156,7 +156,7 @@ public class Client implements Serializable { // This is the client application 
             }
             case 1 -> {
                 System.out.println("Login successful!");
-                this.player = new GamePlayer(username, 0);
+                this.player = new GamePlayer(username, 0); // TODO: get rank from server
             }
             case 2 -> System.out.println("Incorrect password.");
             default -> System.out.println("Login failed.");
