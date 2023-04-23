@@ -9,8 +9,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.Set;
 
 
 public class SocketUtils {
@@ -62,7 +60,7 @@ public class SocketUtils {
     }
 
     public static void sendToClient(Socket connection, CommunicationProtocol message, String... args) {
-        SocketUtils.writeData(connection, message.toString() + " " + String.join(" ", args));
+        SocketUtils.NIOWrite(connection.getChannel(), message.toString() + " " + String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {
@@ -92,79 +90,72 @@ public class SocketUtils {
         }
     }
 
-    public static String NIORead(SocketChannel socketChannel, IntPredicate dealFunc) {
-
+    public static String NIORead(SocketChannel channel, IntPredicate dealFunc) {
         // register a SocketChannel for reading data asynchronously (non-blocking)
         try {
-            socketChannel.configureBlocking(false);
-
+            // Configure the channel to be non-blocking and register it with the selector for reading
             Selector selector = Selector.open();
-            SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ);
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            StringBuilder sb = new StringBuilder();
 
             while (true) {
-                // Wait for a channel to be ready for reading
-                int readyChannels = selector.select();
-                if (readyChannels == 0) continue;
+                System.out.println("Waiting for data...");
+                buffer.clear();
+                selector.select();
 
-                // TODO: add timeout
-                Set<SelectionKey> selectedKeys = selector.selectedKeys();
-                Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
-
-                while (keyIterator.hasNext()) {
-                    SelectionKey selectionKey = keyIterator.next();
-
-                    if (selectionKey.isReadable()) {
-                        // Read data from the channel
-                        String data = SocketUtils.extract(socketChannel);
-                        if (data == null) break;
-                        if (dealFunc.func(data)) return data;
-                    }
-                    keyIterator.remove();
+                // Handle read operation
+                int numBytesRead = channel.read(buffer);
+                if (numBytesRead == -1) throw new IOException("Error reading from channel");
+                if (numBytesRead == 0) {
+                    // No data available at the moment, wait a bit and try again
+                    Thread.sleep(100);
+                    continue;
                 }
+
+                String msg = new String(buffer.array(), 0, numBytesRead);
+                System.out.println("Read from channel: |" + msg + "|");
+                if (dealFunc == null) return msg;
+                if (dealFunc.func(msg)) return msg;
             }
 
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return null;
     }
 
 
-    public static boolean NIOWrite(SocketChannel socketChannel, String data) {
-
+    public static boolean NIOWrite(SocketChannel channel, String data) {
         // register a SocketChannel for writing data asynchronously (non-blocking)
         try {
-            socketChannel.configureBlocking(false);
-
+            // Configure the channel to be non-blocking and register it with the selector for writing
             Selector selector = Selector.open();
-            SelectionKey key = socketChannel.register(selector, SelectionKey.OP_WRITE);
-
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_WRITE);
             ByteBuffer buffer = ByteBuffer.wrap(data.getBytes());
-            int bytesWritten = 0;
 
+            int totalBytesWritten = 0;
             while (buffer.hasRemaining()) {
-                // Wait for a channel to be ready for writing
-                int readyChannels = selector.select();
-                if (readyChannels == 0) continue;
+                System.out.println("Waiting to write data...");
+                selector.select();
 
-                // TODO: add timeout
-                Set<SelectionKey> selectedKeys = selector.selectedKeys();
-                Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
+                // Handle write operation
+                int numBytesWritten = channel.write(buffer);
+                if (numBytesWritten == -1) throw new IOException("Error writing to channel");
 
-                while (keyIterator.hasNext()) {
-                    SelectionKey selectionKey = keyIterator.next();
-
-                    if (selectionKey.isWritable()) {
-                        // Write data to the channel
-                        bytesWritten += socketChannel.write(buffer);
-                    }
-                    keyIterator.remove();
+                totalBytesWritten += numBytesWritten;
+                if (totalBytesWritten == data.length()) {
+                    System.out.println("Wrote to channel: |" + data + "|");
+                    return true;
                 }
+
+                // Not all bytes were written, retry after a short delay
+                Thread.sleep(100);
             }
 
-            return bytesWritten == data.getBytes().length;
-
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return false;

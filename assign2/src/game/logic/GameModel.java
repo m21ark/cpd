@@ -28,7 +28,7 @@ public class GameModel implements Runnable {
 
     public void notifyPlayers(CommunicationProtocol protocol, String... args) {
 
-        System.out.println("Notifying clients: " + protocol.name());
+        System.out.println("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
@@ -67,7 +67,7 @@ public class GameModel implements Runnable {
 
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            int anwser = Integer.parseInt(Objects.requireNonNull(SocketUtils.readData(connection)));
+            int anwser = Integer.parseInt(Objects.requireNonNull(SocketUtils.NIORead(connection.getChannel(), null)));
             SocketUtils.sendToClient(connection, CommunicationProtocol.GUESS_TOO_LOW, String.valueOf(Math.abs(gameWinner - anwser)));
         }
 
@@ -79,7 +79,8 @@ public class GameModel implements Runnable {
         // TODO: LIA
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
-        notifyPlayers(CommunicationProtocol.GAME_END);
+        notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
+        System.out.println("Game ended");
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
