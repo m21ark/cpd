@@ -9,7 +9,7 @@ import java.util.Properties;
 public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
-    File config = new File("src/resources/config.properties"); // TODO: VER ISTO
+    File config = new File("assign2/src/resources/config.properties"); // TODO: VER ISTO
     private boolean testMode = false;
 
     public GameConfig(boolean testMode) {

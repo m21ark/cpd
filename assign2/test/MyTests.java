@@ -202,12 +202,10 @@ public class MyTests {
         /*
         This test is a bit slow, has the auth is updating the users.txt file over and over again
          */
-        try {
-            GameConfig.instance = new GameConfig(false); // resetting the config to development environment
-            ClientHandler.DEBUG_MODE = false;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        GameConfig.instance = new GameConfig(false); // resetting the config to development environment
+        ClientHandler.DEBUG_MODE = false;
+
 
         for (int i = 0; i < 500; i++) {
             Client client = new Client();
@@ -225,12 +223,9 @@ public class MyTests {
 
     @Test
     public void authenticateClientConcurrent() {
-        try {
-            GameConfig.instance = new GameConfig(false); // resetting the config to development environment
-            ClientHandler.DEBUG_MODE = false;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        GameConfig.instance = new GameConfig(false); // resetting the config to development environment
+        ClientHandler.DEBUG_MODE = false;
 
         List<Thread> threads = new ArrayList<>();
         MyConcurrentList<Integer> returnCodes = new MyConcurrentList<>();
