@@ -4,19 +4,14 @@ import game.SocketUtils;
 import game.config.GameConfig;
 import game.server.GameServerInterface;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.Iterator;
 import java.util.Scanner;
-import java.util.Set;
 
 public class Client implements Serializable { // This is the client application runner.
 
@@ -59,52 +54,8 @@ public class Client implements Serializable { // This is the client application 
 
 
     public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
-
-        /*
-        Take a look at the following Java NIO tutorial:
-        https://jenkov.com/tutorials/java-nio/selectors.html
-         */
-
-        // register a SocketChannel for reading data asynchronously (non-blocking)
-        socketChannel.configureBlocking(false);
-
-        Selector selector = Selector.open();
-        SelectionKey key = socketChannel.register(selector, SelectionKey.OP_READ);
-
-        while (true) {
-
-            // Wait for a channel to be ready for reading
-            int readyChannels = selector.select();
-            if (readyChannels == 0) continue;
-
-            // TODO: add timeout
-            Set<SelectionKey> selectedKeys = selector.selectedKeys();
-            Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
-
-            while (keyIterator.hasNext()) {
-                SelectionKey selectionKey = keyIterator.next();
-
-                if (selectionKey.isReadable()) {
-                    // Read data from the channel
-                    String data = SocketUtils.extract(socketChannel);
-                    if (data == null) break;
-                    if (dealWithServerMessages(data)) return;
-                }
-
-                //if (selectionKey.isWritable()) {
-
-                // String message = "Hello, world!";
-                // ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
-                // socketChannel.write(buffer);
-                //
-                // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
-                //}
-
-
-                keyIterator.remove();
-            }
-        }
-
+        String res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
+        System.out.println("Recieved: " + res);
     }
 
     public static void main(String[] args) throws IOException {
@@ -241,6 +192,12 @@ public class Client implements Serializable { // This is the client application 
                 playGame();
                 waitForGameStart(socketChannel);
                 gameLoop();
+
+                System.out.println("Do you want to play again? (y/n)");
+                String answer = (new Scanner(System.in)).nextLine().strip().toLowerCase();
+                if (answer.equals("y")) continue;
+                System.out.println("Thanks for playing!");
+                break;
             }
         }
         socketChannel.close();
@@ -253,12 +210,25 @@ public class Client implements Serializable { // This is the client application 
     protected void gameLoop() {
         String msg = SocketUtils.extract(socketChannel);
 
+        if (msg == null) {
+            System.out.println("Message null!");
+            return;
+        }
+
+        System.out.print("Your guess: ");
+        int guess = (new Scanner(System.in)).nextInt();
+
+        String response = sendGuess(String.valueOf(guess));
+
+        System.out.println("Result: " + response);
 
         // TODO: Lia
     }
 
-    private void sendGuess(String guess) {
-        // SocketUtils.writeData(socketChannel, guess);
+    private String sendGuess(String guess) {
+        if (SocketUtils.NIOWrite(socketChannel, guess))
+            return SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
+        return null;
     }
 
     public String getToken() {

@@ -6,6 +6,7 @@ import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
 
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Random;
 
 public class GameModel implements Runnable {
@@ -14,7 +15,7 @@ public class GameModel implements Runnable {
     private static final int NR_MAX_PLAYERS = 2;
     private static final int MAX_GUESS = 100;
     private static final int MAX_NR_GUESS = 100;
-    private final int gameWinner = new Random().nextInt(MAX_GUESS);
+    private int gameWinner = new Random().nextInt(MAX_GUESS);
     private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
@@ -50,7 +51,7 @@ public class GameModel implements Runnable {
                 this.addPlayer(player);
                 PlayingServer.queueToPlay.remove(player);
                 break;
-            }else{
+            } else {
                 player.increaseTolerance();
             }
         }
@@ -62,6 +63,14 @@ public class GameModel implements Runnable {
 
     private void gameLoop() {
 
+        gameWinner = new Random().nextInt(10);
+
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+            Socket connection = gamePlayer.getConnection();
+            int anwser = Integer.parseInt(Objects.requireNonNull(SocketUtils.readData(connection)));
+            SocketUtils.sendToClient(connection, CommunicationProtocol.GUESS_TOO_LOW, String.valueOf(Math.abs(gameWinner - anwser)));
+        }
+
         // TODO: LIA
     }
 
@@ -70,6 +79,7 @@ public class GameModel implements Runnable {
         // TODO: LIA
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
+        notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
@@ -83,7 +93,6 @@ public class GameModel implements Runnable {
         notifyPlayers(CommunicationProtocol.GAME_STARTED);
 
         gameLoop();
-
         endGame();
     }
 
@@ -114,8 +123,7 @@ public class GameModel implements Runnable {
 
     public int getRank() {
 
-        if (gamePlayers.size() == 0)
-            return -1;
+        if (gamePlayers.size() == 0) return -1;
 
         // Game rank is the mean of the players' ranks
         int sum = 0;
