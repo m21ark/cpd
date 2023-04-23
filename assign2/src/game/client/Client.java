@@ -4,6 +4,7 @@ import game.SocketUtils;
 import game.config.GameConfig;
 import game.server.GameServerInterface;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -22,6 +23,7 @@ public class Client implements Serializable { // This is the client application 
     SocketChannel socketChannel;
     GamePlayer player;
     private String token;
+    private int rank;
 
 
     public Client() throws IOException {
@@ -98,6 +100,7 @@ public class Client implements Serializable { // This is the client application 
                 // selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
                 //}
 
+
                 keyIterator.remove();
             }
         }
@@ -109,8 +112,7 @@ public class Client implements Serializable { // This is the client application 
 
         // Authenticate
         if (client.authenticate()) {
-            // Get token from server
-            client.getTokenFromServer();
+
             // Start game
             client.startGame();
         }
@@ -150,13 +152,13 @@ public class Client implements Serializable { // This is the client application 
 
         switch (serverResult) {
             case 0 -> {
-                if (registerUser()) this.player = new GamePlayer(username, 0);
+                if (registerUser()) this.player = new GamePlayer(username, rank);
                 else return false;
                 return true;
             }
             case 1 -> {
                 System.out.println("Login successful!");
-                this.player = new GamePlayer(username, 0); // TODO: get rank from server
+                this.player = new GamePlayer(username, rank);
             }
             case 2 -> System.out.println("Incorrect password.");
             default -> System.out.println("Login failed.");
@@ -200,8 +202,14 @@ public class Client implements Serializable { // This is the client application 
         // send username and password to server
         SocketUtils.writeData(socketChannel, username + "," + password);
 
-        // receive result from server
-        return Integer.parseInt(SocketUtils.readData(socketChannel));
+        String data = SocketUtils.readData(socketChannel);
+        int code = Integer.parseInt(data.split(",")[0]);
+        this.token = data.split(",")[1];
+        this.rank = Integer.parseInt(data.split(",")[2]);
+
+        System.out.println("Rank " + rank);
+
+        return code;
     }
 
     public int options() {

@@ -91,15 +91,19 @@ public class GameHeap implements Iterable<GameModel> {
             for (GameModel game : heap)
                 if (game.isAvailable()) {
                     int gameRank = game.getRank();
+                    if (gameRank == -1 && closestRank == Integer.MAX_VALUE) {
+                        return game; // if there's no better option
+                    }
                     if (Math.abs(gameRank - rank) < closestRank) {
                         closestRank = Math.abs(gameRank - rank);
                         closestGame = game;
+
+                        if (closestRank <= rankDelta) return closestGame;
                     }
+
                 }
 
-            // only return a game if the rank difference is less than the current rank delta
-            if (closestGame != null && closestRank <= rankDelta) return closestGame;
-            else return null;
+            return null;
 
         } finally {
             lock.writeLock().unlock();

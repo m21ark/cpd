@@ -51,16 +51,16 @@ public class ClientHandler implements Runnable {
         return "token" + Math.random() + socket.getLocalPort() + socket.getPort();
     }
 
-    public int authenticate(String username, String password) {
+    public String authenticate(String username, String password) {
         // TODO: falta um timout para o caso de o cliente nao responder
         // Check if the username and password match any existing entry
         for (String line : persistantUsers) {
             String[] fields = line.split(",");
             if (fields[0].equals(username) && fields[1].equals(password))
-                return 1; // Credentials match an existing entry
-            else if (fields[0].equals(username)) return 2; // Username exists but password is incorrect
+                return "1," + fields[3]; // Credentials match an existing entry
+            else if (fields[0].equals(username)) return "2,0";// Username exists but password is incorrect
         }
-        return 0; // Username doesn't exist
+        return "0,0"; // Username doesn't exist
     }
 
     @Override
@@ -82,7 +82,6 @@ public class ClientHandler implements Runnable {
     private String authenticateUser() {
 
         // Authenticate client
-        int authResult;
         String username, password;
         boolean newUser = false;
 
@@ -93,11 +92,15 @@ public class ClientHandler implements Runnable {
         password = username_password.split(",")[1];
 
         System.out.println("Client connected with username : " + username + " and password : " + password);
-        authResult = authenticate(username, password);
+        String authPair = authenticate(username, password);
+        int authResult = Integer.parseInt(authPair.split(",")[0]);
+        String rank = authPair.split(",")[1];
         System.out.println("Authentication result : " + authResult);
 
+        String token = generateRandomToken();
+
         // Respond to client
-        SocketUtils.writeData(socket, String.valueOf(authResult));
+        SocketUtils.writeData(socket, authResult + "," + token + "," + rank);
 
         // if auth fails, close socket for this client
         if (authResult == 2) {
@@ -108,9 +111,6 @@ public class ClientHandler implements Runnable {
             else return "";
         }
 
-        // generate token
-        String token = generateRandomToken();
-        System.out.println("Client connected with token : " + token);
 
         // if new user, add to persistant storage
         if (newUser) {

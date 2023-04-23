@@ -40,6 +40,22 @@ public class GameModel implements Runnable {
         }
     }
 
+    public void queueUpdate() {
+        this.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(this.gamePlayers.size()));
+
+        // Check if there's a player in queue suitable for this game
+        // Only for the ranking mode
+        for (PlayingServer.WrappedPlayerSocket player : PlayingServer.queueToPlay) {
+            if (player.getTolerance() >= Math.abs(this.getRank() - player.getRank())) {
+                this.addPlayer(player);
+                PlayingServer.queueToPlay.remove(player);
+                break;
+            }else{
+                player.increaseTolerance();
+            }
+        }
+    }
+
     public int getGameWinner() {
         return gameWinner;
     }
@@ -99,7 +115,7 @@ public class GameModel implements Runnable {
     public int getRank() {
 
         if (gamePlayers.size() == 0)
-            return 0;
+            return -1;
 
         // Game rank is the mean of the players' ranks
         int sum = 0;

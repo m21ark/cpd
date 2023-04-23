@@ -32,35 +32,34 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // This mode uses the player's rank to determine the order of the players in the game
 
         int rankDelta = GameConfig.getInstance().getBaseRankDelta();
-        GameModel game;
+        GameModel game = null;
 
         // try to find a game with the given rank tolerance
-        while (true) {
-            System.out.println("Rank delta: " + rankDelta);
-            game = games.getGameWithClosestRank(client.getRank(), rankDelta);
-            if (game != null) break; // found a game with the given rank tolerance
-            rankDelta *= 2; // increase the tolerance
+        // TODO: ver o que acontece quando um com mais de 500 n entra no primeiro jogo
 
-            if (rankDelta > GameConfig.getInstance().getMaxRankDelta()) {
-                // if the tolerance is too big, just add the player to the queue
-                // the player will be added to a game when a game with the given tolerance is available
-                queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
-                System.out.println("Player added to queue due to rank tolerance");
-                // todo: maybe call simpleMode() here instead?
-                return false;
-            }
+        game = games.getGameWithClosestRank(client.getRank(), rankDelta);
+
+
+        if (game == null) {
+            // if the tolerance is too big, just add the player to the queue
+            // the player will be added to a game when a game with the given tolerance is available
+            rankDelta *= 2; // increase the tolerance
+            queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
+            System.out.println("Player added to queue due to rank tolerance");
+            return false;
         }
 
-        game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+
+        game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
 
         if (game.isFull()) {
             System.out.println("Game started");
             executorGameService.submit(game);
         } else {
             System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-            game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
-            // TODO: adicionar timeout para o caso de n haver mais jogadores
-            // todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
+            game.queueUpdate(); // check if a ranked player waiting can enter this updated game
+            //TODO: adicionar timeout para o caso de n haver mais jogadores
+            //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
         }
 
         return true;
@@ -86,6 +85,9 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 }
                 return true;
             }
+            // else {
+            //     return false;
+            // }
         }
         return false;
     }
@@ -121,12 +123,22 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public static class WrappedPlayerSocket extends GamePlayer {
 
         private final Socket connection;
+        private int tolerance;
 
         public WrappedPlayerSocket(GamePlayer client, Socket connection) {
             super(client.getName(), client.getRank());
             this.rank = client.getRank();
             this.score = client.getScore();
             this.connection = connection;
+            this.tolerance = 1000;
+        }
+
+        public WrappedPlayerSocket(GamePlayer client, Socket connection, int tolerance) {
+            super(client.getName(), client.getRank());
+            this.rank = client.getRank();
+            this.score = client.getScore();
+            this.connection = connection;
+            this.tolerance = tolerance;
         }
 
         public GamePlayer getClient() {
@@ -135,6 +147,14 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         public Socket getConnection() {
             return connection;
+        }
+
+        public int getTolerance() {
+            return tolerance;
+        }
+
+        public void increaseTolerance() {
+            this.tolerance *= 2;
         }
     }
 }
