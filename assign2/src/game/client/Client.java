@@ -12,6 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Client implements Serializable { // This is the client application runner.
@@ -232,13 +233,27 @@ public class Client implements Serializable { // This is the client application 
         }
 
         System.out.print("Your guess: ");
-        int guess = (new Scanner(System.in)).nextInt();
+        int guess = getIntegerInput();
 
         String response = sendGuess(String.valueOf(guess));
         System.out.println("Result: " + response);
-
+        response = SocketUtils.NIORead(socketChannel, (String x) -> true);
+        System.out.println("Result 2: " + response);
 
         // TODO: Lia
+    }
+
+    private int getIntegerInput() {
+        int guess;
+        while (true) {
+            try {
+                guess = (new Scanner(System.in)).nextInt();
+                break;
+            } catch (NumberFormatException | InputMismatchException e) {
+                System.out.println("Invalid input!");
+            }
+        }
+        return guess;
     }
 
     private String sendGuess(String guess) {

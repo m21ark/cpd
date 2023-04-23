@@ -30,10 +30,13 @@ public class GameModel implements Runnable {
 
         System.out.println("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+            System.out.println("Markito 1");
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
+                System.out.println("Markito 2");
                 SocketUtils.sendToClient(connection, protocol, args);
             } else {
+                System.out.println("Markito 3");
                 // TODO: este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
                 gamePlayers.remove(gamePlayer); // todo: should they be removed?
                 PlayingServer.games.updateHeap(this);
@@ -77,9 +80,9 @@ public class GameModel implements Runnable {
     public void endGame() {
         // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
+        notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
-        notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
         System.out.println("Game ended");
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado

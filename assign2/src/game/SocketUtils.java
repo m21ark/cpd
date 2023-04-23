@@ -60,7 +60,9 @@ public class SocketUtils {
     }
 
     public static void sendToClient(Socket connection, CommunicationProtocol message, String... args) {
+        System.out.println("Sending to client mK: " + message.toString() + " " + String.join(" ", args));
         SocketUtils.NIOWrite(connection.getChannel(), message.toString() + " " + String.join(" ", args));
+        System.out.printf("Sent to client mK: %s %s%n", message.toString(), String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {
