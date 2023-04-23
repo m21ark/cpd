@@ -12,16 +12,21 @@ public class GameConfig implements Configurations {
     File config = new File("src/resources/config.properties"); // TODO: VER ISTO
     private boolean testMode = false;
 
-    public GameConfig(boolean testMode) throws IOException {
+    public GameConfig(boolean testMode) {
         // load configurations
         this.testMode = testMode;
         properties = new Properties();
-        InputStream inputStream = new FileInputStream(config);
-        properties.load(inputStream);
-        instance = this;
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(config);
+            properties.load(inputStream);
+            instance = this;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static GameConfig getInstance() throws IOException {
+    public static GameConfig getInstance() {
         if (instance == null) {
             instance = new GameConfig(false);
         }
@@ -50,5 +55,13 @@ public class GameConfig implements Configurations {
     @Override
     public String getMode() {
         return properties.getProperty("mode");
+    }
+
+    public int getRankDelta() {
+        return Integer.parseInt(properties.getProperty("baseRankDelta"));
+    }
+
+    public int getMaxRankDelta() {
+        return Integer.parseInt(properties.getProperty("maxRankDelta"));
     }
 }

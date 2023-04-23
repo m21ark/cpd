@@ -31,9 +31,38 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     private boolean rankMode(GamePlayer client, String token) {
 
         // This mode uses the player's rank to determine the order of the players in the game
-        // Todo: implementar o rank mode
 
-        return false;
+        int rankDelta = GameConfig.getInstance().getRankDelta();
+        GameModel game;
+
+        // try to find a game with the given rank tolerance
+        while (true) {
+            game = games.getGameWithClosestRank(client.getRank(), rankDelta);
+            if (game != null) break; // found a game with the given rank tolerance
+            rankDelta *= 2; // increase the tolerance
+
+            if (rankDelta > GameConfig.getInstance().getMaxRankDelta()) {
+                // if the tolerance is too big, just add the player to the queue
+                // the player will be added to a game when a game with the given tolerance is available
+                queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+                // todo: maybe call simpleMode() here instead?
+                return false;
+            }
+        }
+
+        game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+
+        if (game.isFull()) {
+            System.out.println("Game started");
+            executorGameService.submit(game);
+        } else {
+            System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
+            game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
+            // TODO: adicionar timeout para o caso de n haver mais jogadores
+            // todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
+        }
+
+        return true;
     }
 
     private boolean simpleMode(GamePlayer client, String token) {

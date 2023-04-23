@@ -66,6 +66,7 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         String token;
+
         if (DEBUG_MODE) {
             token = generateRandomToken();
             SocketUtils.writeData(socket, token);
@@ -73,6 +74,7 @@ public class ClientHandler implements Runnable {
             token = authenticateUser();
             if (token.equals("")) return; // Authentication failed
         }
+
         System.out.println("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
     }

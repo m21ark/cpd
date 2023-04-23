@@ -95,4 +95,13 @@ public class GameModel implements Runnable {
     public int getCurrentPlayers() {
         return gamePlayers.size();
     }
+
+    public int getRank() {
+        // Game rank is the mean of the players' ranks
+        int sum = 0;
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
+            sum += gamePlayer.getRank();
+        return sum / gamePlayers.size();
+    }
+
 }
