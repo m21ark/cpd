@@ -2,6 +2,7 @@ package game.server;
 
 import game.config.Configurations;
 import game.config.GameConfig;
+import game.utils.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,14 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 // Lembrar de ver isto melhor ... https://hackernoon.com/implementing-an-event-loop-in-java-for-fun-and-profit
 
 public class GameServer {
 
-    private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
     public static PlayingServer playingServer;
     public static Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
@@ -39,10 +37,8 @@ public class GameServer {
     }
 
     public static void main(String[] args) throws IOException {
-        LOGGER.setLevel(Level.CONFIG);
         Configurations configurations;
         if (Arrays.stream(args).toList().contains("-debug")) {
-            LOGGER.setLevel(Level.ALL);
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
         } else configurations = GameConfig.getInstance();
@@ -63,19 +59,18 @@ public class GameServer {
             this.serverSocket = ServerSocketChannel.open();
             serverSocket.socket().bind(new InetSocketAddress(configurations.getAddress(), configurations.getPort()));
             serverSocket.configureBlocking(false);
-            LOGGER.info("Server started on port " + configurations.getPort());
+            Logger.info("Server started on port " + configurations.getPort());
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Could not open server socket on port " + configurations.getPort(), e);
+            Logger.error("Could not open server socket on port " + configurations.getPort());
             System.exit(1);
         }
     }
 
     private void acceptConnections() throws IOException {
-        LOGGER.info("Waiting for connections...");
+        Logger.info("Waiting for connections...");
         while (serverSocket.isOpen()) {
             SocketChannel socketChannel = serverSocket.accept();
-            if (socketChannel != null)
-                executorService.submit(new ClientHandler(socketChannel.socket()));
+            if (socketChannel != null) executorService.submit(new ClientHandler(socketChannel.socket()));
             else {
                 //try {
                 //    Thread.sleep(1000); // Fiz isto para não ficar sempre a verificar se há novas conexões (RIP CPU) // TODO tirar fora dps

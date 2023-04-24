@@ -6,6 +6,7 @@ import game.logic.GameModel;
 import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
+import game.utils.Logger;
 
 import java.net.Socket;
 import java.rmi.RemoteException;
@@ -45,7 +46,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             // the player will be added to a game when a game with the given tolerance is available
             rankDelta *= 2; // increase the tolerance
             queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
-            System.out.println("Player added to queue due to rank tolerance");
+            Logger.warning("Player added to queue due to rank tolerance");
             return false;
         }
 
@@ -53,10 +54,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
 
         if (game.isFull()) {
-            System.out.println("Game started");
+            Logger.info("Game started");
             executorGameService.submit(game);
         } else {
-            System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
+            Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
             game.queueUpdate(); // check if a ranked player waiting can enter this updated game
             //TODO: adicionar timeout para o caso de n haver mais jogadores
             //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
@@ -75,10 +76,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             if (game.isAvailable()) {
                 game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
                 if (game.isFull()) {
-                    System.out.println("Game started");
+                    Logger.info("Game started");
                     executorGameService.submit(game);
                 } else {
-                    System.out.println("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
+                    Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
                     game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
                     //TODO: adicionar timeout para o caso de n haver mais jogadores
                     //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
@@ -93,7 +94,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     }
 
     public void addToQueue(GamePlayer client, String token) {
-        System.out.println("No games available, player will be set to a queue");
+        Logger.warning("No games available, player will be set to a queue");
         // latter the game is responsible for removing the player from the queue and add it to the game
         // probably it should not be a queue has in rank mode the order is not that important, and we don't want
         // to discard some players
@@ -105,7 +106,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public void queueGame(GamePlayer client, String token) throws RemoteException {
 
         // TODO: detetar se o player desistiu da queue
-        System.out.println("Added player to queue");
+        Logger.info("Added player to queue");
 
         boolean gamesAvailable;
         String mode = GameConfig.getInstance().getMode();

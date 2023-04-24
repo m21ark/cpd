@@ -1,4 +1,4 @@
-package game;
+package game.utils;
 
 import game.protocols.CommunicationProtocol;
 
@@ -33,43 +33,43 @@ public class SocketUtils {
 
     public static String readData(Socket socket) {
         try {
-            System.out.println("Reading from socket...");
+            Logger.info("Reading from socket...");
             InputStream input = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(input));
             String ret = reader.readLine();
-            System.out.println("Read from socket: " + ret);
+            Logger.info("Read from socket: " + ret);
             return ret;
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error reading from socket: " + e.getMessage());
+            Logger.error("Error reading from socket: " + e.getMessage());
             return null;
         }
     }
 
     public static void writeData(Socket socket, String data) {
         try {
-            System.out.println("Writing to socket: " + data);
+            Logger.info("Writing to socket: " + data);
             OutputStream output = new BufferedOutputStream(socket.getOutputStream());
             output.write((data + "\n").getBytes(StandardCharsets.UTF_8));
             output.flush();
-            System.out.println("Wrote to socket: " + data);
+            Logger.info("Wrote to socket: " + data);
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error writing to socket: " + e.getMessage());
+            Logger.error("Error writing to socket: " + e.getMessage());
         }
     }
 
     public static void sendToClient(Socket connection, CommunicationProtocol message, String... args) {
-        System.out.println("Sending to client mK: " + message.toString() + " " + String.join(" ", args));
-        SocketUtils.NIOWrite(connection.getChannel(), message.toString() + " " + String.join(" ", args));
-        System.out.printf("Sent to client mK: %s %s%n", message.toString(), String.join(" ", args));
+        Logger.info("Sending to client mK: " + message.toString() + " " + String.join(" ", args));
+        SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
+        Logger.info("Sent to client mK: " + message + String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {
         try {
             socket.close();
         } catch (IOException e) {
-            System.out.println("Error closing socket!");
+            Logger.error("Error closing socket!");
         }
     }
 
@@ -87,7 +87,7 @@ public class SocketUtils {
             // Process the data that was read
             return SocketUtils.processData(buffer);
         } catch (IOException e) {
-            System.out.println("Error reading from socket: " + e.getMessage());
+            Logger.error("Error reading from socket: " + e.getMessage());
             return null;
         }
     }
@@ -103,7 +103,7 @@ public class SocketUtils {
             StringBuilder sb = new StringBuilder();
 
             while (true) {
-                System.out.println("Waiting for data...");
+                Logger.info("Waiting for data...");
                 buffer.clear();
                 selector.select();
 
@@ -117,7 +117,7 @@ public class SocketUtils {
                 }
 
                 String msg = new String(buffer.array(), 0, numBytesRead);
-                System.out.println("Read from channel: |" + msg + "|");
+                Logger.info("Read from channel: |" + msg + "|");
                 if (dealFunc == null) return msg;
                 if (dealFunc.func(msg)) return msg;
             }
@@ -140,7 +140,7 @@ public class SocketUtils {
 
             int totalBytesWritten = 0;
             while (buffer.hasRemaining()) {
-                System.out.println("Waiting to write data...");
+                Logger.info("Waiting to write data...");
                 selector.select();
 
                 // Handle write operation
@@ -149,7 +149,7 @@ public class SocketUtils {
 
                 totalBytesWritten += numBytesWritten;
                 if (totalBytesWritten == data.length()) {
-                    System.out.println("Wrote to channel: |" + data + "|");
+                    Logger.info("Wrote to channel: |" + data + "|");
                     return true;
                 }
 

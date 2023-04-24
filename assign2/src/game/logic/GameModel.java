@@ -1,9 +1,10 @@
 package game.logic;
 
-import game.SocketUtils;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
+import game.utils.Logger;
+import game.utils.SocketUtils;
 
 import java.net.Socket;
 import java.util.Objects;
@@ -28,15 +29,14 @@ public class GameModel implements Runnable {
 
     public void notifyPlayers(CommunicationProtocol protocol, String... args) {
 
-        System.out.println("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
+        Logger.info("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-            System.out.println("Markito 1");
+
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
-                System.out.println("Markito 2");
                 SocketUtils.sendToClient(connection, protocol, args);
             } else {
-                System.out.println("Markito 3");
+
                 // TODO: este remove é melhor ser feito à parte, n é boa prática remover enquanto se itera
                 gamePlayers.remove(gamePlayer); // todo: should they be removed?
                 PlayingServer.games.updateHeap(this);
