@@ -75,14 +75,23 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("Too low!");
             return true;
         }
-        if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
+        else if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
             System.out.println("Too high!");
             return true;
         }
-        if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
-            System.out.println("Correct!");
+        else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
+            System.out.println("Correct! You win!");
             return true;
         }
+        else if (data.contains(CommunicationProtocol.GAME_STARTED.name())) {
+            System.out.println("Game started. Time to play!");
+            return true;
+        }
+        else if(data.contains(CommunicationProtocol.GAME_END.name())) {
+            System.out.println("Game over!");
+            return true;
+        }
+
         return false;
     }
 
@@ -232,15 +241,46 @@ public class Client implements Serializable { // This is the client application 
             return;
         }
 
-        System.out.print("Your guess: ");
-        int guess = getIntegerInput();
+        //System.out.print("Your guess: ");
+        //int guess = getIntegerInput();
 
-        String response = sendGuess(String.valueOf(guess));
-        System.out.println("Result: " + response);
-        response = SocketUtils.NIORead(socketChannel, (String x) -> true);
-        System.out.println("Result 2: " + response);
+        //String response = sendGuess(String.valueOf(guess));
+        //System.out.println("Result: " + response);
+        //response = SocketUtils.NIORead(socketChannel, (String x) -> true);
+        //System.out.println("Result 2: " + response);
 
         // TODO: Lia
+
+        int maxGuesses = 10;
+        int numGuesses = 0;
+        Scanner scanner = new Scanner(System.in);
+
+        String serverResponse;
+        //System.out.println(serverResponse);
+
+        while (numGuesses < maxGuesses) {
+            System.out.println("Guess the number between 1 and 100: ");
+            int guess = getIntegerInput();
+            serverResponse = sendGuess(String.valueOf(guess));
+
+            System.out.println(serverResponse);
+
+            if(serverResponse.contains("GAME_WON")) {
+                break;
+            }
+
+            numGuesses++;
+        }
+
+        if(numGuesses == maxGuesses) {
+            System.out.println("lost");
+        }
+
+        serverResponse = SocketUtils.readData(socketChannel);
+        System.out.println(serverResponse);
+
+
+
     }
 
     private int getIntegerInput() {
