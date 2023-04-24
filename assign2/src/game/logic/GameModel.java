@@ -12,8 +12,8 @@ import java.util.Random;
 
 public class GameModel implements Runnable {
 
-    private static final int NR_MIN_PLAYERS = 2;
-    private static final int NR_MAX_PLAYERS = 2;
+    private static final int NR_MIN_PLAYERS = 1;
+    private static final int NR_MAX_PLAYERS = 1;
     private static final int MAX_GUESS = 100;
     private static final int MAX_NR_GUESS = 100;
     private int gameWinner = new Random().nextInt(MAX_GUESS);
@@ -64,21 +64,33 @@ public class GameModel implements Runnable {
         return gameWinner;
     }
 
-    private void gameLoop() {
-
-        gameWinner = new Random().nextInt(10);
-
+    public boolean responseToGuess() {
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            int anwser = Integer.parseInt(Objects.requireNonNull(SocketUtils.NIORead(connection.getChannel(), null)));
-            SocketUtils.sendToClient(connection, CommunicationProtocol.GUESS_TOO_LOW, String.valueOf(Math.abs(gameWinner - anwser)));
+            int guess = Integer.parseInt(Objects.requireNonNull(SocketUtils.NIORead(connection.getChannel(), null)));
+
+            if (guess == gameWinner) {
+                notifyPlayers(CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
+                return true;
+            } else if (guess > gameWinner) {
+                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_HIGH);
+            } else {
+                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
+            }
+        }
+        return false;
+    }
+
+    private void gameLoop() {
+        int nrGuesses = 0;
+        while (nrGuesses < MAX_NR_GUESS) {
+            if(responseToGuess()) break;
+            nrGuesses++;
         }
 
-        // TODO: LIA
     }
 
     public void endGame() {
-        // notifyPlayers(CommunicationProtocol.GAME_END);
         // TODO: LIA
         notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
         gamePlayers.clear();

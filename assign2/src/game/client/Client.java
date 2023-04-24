@@ -76,15 +76,15 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("Guess is too low!");
             return true;
         }
-        else if (data.contains(CommunicationProtocol.GAME_STARTED.name())) {
-            System.out.println("Game started. Time to play!");
+        else if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
+            System.out.println("Guess is too high!");
             return true;
         }
-        else if(data.contains(CommunicationProtocol.GAME_END.name())) {
-            System.out.println("Game over!");
+        else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
+            System.out.println("Your guess is correct!");
             return true;
         }
-
+        Logger.error("Invalid response from server: " + data);
         return false;
     }
 
@@ -227,9 +227,42 @@ public class Client implements Serializable { // This is the client application 
     }
 
     protected void gameLoop() {
+        int maxGuesses = 10; //ir buscar depois
+        int numGuesses = 0;
+        Scanner scanner = new Scanner(System.in);
+        String serverResponse;
 
+        while (numGuesses < maxGuesses) {
+            System.out.println("Guess the number between 1 and 100: ");
+            int guess = getIntegerInput();
+            serverResponse = sendGuess(String.valueOf(guess));
 
+            System.out.println(serverResponse);
 
+            if(serverResponse.contains("GUESS_CORRECT")) {
+                break;
+            }
+            numGuesses++;
+        }
+
+        serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
+            if(data.contains("GAME_END")) {
+                return true;
+            }
+            Logger.error("Invalid response from server: " + data);
+            return false;
+        });
+
+        serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
+            if(data.contains("GAME_RESULT")) {
+                //System.out.println(data); TODO: parse result
+                //meter se ganhou/perdeu + resposta certa
+                return true;
+            }
+            Logger.error("Invalid response from server: " + data);
+            return false;
+        });
+        System.out.println(serverResponse);
 
     }
 
