@@ -1,9 +1,10 @@
 package game.client;
 
-import game.SocketUtils;
 import game.config.GameConfig;
 import game.protocols.CommunicationProtocol;
 import game.server.GameServerInterface;
+import game.utils.Logger;
+import game.utils.SocketUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -31,7 +32,7 @@ public class Client implements Serializable { // This is the client application 
         try {
             socketChannel = SocketChannel.open(address);
         } catch (Exception e) {
-            System.out.println("Server is not running");
+            Logger.error("Server is not running");
             System.exit(0);
         }
 
@@ -55,7 +56,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
 
-    public static void waitForGameStart(SocketChannel socketChannel) throws IOException {
+    public static void waitForGameStart(SocketChannel socketChannel) {
         String res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
     }
 
@@ -72,15 +73,15 @@ public class Client implements Serializable { // This is the client application 
 
     private static boolean dealWithServerGuessResponse(String data) {
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
-            System.out.println("Too low!");
+            System.out.println("Guess is too low!");
             return true;
         }
         if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
-            System.out.println("Too high!");
+            System.out.println("Guess is too high!");
             return true;
         }
         if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
-            System.out.println("Correct!");
+            System.out.println("Guess is correct!");
             return true;
         }
         return false;
@@ -174,8 +175,8 @@ public class Client implements Serializable { // This is the client application 
         int code = Integer.parseInt(data.split(",")[0]);
         this.token = data.split(",")[1];
         this.rank = Integer.parseInt(data.split(",")[2]);
-        System.out.println("Token |" + token + "|");
-        System.out.println("Rank " + rank);
+        Logger.info("Token |" + token + "|");
+        Logger.info("Rank " + rank);
 
         return code;
     }
@@ -228,17 +229,16 @@ public class Client implements Serializable { // This is the client application 
         String msg = SocketUtils.extract(socketChannel);
 
         if (msg == null) {
-            System.out.println("Message null!");
+            Logger.error("Message null at gameLoop!");
             return;
         }
-
         System.out.print("Your guess: ");
         int guess = getIntegerInput();
 
         String response = sendGuess(String.valueOf(guess));
-        System.out.println("Result: " + response);
+        Logger.info("Result: " + response);
         response = SocketUtils.NIORead(socketChannel, (String x) -> true);
-        System.out.println("Result 2: " + response);
+        Logger.info("Result 2: " + response);
 
         // TODO: Lia
     }

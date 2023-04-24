@@ -1,6 +1,7 @@
 package game.server;
 
-import game.SocketUtils;
+import game.utils.Logger;
+import game.utils.SocketUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,8 +35,8 @@ public class ClientHandler implements Runnable {
 
             if (!persistantUsersFile.exists()) {
                 // If it doesn't exist, create it
-                if (persistantUsersFile.createNewFile()) System.out.println("Created new users.txt file.");
-                else System.out.println("Failed to create users.txt file.");
+                if (persistantUsersFile.createNewFile()) Logger.warning("Created new users.txt file.");
+                else Logger.warning("Failed to create users.txt file.");
             }
 
             // Read the lines from the users.txt file
@@ -43,7 +44,7 @@ public class ClientHandler implements Runnable {
             this.persistantUsers = Files.readAllLines(path);
 
         } catch (IOException e) {
-            System.out.println("Could not intialize users.txt file.");
+            Logger.error("Could not intialize users.txt file.");
         }
     }
 
@@ -75,7 +76,7 @@ public class ClientHandler implements Runnable {
             if (token.equals("")) return; // Authentication failed
         }
 
-        System.out.println("Token sent. Adding client to the server's list...");
+        Logger.info("Token sent. Adding client to the server's list...");
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
     }
 
@@ -88,14 +89,19 @@ public class ClientHandler implements Runnable {
         // Read username and password from client and try to authenticate
         String username_password = SocketUtils.readData(socket);
 
+        if (username_password == null) {
+            Logger.warning("Client closed connection.");
+            return "";
+        }
+
         username = username_password.split(",")[0];
         password = username_password.split(",")[1];
 
-        System.out.println("Client connected with username : " + username + " and password : " + password);
+        Logger.info("Client connected with username : " + username + " and password : " + password);
         String authPair = authenticate(username, password);
         int authResult = Integer.parseInt(authPair.split(",")[0]);
         String rank = authPair.split(",")[1];
-        System.out.println("Authentication result : " + authResult);
+        Logger.info("Authentication result : " + authResult);
 
         String token = generateRandomToken();
 
@@ -111,16 +117,15 @@ public class ClientHandler implements Runnable {
             else return "";
         }
 
-
         // if new user, add to persistant storage
         if (newUser) {
-            System.out.println("New user detected. Adding to persistant storage.");
+            Logger.info("New user detected. Adding to persistant storage.");
             addNewUserToPersistantStorage(username, password, token);
             SocketUtils.writeData(socket, "1");
-        } else System.out.println("User already exists.");
+        } else Logger.warning("User already exists.");
 
         // write to client
-        System.out.println("Sending token to client: " + username + " <-> " + token);
+        Logger.info("Sending token to client: " + username + " <-> " + token);
         SocketUtils.writeData(socket, token);
         return token;
     }
@@ -133,20 +138,20 @@ public class ClientHandler implements Runnable {
         String passwordConf = SocketUtils.readData(socket);
 
         if (passwordConf == null) {
-            System.out.println("Client closed connection.");
+            Logger.error("Client closed connection.");
             return false;
         }
 
-        System.out.println("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
+        Logger.info("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
 
         if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
-            System.out.println("User doesn't want to add a new entry.");
+            Logger.info("User doesn't want to add a new entry.");
             authResult = 2;
         } else if (!password.equals(passwordConf)) {
-            System.out.println("Passwords don't match. Expected |" + password + "| but got |" + passwordConf + "| .");
+            Logger.info("Passwords don't match. Expected |" + password + "| but got |" + passwordConf + "| .");
             authResult = 2;
         } else {
-            System.out.println("Password was confirmed.");
+            Logger.info("Password was confirmed.");
             authResult = 1;
             return true;
         }
@@ -166,7 +171,7 @@ public class ClientHandler implements Runnable {
             break;
         }
 
-        System.out.println("Updated volatile rank for user " + username);
+        Logger.info("Updated volatile rank for user " + username);
 
         // TODO: this is updating the list, but not the file
     }
@@ -184,7 +189,7 @@ public class ClientHandler implements Runnable {
             writer = new FileWriter(persistantUsersFile, true);
             writer.write(newEntry + System.lineSeparator()); // Add new line separator
             writer.close();
-            System.out.println("New user added to persistant storage.");
+            Logger.info("New user added to persistant storage.");
 
         } catch (IOException e) {
             throw new RuntimeException(e);
