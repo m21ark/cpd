@@ -6,6 +6,10 @@ import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Objects;
 import java.util.Random;
@@ -87,7 +91,6 @@ public class GameModel implements Runnable {
             if(responseToGuess()) break;
             nrGuesses++;
         }
-
     }
 
     public void endGame() {
@@ -99,12 +102,27 @@ public class GameModel implements Runnable {
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
+
+
+        /*if(PlayingServer.gameConfig.getGameMode() == GameMode.RANKED) {
+            queueUpdate();
+        } else {
+            queueUpdate();
+        }*/
+
+        //System.out.println("Your final score is " + (1000 - Math.abs(numberToGuess - closestGuess) - 1) + ".");
+        
     }
 
     @Override
     public void run() {
         System.out.println("Game playground");
         // TODO: Add max timeout to the game
+
+        if(gamePlayers.size() < NR_MIN_PLAYERS) {
+            notifyPlayers(CommunicationProtocol.GAME_WAIT);
+            return;
+        }
 
         notifyPlayers(CommunicationProtocol.GAME_STARTED);
 

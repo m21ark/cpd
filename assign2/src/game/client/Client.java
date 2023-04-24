@@ -22,7 +22,7 @@ public class Client implements Serializable { // This is the client application 
     GamePlayer player;
     private String token;
     private int rank;
-
+    private static final int MAX_NR_GUESS = 100;
 
     public Client() throws IOException {
         GameConfig config = GameConfig.getInstance();
@@ -227,12 +227,11 @@ public class Client implements Serializable { // This is the client application 
     }
 
     protected void gameLoop() {
-        int maxGuesses = 10; //ir buscar depois
         int numGuesses = 0;
         Scanner scanner = new Scanner(System.in);
         String serverResponse;
 
-        while (numGuesses < maxGuesses) {
+        while (numGuesses < MAX_NR_GUESS) {
             System.out.println("Guess the number between 1 and 100: ");
             int guess = getIntegerInput();
             serverResponse = sendGuess(String.valueOf(guess));
