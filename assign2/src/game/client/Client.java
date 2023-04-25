@@ -18,11 +18,11 @@ import java.util.Scanner;
 
 public class Client implements Serializable { // This is the client application runner.
 
+    private static final int MAX_NR_GUESS = 100;
     SocketChannel socketChannel;
     GamePlayer player;
     private String token;
     private int rank;
-    private static final int MAX_NR_GUESS = 100;
 
     public Client() throws IOException {
         GameConfig config = GameConfig.getInstance();
@@ -75,13 +75,14 @@ public class Client implements Serializable { // This is the client application 
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
             System.out.println("Guess is too low!");
             return true;
-        }
-        else if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
+        } else if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
             System.out.println("Guess is too high!");
             return true;
-        }
-        else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
+        } else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
             System.out.println("Your guess is correct!");
+            return true;
+        } else if (data.contains(CommunicationProtocol.GAME_END.name())) {
+            System.out.println("Game over!");
             return true;
         }
         Logger.error("Invalid response from server: " + data);
@@ -238,14 +239,14 @@ public class Client implements Serializable { // This is the client application 
 
             System.out.println(serverResponse);
 
-            if(serverResponse.contains("GUESS_CORRECT")) {
+            if (serverResponse.contains("GUESS_CORRECT")) {
                 break;
             }
             numGuesses++;
         }
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
-            if(data.contains("GAME_END")) {
+            if (data.contains("GAME_END")) {
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
@@ -253,16 +254,21 @@ public class Client implements Serializable { // This is the client application 
         });
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
-            if(data.contains("GAME_RESULT")) {
-                //System.out.println(data); TODO: parse result
-                //meter se ganhou/perdeu + resposta certa
+            if (data.contains("GAME_RESULT")) {
+
+                // Points , Position/Players
+                String arg = data.split(" ")[1];
+                if (Integer.parseInt(arg) > 0) System.out.println("You won!");
+                else System.out.println("You lost!");
+                System.out.println("Points: " + arg);
+
+                arg = data.split(" ")[2];
+                System.out.println("Position: " + arg);
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
             return false;
         });
-        System.out.println(serverResponse);
-
     }
 
     private int getIntegerInput() {

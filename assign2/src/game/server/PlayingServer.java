@@ -77,7 +77,9 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // now we just need to check the first game
         for (GameModel game : games) {
             if (game.isAvailable()) {
-                game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+                var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
+                player.setToken(token);
+                game.addPlayer(player);
                 if (game.isFull()) {
                     Logger.info("Game started");
                     executorGameService.submit(game);
@@ -102,7 +104,9 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // probably it should not be a queue has in rank mode the order is not that important, and we don't want
         // to discard some players
 
-        queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token)));
+        var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
+        player.setToken(token);
+        queueToPlay.add(player);
     }
 
     @Override

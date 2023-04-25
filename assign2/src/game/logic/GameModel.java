@@ -8,9 +8,7 @@ import game.utils.SocketUtils;
 import kotlin.Pair;
 
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,6 +28,12 @@ public class GameModel implements Runnable {
 
     public static int getNrMaxPlayers() {
         return NR_MAX_PLAYERS;
+    }
+
+    public PlayingServer.WrappedPlayerSocket getPlayer(String token) {
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
+            if (gamePlayer.getToken().equals(token)) return gamePlayer;
+        return null;
     }
 
     public void notifyPlayers(CommunicationProtocol protocol, String... args) {
@@ -123,18 +127,41 @@ public class GameModel implements Runnable {
 
         // wait for all threads to finish
         executor.shutdown();
-        while (!executor.isTerminated()) {}
+        while (!executor.isTerminated()) {
+        }
 
         // kill all threads
         executor.shutdownNow();
     }
 
     public void endGame() {
-        // TODO: LIA
+
         notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
+
+        List<String> leaderboard = getLeaderboard();
+
+        // Notify who won and who lost + update ranks
+        int maxPoints = 5;
+        int deltaPoints = 6; // Points to be subtracted from the winner for each player // TODO: ver melhor esquema de pontos
+        int playerCount = 1;
+
+        for (String pos : leaderboard) {
+            String[] split = pos.split(":");
+            String token = split[0];
+            int rank = Integer.parseInt(split[1]);
+
+            PlayingServer.WrappedPlayerSocket player = getPlayer(token);
+            if (player == null) continue;
+
+            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(maxPoints), playerCount++ + "/" + gamePlayers.size());
+
+            player.setRank(player.getRank() + maxPoints);
+            maxPoints -= deltaPoints;
+        }
+
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
-        System.out.println("Game ended");
+        System.out.println("Game cleared");
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
@@ -147,8 +174,8 @@ public class GameModel implements Runnable {
         }*/
 
         //System.out.println("Your final score is " + (1000 - Math.abs(numberToGuess - closestGuess) - 1) + ".");
-
     }
+
 
     @Override
     public void run() {
@@ -201,5 +228,21 @@ public class GameModel implements Runnable {
             sum += gamePlayer.getRank();
         return sum / gamePlayers.size();
     }
+
+    private List<String> getLeaderboard() {
+        List<String> leaderboard = new ArrayList<>();
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+            leaderboard.add(gamePlayer.getToken() + ":" + gamePlayer.getRank());
+        }
+
+        leaderboard.sort((o1, o2) -> {
+            String[] split1 = o1.split(":");
+            String[] split2 = o2.split(":");
+            return Integer.parseInt(split2[1]) - Integer.parseInt(split1[1]);
+        });
+
+        return leaderboard;
+    }
+
 
 }
