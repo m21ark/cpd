@@ -58,6 +58,9 @@ public class Client implements Serializable { // This is the client application 
 
     public static void waitForGameStart(SocketChannel socketChannel) {
         String res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
+        while (res == null || !res.contains("GAME_STARTED")) {
+            res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -239,7 +242,7 @@ public class Client implements Serializable { // This is the client application 
 
             System.out.println(serverResponse);
 
-            if (serverResponse.contains("GUESS_CORRECT") || serverResponse.contains("GAME_END")) {
+            if (serverResponse.contains("GUESS_CORRECT")) {
                 break;
             }
             numGuesses++;

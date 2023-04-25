@@ -90,7 +90,7 @@ public class ClientHandler implements Runnable {
         String username_password = SocketUtils.readData(socket);
 
         if (username_password == null) {
-            Logger.warning("Client closed connection.");
+            Logger.warning("Client closed connection or took long to respond.");
             return "";
         }
 
@@ -131,7 +131,7 @@ public class ClientHandler implements Runnable {
     }
 
     private boolean registerNewUser(String username, String password) {
-        // client will awnser if they want to add a new entry
+        // client will answer if they want to add a new entry
         int authResult = 0;
 
         // Read password confirmation from client

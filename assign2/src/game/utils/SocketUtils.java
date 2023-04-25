@@ -93,6 +93,10 @@ public class SocketUtils {
     }
 
     public static String NIORead(SocketChannel channel, IntPredicate dealFunc) {
+        return NIORead(channel, dealFunc, null);
+    }
+
+    public static String NIORead(SocketChannel channel, IntPredicate dealFunc, Long timeout) {
         // register a SocketChannel for reading data asynchronously (non-blocking)
         try {
             // Configure the channel to be non-blocking and register it with the selector for reading
@@ -101,11 +105,24 @@ public class SocketUtils {
             channel.register(selector, SelectionKey.OP_READ);
             ByteBuffer buffer = ByteBuffer.allocate(1024);
 
+            int nChannelsReady;
 
             while (true) {
-                Logger.info("Waiting for data...");
+                // Logger.info("Waiting for data...");
                 buffer.clear();
-                selector.select();
+                if (timeout != null) {
+                    if (timeout == 0)
+                        nChannelsReady = selector.selectNow(); // neither blocking nor waiting
+                    else
+                        nChannelsReady = selector.select(timeout); // wait for timeout ms
+                } else {
+                    nChannelsReady = selector.select();
+                }
+
+                if (nChannelsReady == 0) {
+                    //Logger.info("No data available after " + timeout + "ms");
+                    return null;
+                }
 
                 // Handle read operation
                 int numBytesRead = channel.read(buffer);

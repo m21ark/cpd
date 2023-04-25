@@ -2,6 +2,7 @@ package game.logic;
 
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
+import game.protocols.GuessErgo;
 import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
@@ -95,15 +96,21 @@ public class GameModel implements Runnable {
         return MAX_NR_GUESS;
     }
 
-    public boolean responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
+    public GuessErgo responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
 
-        while (guessesLeft(gamePlayer.getToken()) > 0) {
+        //while (guessesLeft(gamePlayer.getToken()) > 0) {
             Socket connection = gamePlayer.getConnection();
-            int guess = Integer.parseInt(Objects.requireNonNull(SocketUtils.NIORead(connection.getChannel(), null)));
+            String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
+            if (s == null) {
+                return GuessErgo.NOT_PLAYED;
+            }
+            int guess = Integer.parseInt(Objects.requireNonNull(s));
+
+
 
             if (guess == gameWinner) {
                 SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
-                return true;
+                return GuessErgo.WINNING_MOVE;
             }
 
             updateGuesses(gamePlayer.getToken(), guess);
@@ -113,29 +120,50 @@ public class GameModel implements Runnable {
             } else {
                 SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
             }
-        }
-        return false;
+        // }
+        return GuessErgo.PLAYED;
     }
 
     private void gameLoop() {
 
         Logger.info("The answer is " + gameWinner);
 
-        ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
-
-        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-            executor.execute(() -> {
-                responseToGuess(gamePlayer);
-            });
+        int finishedPlayers = 0;
+        long startTime = System.currentTimeMillis();
+        while (true) {
+            long elapsedTime = System.currentTimeMillis() - startTime;
+            if (elapsedTime > 300000) { // TODO: add to config
+                Logger.info("Game timed out!");
+                break;
+            }
+            if (finishedPlayers == gamePlayers.size()) break;
+            for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+                GuessErgo response = responseToGuess(gamePlayer);
+                if (response == GuessErgo.WINNING_MOVE) {
+                    finishedPlayers++;
+                } else if (response == GuessErgo.PLAYED) {
+                    if (guessesLeft(gamePlayer.getToken()) == 0) {
+                        finishedPlayers++;
+                    }
+                }
+            }
         }
 
-        // wait for all threads to finish
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-        }
+       // ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
 
-        // kill all threads
-        executor.shutdownNow();
+       // for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+       //     executor.execute(() -> {
+       //         responseToGuess(gamePlayer);
+       //     });
+       // }
+
+       // // wait for all threads to finish
+       // executor.shutdown();
+       // while (!executor.isTerminated()) {
+       // }
+
+       // // kill all threads
+       // executor.shutdownNow();
     }
 
     public void endGame() {
