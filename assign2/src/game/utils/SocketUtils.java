@@ -100,7 +100,7 @@ public class SocketUtils {
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_READ);
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            StringBuilder sb = new StringBuilder();
+
 
             while (true) {
                 Logger.info("Waiting for data...");

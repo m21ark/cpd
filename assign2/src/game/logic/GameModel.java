@@ -5,7 +5,7 @@ import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
-import kotlin.Pair;
+import game.logic.structures.Pair;
 
 import java.net.Socket;
 import java.util.*;
@@ -17,7 +17,7 @@ public class GameModel implements Runnable {
     private static final int NR_MIN_PLAYERS = 2;
     private static final int NR_MAX_PLAYERS = 2;
     private static final int MAX_GUESS = 100;
-    private static final int MAX_NR_GUESS = 100;
+    private static final int MAX_NR_GUESS = 1;
     private final int gameWinner = new Random().nextInt(MAX_GUESS);
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
@@ -91,6 +91,10 @@ public class GameModel implements Runnable {
         return gameWinner;
     }
 
+    public static int getMaxNrGuess() {
+        return MAX_NR_GUESS;
+    }
+
     public boolean responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
 
         while (guessesLeft(gamePlayer.getToken()) > 0) {
@@ -115,7 +119,7 @@ public class GameModel implements Runnable {
 
     private void gameLoop() {
 
-        Logger.info("The awnser is " + gameWinner);
+        Logger.info("The answer is " + gameWinner);
 
         ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
 
@@ -182,10 +186,10 @@ public class GameModel implements Runnable {
         System.out.println("Game playground");
         // TODO: Add max timeout to the game
 
-        if (gamePlayers.size() < NR_MIN_PLAYERS) {
-            notifyPlayers(CommunicationProtocol.GAME_WAIT);
-            return;
-        }
+        // if (gamePlayers.size() < NR_MIN_PLAYERS) {
+        //     notifyPlayers(CommunicationProtocol.GAME_WAIT);
+        //     return;
+        // }
 
         notifyPlayers(CommunicationProtocol.GAME_STARTED);
 

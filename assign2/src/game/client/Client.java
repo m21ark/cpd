@@ -18,7 +18,7 @@ import java.util.Scanner;
 
 public class Client implements Serializable { // This is the client application runner.
 
-    private static final int MAX_NR_GUESS = 100;
+    private static final int MAX_NR_GUESS = 1; // TODO: should be a config or something
     SocketChannel socketChannel;
     GamePlayer player;
     private String token;
@@ -239,7 +239,7 @@ public class Client implements Serializable { // This is the client application 
 
             System.out.println(serverResponse);
 
-            if (serverResponse.contains("GUESS_CORRECT")) {
+            if (serverResponse.contains("GUESS_CORRECT") || serverResponse.contains("GAME_END")) {
                 break;
             }
             numGuesses++;
