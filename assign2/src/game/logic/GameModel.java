@@ -5,22 +5,23 @@ import game.protocols.CommunicationProtocol;
 import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
+import kotlin.Pair;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GameModel implements Runnable {
 
-    private static final int NR_MIN_PLAYERS = 1;
-    private static final int NR_MAX_PLAYERS = 1;
+    private static final int NR_MIN_PLAYERS = 2;
+    private static final int NR_MAX_PLAYERS = 2;
     private static final int MAX_GUESS = 100;
     private static final int MAX_NR_GUESS = 100;
-    private int gameWinner = new Random().nextInt(MAX_GUESS);
+    private final int gameWinner = new Random().nextInt(MAX_GUESS);
+    private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
@@ -64,19 +65,42 @@ public class GameModel implements Runnable {
         }
     }
 
+    public void updateGuesses(String token, int guess) {
+        Pair<Integer, Integer> guesses = playerGuesses.get(token);
+        if (guesses == null) {
+            playerGuesses.put(token, new Pair<>(MAX_NR_GUESS - 1, guess));
+        } else {
+            playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guess));
+        }
+    }
+
+    public int guessesLeft(String token) {
+        Pair<Integer, Integer> guesses = playerGuesses.get(token);
+        if (guesses == null) {
+            return MAX_NR_GUESS;
+        } else {
+            return guesses.getFirst();
+        }
+    }
+
     public int getGameWinner() {
         return gameWinner;
     }
 
-    public boolean responseToGuess() {
-        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+    public boolean responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
+
+        while (guessesLeft(gamePlayer.getToken()) > 0) {
             Socket connection = gamePlayer.getConnection();
             int guess = Integer.parseInt(Objects.requireNonNull(SocketUtils.NIORead(connection.getChannel(), null)));
 
             if (guess == gameWinner) {
-                notifyPlayers(CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
+                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
                 return true;
-            } else if (guess > gameWinner) {
+            }
+
+            updateGuesses(gamePlayer.getToken(), guess);
+
+            if (guess > gameWinner) {
                 SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_HIGH);
             } else {
                 SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
@@ -86,11 +110,23 @@ public class GameModel implements Runnable {
     }
 
     private void gameLoop() {
-        int nrGuesses = 0;
-        while (nrGuesses < MAX_NR_GUESS) {
-            if(responseToGuess()) break;
-            nrGuesses++;
+
+        Logger.info("The awnser is " + gameWinner);
+
+        ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
+
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+            executor.execute(() -> {
+                responseToGuess(gamePlayer);
+            });
         }
+
+        // wait for all threads to finish
+        executor.shutdown();
+        while (!executor.isTerminated()) {}
+
+        // kill all threads
+        executor.shutdownNow();
     }
 
     public void endGame() {
@@ -111,7 +147,7 @@ public class GameModel implements Runnable {
         }*/
 
         //System.out.println("Your final score is " + (1000 - Math.abs(numberToGuess - closestGuess) - 1) + ".");
-        
+
     }
 
     @Override
@@ -119,7 +155,7 @@ public class GameModel implements Runnable {
         System.out.println("Game playground");
         // TODO: Add max timeout to the game
 
-        if(gamePlayers.size() < NR_MIN_PLAYERS) {
+        if (gamePlayers.size() < NR_MIN_PLAYERS) {
             notifyPlayers(CommunicationProtocol.GAME_WAIT);
             return;
         }

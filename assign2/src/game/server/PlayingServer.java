@@ -45,13 +45,16 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             // if the tolerance is too big, just add the player to the queue
             // the player will be added to a game when a game with the given tolerance is available
             rankDelta *= 2; // increase the tolerance
-            queueToPlay.add(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
+            var player = new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta);
+            player.setToken(token);
+            queueToPlay.add(player);
             Logger.warning("Player added to queue due to rank tolerance");
             return false;
         }
 
-
-        game.addPlayer(new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta));
+        var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
+        player.setToken(token);
+        game.addPlayer(player);
 
         if (game.isFull()) {
             Logger.info("Game started");
@@ -126,6 +129,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         private final Socket connection;
         private int tolerance;
 
+        private String token;
+
         public WrappedPlayerSocket(GamePlayer client, Socket connection) {
             super(client.getName(), client.getRank());
             this.rank = client.getRank();
@@ -140,6 +145,14 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             this.score = client.getScore();
             this.connection = connection;
             this.tolerance = tolerance;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        public void setToken(String token) {
+            this.token = token;
         }
 
         public GamePlayer getClient() {
