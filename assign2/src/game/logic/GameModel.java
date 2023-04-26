@@ -104,18 +104,13 @@ public class GameModel implements Runnable {
         // if the guess is better than the previous one, update it
         if (Math.abs(guess - gameWinner) < Math.abs(guesses.getSecond() - gameWinner))
             playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guess));
-        else
-            playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guesses.getSecond()));
+        else playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guesses.getSecond()));
 
     }
 
     public int guessesLeft(String token) {
         Pair<Integer, Integer> guesses = playerGuesses.get(token);
-        if (guesses == null) {
-            return MAX_NR_GUESSES;
-        } else {
-            return guesses.getFirst();
-        }
+        return (guesses == null) ? MAX_NR_GUESSES : guesses.getFirst();
     }
 
     public int getGameWinner() {
@@ -275,4 +270,8 @@ public class GameModel implements Runnable {
     }
 
 
+    public void removePlayer(PlayingServer.WrappedPlayerSocket player) {
+        gamePlayers.remove(player);
+        PlayingServer.games.updateHeap(this);
+    }
 }

@@ -7,6 +7,7 @@ import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.utils.Logger;
+import game.utils.SocketUtils;
 
 import java.net.Socket;
 import java.rmi.RemoteException;
@@ -76,16 +77,21 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // if all games except one are full, a list would require a linear search to find the game available
         // now we just need to check the first game
         for (GameModel game : games) {
+
+            // Check if the players are still connected to the server
+            if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
+
             if (game.isAvailable()) {
                 var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
                 player.setToken(token);
                 game.addPlayer(player);
                 if (game.isFull()) {
+
                     Logger.info("Game started");
                     executorGameService.submit(game);
                 } else {
                     Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-                    game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
+                    notifyQueueUpdate(game);
                     //TODO: adicionar timeout para o caso de n haver mais jogadores
                     //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
@@ -96,6 +102,30 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             // }
         }
         return false;
+    }
+
+    private void notifyQueueUpdate(GameModel game) {
+        game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
+    }
+
+    private boolean checkIfPlayersAreStillConnected(GameModel game) {
+        for (WrappedPlayerSocket player : game.getGamePlayers()) {
+
+            // Check if they logged out or lost connection
+            try {
+                String s = SocketUtils.NIORead(player.getConnection().getChannel(), (String x) -> {
+                    if (x.contains(CommunicationProtocol.LOGOUT.name())) {
+                        Logger.warning("Player logged out of the game");
+                        game.removePlayer(player);
+                    }
+                    return true;
+                }, 100L); // TODO: timeout number ?
+            } catch (Exception e) {
+                Logger.warning("Player " + player.getToken() + " lost connection");
+                return false;
+            }
+        }
+        return true;
     }
 
     public void addToQueue(GamePlayer client, String token) {

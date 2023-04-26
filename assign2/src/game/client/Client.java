@@ -45,32 +45,8 @@ public class Client implements Serializable { // This is the client application 
         player = new GamePlayer(s, i);
     }
 
-
-    public static boolean dealWithServerMessages(String data) {
-        if (data.contains("GAME_STARTED")) {
-            System.out.println("Game started. Time to play!");
-            String[] parts = data.split(" ");
-            MAX_NR_GUESSES = Integer.parseInt(parts[1]);
-            NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
-            MAX_GUESS = Integer.parseInt(parts[3]);
-            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
-            System.out.println("There are " + NR_MAX_PLAYERS + " players.");
-
-            return true;
-        } else if (data.contains("QUEUE_UPDATE")) {
-            String[] parts = data.split(" ");
-            System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
-        }
-        return false;
-    }
-
-
-    public static void waitForGameStart(SocketChannel socketChannel) {
-        String res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
-    }
-
     public static void main(String[] args) throws IOException {
-        Logger.setLevel(java.util.logging.Level.SEVERE);
+        //Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
@@ -100,12 +76,84 @@ public class Client implements Serializable { // This is the client application 
         return false;
     }
 
+    public void waitForGameStart(SocketChannel socketChannel) {
+        // Start a new thread to wait for game start
+        Thread waitThread = new Thread(() -> SocketUtils.NIORead(socketChannel, this::dealWithServerMessages));
+        waitThread.start();
+
+        // Start a new thread to verify if the user wants to leave
+        Thread leaveThread = new Thread(this::verifyUserWantToLeave);
+        leaveThread.start();
+
+        // Wait for the game to start or for the user to leave
+        try {
+            waitThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean dealWithServerMessages(String data) {
+        if (data.contains("GAME_STARTED")) {
+            System.out.println("Game started. Time to play!");
+            String[] parts = data.split(" ");
+            MAX_NR_GUESSES = Integer.parseInt(parts[1]);
+            NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
+            MAX_GUESS = Integer.parseInt(parts[3]);
+            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
+            System.out.println("There are " + NR_MAX_PLAYERS + " players.");
+
+            return true;
+        } else if (data.contains("QUEUE_UPDATE")) {
+            String[] parts = data.split(" ");
+            System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
+        }
+
+        return false;
+    }
+
+    private void verifyUserWantToLeave() {
+        // check for user input while waiting for server response
+        // if user inputs "exit", close the socket and exit the program
+        //System.out.println("ola 1");
+        while (true) {
+            try {
+                //System.out.println("ola 2");
+                if (System.in.available() <= 0) Thread.sleep(1000);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            //System.out.println("ola 3");
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("ola 2");
+            while (scanner.hasNextLine()) {
+                System.out.println("here 3");
+                String line = scanner.nextLine().toLowerCase().strip();
+                System.out.println("here 4");
+                System.out.println("line: |" + line + "|");
+                if (line.equals("exit")) {
+                    System.out.println("ola 10");
+                    try {
+                        System.out.println("Logging out at your request...");
+                        SocketUtils.NIOWrite(socketChannel, CommunicationProtocol.LOGOUT.name());
+                        this.socketChannel.close();
+                    } catch (IOException e) {
+                        System.out.println("Error closing socket channel at logout: " + e.getMessage());
+                    }
+                    System.exit(0);
+                }
+            }
+        }
+    }
+
     protected void playGame() {
         Registry registry;
         try {
             registry = LocateRegistry.getRegistry(GameConfig.getInstance().getAddress(), GameConfig.getInstance().getRMIReg());
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
             gameServer.queueGame(this.player, token);
+            System.out.println("Waiting for other players to join...");
+            System.out.println("Type 'exit' to leave the game lobby.");
         } catch (IOException | NotBoundException e) {
             e.printStackTrace();
         }
