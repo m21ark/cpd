@@ -18,8 +18,8 @@ public class GameModel implements Runnable {
     private static final int MAX_GUESS = GameConfig.getInstance().getMaxGuess();
     private static final int MAX_NR_GUESSES = GameConfig.getInstance().getMaxNrGuess();
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
+    private final MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
     private int gameWinner = new Random().nextInt(MAX_GUESS);
-    private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
@@ -31,6 +31,28 @@ public class GameModel implements Runnable {
 
     public static int getMaxNrGuesses() {
         return MAX_NR_GUESSES;
+    }
+
+    private static Map<String, Integer> getLeaderboardScores(List<String> Leaderboard) {
+        int numUsers = Leaderboard.size();
+        int middleIndex = numUsers / 2;
+        Map<String, Integer> userScores = new HashMap<>();
+
+        if (numUsers == 2) {
+            // Two users, give the first user a score of 2 and the second user a score of -1
+            userScores.put(Leaderboard.get(0), 2);
+            userScores.put(Leaderboard.get(1), -1);
+            return userScores;
+        }
+
+        // Calculate the score for each user
+        for (int i = 0; i < numUsers; i++) {
+            int score;
+            if (i < middleIndex) score = numUsers - middleIndex + i + 1;
+            else score = middleIndex - (i - middleIndex) - 1;
+            userScores.put(Leaderboard.get(i), score);
+        }
+        return userScores;
     }
 
     public PlayingServer.WrappedPlayerSocket getPlayer(String token) {
@@ -76,9 +98,15 @@ public class GameModel implements Runnable {
         Pair<Integer, Integer> guesses = playerGuesses.get(token);
         if (guesses == null) {
             playerGuesses.put(token, new Pair<>(MAX_NR_GUESSES - 1, guess));
-        } else {
-            playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guess));
+            return;
         }
+
+        // if the guess is better than the previous one, update it
+        if (Math.abs(guess - gameWinner) < Math.abs(guesses.getSecond() - gameWinner))
+            playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guess));
+        else
+            playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guesses.getSecond()));
+
     }
 
     public int guessesLeft(String token) {
@@ -111,6 +139,7 @@ public class GameModel implements Runnable {
 
         if (guess == gameWinner) {
             SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
+            updateGuesses(gamePlayer.getToken(), gameWinner);
             return GuessErgo.WINNING_MOVE;
         }
 
@@ -150,46 +179,27 @@ public class GameModel implements Runnable {
             }
         }
 
-        // ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
 
-        // for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-        //     executor.execute(() -> {
-        //         responseToGuess(gamePlayer);
-        //     });
-        // }
-
-        // // wait for all threads to finish
-        // executor.shutdown();
-        // while (!executor.isTerminated()) {
-        // }
-
-        // // kill all threads
-        // executor.shutdownNow();
     }
 
     public void endGame() {
 
         notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
 
-        List<String> leaderboard = getLeaderboard();
+        Map<String, Integer> leaderboard = getLeaderboard();
 
         // Notify who won and who lost + update ranks
-        int maxPoints = 5;
-        int deltaPoints = 6; // Points to be subtracted from the winner for each player // TODO: ver melhor esquema de pontos
-        int playerCount = 1;
-
-        for (String pos : leaderboard) {
-            String[] split = pos.split(":");
-            String token = split[0];
-            int rank = Integer.parseInt(split[1]);
-
+        int i = 0;
+        for (String token : leaderboard.keySet()) {
+            i++;
             PlayingServer.WrappedPlayerSocket player = getPlayer(token);
-            if (player == null) continue;
+            if (player == null) {
+                Logger.warning("Player with token " + token + " not found!");
+                continue;
+            }
 
-            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(maxPoints), playerCount++ + "/" + gamePlayers.size());
-
-            player.setRank(player.getRank() + maxPoints);
-            maxPoints -= deltaPoints;
+            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token)), String.valueOf(i), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
+            player.setRank(player.getRank() + leaderboard.get(token)); // TODO: salvar no ficheiro
         }
 
         gamePlayers.clear();
@@ -199,27 +209,12 @@ public class GameModel implements Runnable {
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
-
-
-        /*if(PlayingServer.gameConfig.getGameMode() == GameMode.RANKED) {
-            queueUpdate();
-        } else {
-            queueUpdate();
-        }*/
-
-        //System.out.println("Your final score is " + (1000 - Math.abs(numberToGuess - closestGuess) - 1) + ".");
     }
-
 
     @Override
     public void run() {
         Logger.info("Game playground");
         // TODO: Add max timeout to the game
-
-        // if (gamePlayers.size() < NR_MIN_PLAYERS) {
-        //     notifyPlayers(CommunicationProtocol.GAME_WAIT);
-        //     return;
-        // }
 
         notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
 
@@ -229,10 +224,6 @@ public class GameModel implements Runnable {
 
     public MyConcurrentList<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
         return gamePlayers;
-    }
-
-    public void setGamePlayers(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
-        this.gamePlayers = gamePlayers;
     }
 
     public boolean isAvailable() {
@@ -263,19 +254,24 @@ public class GameModel implements Runnable {
         return sum / gamePlayers.size();
     }
 
-    private List<String> getLeaderboard() {
+    private Map<String, Integer> getLeaderboard() {
         List<String> leaderboard = new ArrayList<>();
-        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-            leaderboard.add(gamePlayer.getToken() + ":" + gamePlayer.getRank());
-        }
 
-        leaderboard.sort((o1, o2) -> {
-            String[] split1 = o1.split(":");
-            String[] split2 = o2.split(":");
-            return Integer.parseInt(split2[1]) - Integer.parseInt(split1[1]);
+        // Sort descendently by guesses left and then by distance to the answer
+        List<Map.Entry<String, Pair<Integer, Integer>>> sorted = new ArrayList<>(playerGuesses.entrySet());
+
+        // <token, <num_guesses_left, best_guess>>
+        sorted.sort((o1, o2) -> {
+            int guessesLeft = o2.getValue().getFirst() - o1.getValue().getFirst();
+            if (guessesLeft != 0) return guessesLeft;
+            return Math.abs(o1.getValue().getSecond() - gameWinner) - Math.abs(o2.getValue().getSecond() - gameWinner);
         });
 
-        return leaderboard;
+        // Add to leaderboard
+        for (Map.Entry<String, Pair<Integer, Integer>> entry : sorted)
+            leaderboard.add(entry.getKey()); // token list
+
+        return getLeaderboardScores(leaderboard);
     }
 
 

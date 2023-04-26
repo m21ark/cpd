@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 public class ClientHandler implements Runnable {
     public static boolean DEBUG_MODE = false;
@@ -49,7 +50,8 @@ public class ClientHandler implements Runnable {
     }
 
     private String generateRandomToken() {
-        return "token" + Math.random() + socket.getLocalPort() + socket.getPort();
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString().replace("-", "");
     }
 
     public String authenticate(String username, String password) {

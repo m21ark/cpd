@@ -70,6 +70,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public static void main(String[] args) throws IOException {
+        Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
@@ -89,6 +90,7 @@ public class Client implements Serializable { // This is the client application 
             return true;
         } else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
             System.out.println("Your guess is correct!");
+            System.out.println("Waiting for other players to finish...");
             return true;
         } else if (data.contains(CommunicationProtocol.GAME_END.name())) {
             System.out.println("Game over!");
@@ -231,6 +233,9 @@ public class Client implements Serializable { // This is the client application 
                 waitForGameStart(socketChannel);
                 gameLoop();
 
+                // Clear the input stream
+                while (System.in.available() > 0) System.in.read();
+
                 System.out.println("\nDo you want to play again? (y/n)");
                 String answer = (new Scanner(System.in)).nextLine().strip().toLowerCase();
                 if (answer.equals("y")) continue;
@@ -276,16 +281,18 @@ public class Client implements Serializable { // This is the client application 
             return false;
         });
 
+        int finalNumGuesses = MAX_NR_GUESSES - numGuesses + 1;
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains("GAME_RESULT")) {
 
                 // Points , Position/Players
-                String arg = data.split(" ")[1];
-                if (Integer.parseInt(arg) > 0) System.out.println("You won!");
+                String[] args = data.split(" ");
+                if (Integer.parseInt(args[1]) > 0) System.out.println("You won!");
                 else System.out.println("You lost!");
-                System.out.println("Points: " + arg + " --> New Rank = " + (player.getRank() + Integer.parseInt(arg)));
-                arg = data.split(" ")[2];
-                System.out.println("Position: " + arg);
+                System.out.println("Points: " + args[1] + " --> New Rank = " + (player.getRank() + Integer.parseInt(args[1])));
+                System.out.println("Position: " + args[2] + "/" + args[3]);
+                int delta = Integer.parseInt(args[4]) - Integer.parseInt(args[5]);
+                System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + finalNumGuesses + " guesses");
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
