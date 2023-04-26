@@ -18,7 +18,9 @@ import java.util.Scanner;
 
 public class Client implements Serializable { // This is the client application runner.
 
-    private static final int MAX_NR_GUESS = GameConfig.getInstance().getMaxNrGuess();
+    private static int NR_MAX_PLAYERS = -1;
+    private static int MAX_GUESS = -1;
+    private static int MAX_NR_GUESSES = -1;
     SocketChannel socketChannel;
     GamePlayer player;
     private String token;
@@ -47,6 +49,12 @@ public class Client implements Serializable { // This is the client application 
     public static boolean dealWithServerMessages(String data) {
         if (data.contains("GAME_STARTED")) {
             System.out.println("Game started. Time to play!");
+            String[] parts = data.split(" ");
+            System.out.println("You have " + parts[1] + " guesses.");
+            MAX_NR_GUESSES = Integer.parseInt(parts[1]);
+            NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
+            MAX_GUESS = Integer.parseInt(parts[3]);
+
             return true;
         } else if (data.contains("QUEUE_UPDATE")) {
             String[] parts = data.split(" ");
@@ -228,12 +236,12 @@ public class Client implements Serializable { // This is the client application 
     }
 
     protected void gameLoop() {
-        int numGuesses = 0;
+        int numGuesses = MAX_NR_GUESSES;
         Scanner scanner = new Scanner(System.in);
         String serverResponse;
 
-        while (numGuesses < MAX_NR_GUESS) {
-            System.out.println("Guess the number between 1 and 100: ");
+        while (numGuesses > 0) {
+            System.out.println("Guess the number between 1 and " + MAX_GUESS + " (" + numGuesses + " guesses left): ");
             int guess = getIntegerInput();
             serverResponse = sendGuess(String.valueOf(guess));
 
@@ -242,7 +250,11 @@ public class Client implements Serializable { // This is the client application 
             if (serverResponse.contains("GUESS_CORRECT")) {
                 break;
             }
-            numGuesses++;
+            numGuesses--;
+        }
+
+        if (numGuesses == 0) {
+            System.out.println("You are out of guesses! Waiting for game to end...");
         }
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {

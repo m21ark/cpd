@@ -2,26 +2,23 @@ package game.logic;
 
 import game.config.GameConfig;
 import game.logic.structures.MyConcurrentList;
+import game.logic.structures.Pair;
 import game.protocols.CommunicationProtocol;
 import game.protocols.GuessErgo;
 import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
-import game.logic.structures.Pair;
 
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class GameModel implements Runnable {
 
-    private static final int NR_MIN_PLAYERS = 2;
-    private static final int NR_MAX_PLAYERS = 2;
-    private static final int MAX_GUESS = 100;
-    private static final int MAX_NR_GUESS = 1;
-    private final int gameWinner = new Random().nextInt(MAX_GUESS);
+    private static final int NR_MAX_PLAYERS = GameConfig.getInstance().getNrMaxPlayers();
+    private static final int MAX_GUESS = GameConfig.getInstance().getMaxGuess();
+    private static final int MAX_NR_GUESSES = GameConfig.getInstance().getMaxNrGuess();
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
+    private int gameWinner = new Random().nextInt(MAX_GUESS);
     private MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
@@ -30,6 +27,10 @@ public class GameModel implements Runnable {
 
     public static int getNrMaxPlayers() {
         return NR_MAX_PLAYERS;
+    }
+
+    public static int getMaxNrGuesses() {
+        return MAX_NR_GUESSES;
     }
 
     public PlayingServer.WrappedPlayerSocket getPlayer(String token) {
@@ -74,7 +75,7 @@ public class GameModel implements Runnable {
     public void updateGuesses(String token, int guess) {
         Pair<Integer, Integer> guesses = playerGuesses.get(token);
         if (guesses == null) {
-            playerGuesses.put(token, new Pair<>(MAX_NR_GUESS - 1, guess));
+            playerGuesses.put(token, new Pair<>(MAX_NR_GUESSES - 1, guess));
         } else {
             playerGuesses.put(token, new Pair<>(guesses.getFirst() - 1, guess));
         }
@@ -83,7 +84,7 @@ public class GameModel implements Runnable {
     public int guessesLeft(String token) {
         Pair<Integer, Integer> guesses = playerGuesses.get(token);
         if (guesses == null) {
-            return MAX_NR_GUESS;
+            return MAX_NR_GUESSES;
         } else {
             return guesses.getFirst();
         }
@@ -93,34 +94,33 @@ public class GameModel implements Runnable {
         return gameWinner;
     }
 
-    public static int getMaxNrGuess() {
-        return MAX_NR_GUESS;
-    }
-
     public GuessErgo responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
 
         //while (guessesLeft(gamePlayer.getToken()) > 0) {
-            Socket connection = gamePlayer.getConnection();
-            String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
-            if (s == null) {
-                return GuessErgo.NOT_PLAYED;
-            }
-            int guess = Integer.parseInt(Objects.requireNonNull(s));
+        Socket connection = gamePlayer.getConnection();
+        if (!connection.isConnected() || connection.isClosed()) {
+            Logger.info("Player left game");
+            return GuessErgo.NOT_PLAYED;
+        }
+        String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
+        if (s == null) {
+            return GuessErgo.NOT_PLAYED;
+        }
+        int guess = Integer.parseInt(Objects.requireNonNull(s));
 
 
+        if (guess == gameWinner) {
+            SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
+            return GuessErgo.WINNING_MOVE;
+        }
 
-            if (guess == gameWinner) {
-                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
-                return GuessErgo.WINNING_MOVE;
-            }
+        updateGuesses(gamePlayer.getToken(), guess);
 
-            updateGuesses(gamePlayer.getToken(), guess);
-
-            if (guess > gameWinner) {
-                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_HIGH);
-            } else {
-                SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
-            }
+        if (guess > gameWinner) {
+            SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_HIGH);
+        } else {
+            SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
+        }
         // }
         return GuessErgo.PLAYED;
     }
@@ -140,7 +140,7 @@ public class GameModel implements Runnable {
             if (finishedPlayers == gamePlayers.size()) break;
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
                 GuessErgo response = responseToGuess(gamePlayer);
-                if (response == GuessErgo.WINNING_MOVE) {
+                if (response == GuessErgo.WINNING_MOVE || response == GuessErgo.LEFT_GAME) {
                     finishedPlayers++;
                 } else if (response == GuessErgo.PLAYED) {
                     if (guessesLeft(gamePlayer.getToken()) == 0) {
@@ -150,21 +150,21 @@ public class GameModel implements Runnable {
             }
         }
 
-       // ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
+        // ExecutorService executor = Executors.newFixedThreadPool(gamePlayers.size());
 
-       // for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-       //     executor.execute(() -> {
-       //         responseToGuess(gamePlayer);
-       //     });
-       // }
+        // for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+        //     executor.execute(() -> {
+        //         responseToGuess(gamePlayer);
+        //     });
+        // }
 
-       // // wait for all threads to finish
-       // executor.shutdown();
-       // while (!executor.isTerminated()) {
-       // }
+        // // wait for all threads to finish
+        // executor.shutdown();
+        // while (!executor.isTerminated()) {
+        // }
 
-       // // kill all threads
-       // executor.shutdownNow();
+        // // kill all threads
+        // executor.shutdownNow();
     }
 
     public void endGame() {
@@ -195,6 +195,7 @@ public class GameModel implements Runnable {
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
         System.out.println("Game cleared");
+        gameWinner = new Random().nextInt(MAX_GUESS);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
@@ -220,7 +221,10 @@ public class GameModel implements Runnable {
         //     return;
         // }
 
-        notifyPlayers(CommunicationProtocol.GAME_STARTED);
+        notifyPlayers(CommunicationProtocol.GAME_STARTED,
+                String.valueOf(MAX_NR_GUESSES),
+                String.valueOf(NR_MAX_PLAYERS),
+                String.valueOf(MAX_GUESS));
 
         gameLoop();
         endGame();

@@ -104,7 +104,7 @@ public class MyTests {
         for (int i = 0; i < 3; i++) {
             int finalI = i;
             threads.add(new Thread(() -> { // TODO: test this better when game is working
-                for (int j = 0; j < GameModel.getMaxNrGuess(); j++) { // MAX numbers of tries ... make this more modular
+                for (int j = 0; j < GameModel.getMaxNrGuesses(); j++) { // MAX numbers of tries ... make this more modular
                     for (int k = 0; k < clients.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
                         Client client = clients.get(k);

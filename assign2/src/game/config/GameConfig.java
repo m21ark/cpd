@@ -72,4 +72,12 @@ public class GameConfig implements Configurations {
     public int getMaxNrGuess() {
         return Integer.parseInt(properties.getProperty("maxNrGuesses"));
     }
+
+    public int getMaxGuess() {
+        return Integer.parseInt(properties.getProperty("maxGuessValue"));
+    }
+
+    public int getNrMaxPlayers() {
+        return Integer.parseInt(properties.getProperty("nrMaxPlayersInGame"));
+    }
 }
