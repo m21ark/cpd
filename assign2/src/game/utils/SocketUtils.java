@@ -119,7 +119,7 @@ public class SocketUtils {
                     nChannelsReady = selector.select();
                 }
 
-                if (nChannelsReady == 0) {
+                if (nChannelsReady == 0 && timeout != null) {
                     //Logger.info("No data available after " + timeout + "ms");
                     return null;
                 }

@@ -9,7 +9,7 @@ import java.util.Properties;
 public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
-    File config = new File("assign2/src/resources/config.properties"); // TODO: Muda isto outra vez e morres Ricardo
+    File config = new File("src/resources/config.properties");
     private boolean testMode = false;
 
     public GameConfig(boolean testMode) {
@@ -63,5 +63,13 @@ public class GameConfig implements Configurations {
 
     public int getMaxRankDelta() {
         return Integer.parseInt(properties.getProperty("maxRankDelta"));
+    }
+
+    public long getGameTimeout() {
+        return Long.parseLong(properties.getProperty("gameTimeoutTime"));
+    }
+
+    public int getMaxNrGuess() {
+        return Integer.parseInt(properties.getProperty("maxNrGuesses"));
     }
 }

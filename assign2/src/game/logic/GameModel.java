@@ -1,5 +1,6 @@
 package game.logic;
 
+import game.config.GameConfig;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.protocols.GuessErgo;
@@ -132,7 +133,7 @@ public class GameModel implements Runnable {
         long startTime = System.currentTimeMillis();
         while (true) {
             long elapsedTime = System.currentTimeMillis() - startTime;
-            if (elapsedTime > 300000) { // TODO: add to config
+            if (elapsedTime > GameConfig.getInstance().getGameTimeout()) {
                 Logger.info("Game timed out!");
                 break;
             }

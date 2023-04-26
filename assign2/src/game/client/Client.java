@@ -18,7 +18,7 @@ import java.util.Scanner;
 
 public class Client implements Serializable { // This is the client application runner.
 
-    private static final int MAX_NR_GUESS = 1; // TODO: should be a config or something
+    private static final int MAX_NR_GUESS = GameConfig.getInstance().getMaxNrGuess();
     SocketChannel socketChannel;
     GamePlayer player;
     private String token;
@@ -58,9 +58,6 @@ public class Client implements Serializable { // This is the client application 
 
     public static void waitForGameStart(SocketChannel socketChannel) {
         String res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
-        while (res == null || !res.contains("GAME_STARTED")) {
-            res = SocketUtils.NIORead(socketChannel, Client::dealWithServerMessages);
-        }
     }
 
     public static void main(String[] args) throws IOException {
