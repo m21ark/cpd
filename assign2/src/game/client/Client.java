@@ -77,20 +77,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
-        // Start a new thread to wait for game start
-        Thread waitThread = new Thread(() -> SocketUtils.NIORead(socketChannel, this::dealWithServerMessages));
-        waitThread.start();
-
-        // Start a new thread to verify if the user wants to leave
-        Thread leaveThread = new Thread(this::verifyUserWantToLeave);
-        leaveThread.start();
-
-        // Wait for the game to start or for the user to leave
-        try {
-            waitThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
     }
 
     public boolean dealWithServerMessages(String data) {
@@ -115,33 +102,17 @@ public class Client implements Serializable { // This is the client application 
     private void verifyUserWantToLeave() {
         // check for user input while waiting for server response
         // if user inputs "exit", close the socket and exit the program
-        //System.out.println("ola 1");
-        while (true) {
-            try {
-                //System.out.println("ola 2");
-                if (System.in.available() <= 0) Thread.sleep(1000);
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            //System.out.println("ola 3");
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("ola 2");
-            while (scanner.hasNextLine()) {
-                System.out.println("here 3");
-                String line = scanner.nextLine().toLowerCase().strip();
-                System.out.println("here 4");
-                System.out.println("line: |" + line + "|");
-                if (line.equals("exit")) {
-                    System.out.println("ola 10");
-                    try {
-                        System.out.println("Logging out at your request...");
-                        SocketUtils.NIOWrite(socketChannel, CommunicationProtocol.LOGOUT.name());
-                        this.socketChannel.close();
-                    } catch (IOException e) {
-                        System.out.println("Error closing socket channel at logout: " + e.getMessage());
-                    }
-                    System.exit(0);
-                }
+        try {
+            if (System.in.available() <= 0) return;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine().toLowerCase().strip();
+
+            if (line.equals("exit")) {
+                informServerOfLogoutAndLeave();
             }
         }
     }
@@ -340,7 +311,7 @@ public class Client implements Serializable { // This is the client application 
                 System.out.println("Points: " + args[1] + " --> New Rank = " + (player.getRank() + Integer.parseInt(args[1])));
                 System.out.println("Position: " + args[2] + "/" + args[3]);
                 int delta = Integer.parseInt(args[4]) - Integer.parseInt(args[5]);
-                System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + finalNumGuesses + " guesses");
+                System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + (finalNumGuesses - 1) + " guesses");
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
@@ -348,13 +319,29 @@ public class Client implements Serializable { // This is the client application 
         });
     }
 
+    public void informServerOfLogoutAndLeave(){
+        try {
+            System.out.println("Logging out at your request...");
+            SocketUtils.NIOWrite(socketChannel, CommunicationProtocol.LOGOUT.name());
+            this.socketChannel.close();
+        } catch (IOException e) {
+            System.out.println("Error closing socket channel at logout: " + e.getMessage());
+        }
+        System.exit(0);
+    }
+
     private int getIntegerInput() {
         int guess;
+        Scanner scanner = new Scanner(System.in);
         while (true) {
             try {
-                guess = (new Scanner(System.in)).nextInt();
+                guess = scanner.nextInt();
                 break;
             } catch (NumberFormatException | InputMismatchException e) {
+                String input = scanner.nextLine().strip();
+                if (input.equals("exit")) {
+                    informServerOfLogoutAndLeave();
+                }
                 System.out.println("Invalid input!");
             }
         }

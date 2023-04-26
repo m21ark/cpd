@@ -92,6 +92,43 @@ public class SocketUtils {
         }
     }
 
+    public static String NIOReadAndInput(SocketChannel channel, IntPredicate dealFunc, VoidPredicate inputFunc) {
+        // register a SocketChannel for reading data asynchronously (non-blocking)
+        try {
+            // Configure the channel to be non-blocking and register it with the selector for reading
+            Selector selector = Selector.open();
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+            while (true) {
+                // Logger.info("Waiting for data...");
+                buffer.clear();
+                selector.selectNow(); // neither blocking nor waiting
+
+                inputFunc.func();
+
+                // Handle read operation
+                int numBytesRead = channel.read(buffer);
+                if (numBytesRead == -1){
+                    // Socket is down
+                    closeSocket(channel.socket());
+                }
+                if (numBytesRead == 0) {
+                    continue;
+                }
+
+                String msg = new String(buffer.array(), 0, numBytesRead);
+                if (dealFunc == null) return msg;
+                if (dealFunc.func(msg)) return msg;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static String NIORead(SocketChannel channel, IntPredicate dealFunc) {
         return NIORead(channel, dealFunc, null);
     }
@@ -186,6 +223,10 @@ public class SocketUtils {
 
     public interface IntPredicate {
         boolean func(String n);
+    }
+
+    public interface VoidPredicate {
+        void func();
     }
 
 }

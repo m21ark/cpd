@@ -10,13 +10,13 @@ public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
     File config = new File("src/resources/config.properties");
-    private boolean testMode = false;
+    private boolean testMode;
 
     public GameConfig(boolean testMode) {
         // load configurations
         this.testMode = testMode;
         properties = new Properties();
-        InputStream inputStream = null;
+        InputStream inputStream;
         try {
             inputStream = new FileInputStream(config);
             properties.load(inputStream);

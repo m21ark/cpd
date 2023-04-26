@@ -123,7 +123,7 @@ public class GameModel implements Runnable {
         Socket connection = gamePlayer.getConnection();
         if (!connection.isConnected() || connection.isClosed()) {
             Logger.info("Player left game");
-            return GuessErgo.NOT_PLAYED;
+            return GuessErgo.LEFT_GAME;
         }
         String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
         if (s == null) {
