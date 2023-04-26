@@ -57,7 +57,7 @@ public class GameModel implements Runnable {
     }
 
     public void queueUpdate() {
-        this.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(this.gamePlayers.size()));
+        this.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
 
         // Check if there's a player in queue suitable for this game
         // Only for the ranking mode
@@ -221,10 +221,7 @@ public class GameModel implements Runnable {
         //     return;
         // }
 
-        notifyPlayers(CommunicationProtocol.GAME_STARTED,
-                String.valueOf(MAX_NR_GUESSES),
-                String.valueOf(NR_MAX_PLAYERS),
-                String.valueOf(MAX_GUESS));
+        notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
 
         gameLoop();
         endGame();

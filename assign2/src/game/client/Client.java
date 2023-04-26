@@ -59,7 +59,7 @@ public class Client implements Serializable { // This is the client application 
             return true;
         } else if (data.contains("QUEUE_UPDATE")) {
             String[] parts = data.split(" ");
-            System.out.println("There are " + parts[1].split("\\n")[0] + " players in the game lobby.");
+            System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
         }
         return false;
     }
@@ -115,11 +115,18 @@ public class Client implements Serializable { // This is the client application 
         String username;
 
         while (true) {
+
             Scanner scanner = new Scanner(System.in);
-            System.out.print("Username: ");
+
+            System.out.println("+-------------------------+");
+            System.out.println("|      Login Menu         |");
+            System.out.println("+-------------------------+");
+            System.out.print("| Enter username: ");
             username = scanner.nextLine().strip();
-            System.out.print("Password: ");
+            System.out.print("| Enter password: ");
             String password = scanner.nextLine().strip();
+            System.out.println("+-------------------------+");
+
 
             if (username.equals("exit")) System.exit(0);
 
@@ -158,7 +165,10 @@ public class Client implements Serializable { // This is the client application 
         if (answer.equals("y")) {
             System.out.print("Repeat Password: ");
             answer = scanner.nextLine().strip();
-        } else answer = "CANCEL_NEW_USER";
+        } else {
+            System.out.println("An account is needed to play. Shutting down...");
+            answer = "CANCEL_NEW_USER";
+        }
 
         // send answer to server
         SocketUtils.writeData(socketChannel, answer);
@@ -195,13 +205,12 @@ public class Client implements Serializable { // This is the client application 
     public int options() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("+-------------------------+");
-        System.out.println("|    Please select an     |");
-        System.out.println("|         option:         |");
-        System.out.println("+-------------------------+");
-        System.out.println("|   1 - Start a new game  |");
-        System.out.println("|   2 - Exit              |");
-        System.out.println("+-------------------------+");
+        int rank = this.player.getRank();
+        String rankString = String.format("%3d", rank);
+
+        String menuHeader = "+-------------------------+\n" + "|    Select an option     |\n" + "|      (Rank = " + rankString + ")       |\n" + "+-------------------------+\n" + "|   1 - Start a new game  |\n" + "|   2 - Exit              |\n" + "+-------------------------+";
+
+        System.out.println(menuHeader);
 
         try {
             return scanner.nextInt();

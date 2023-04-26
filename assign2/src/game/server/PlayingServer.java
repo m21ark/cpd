@@ -85,7 +85,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                     executorGameService.submit(game);
                 } else {
                     Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-                    game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()));
+                    game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
                     //TODO: adicionar timeout para o caso de n haver mais jogadores
                     //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
