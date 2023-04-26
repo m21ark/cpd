@@ -79,6 +79,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         for (GameModel game : games) {
 
             // Check if the players are still connected to the server
+            // TODO: usar rmi para avisar quando um jogador sai do jogo ... o de baixo n parece ser muito eficiente
+            // com rmi, tiramos logo do jogo mal e podemos notificar os outros jogadores no momento
             if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
 
             if (game.isAvailable()) {

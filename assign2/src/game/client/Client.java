@@ -108,12 +108,10 @@ public class Client implements Serializable { // This is the client application 
             throw new RuntimeException(e);
         }
         Scanner scanner = new Scanner(System.in);
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine().toLowerCase().strip();
+        String line = scanner.nextLine().toLowerCase().strip();
 
-            if (line.equals("exit")) {
-                informServerOfLogoutAndLeave();
-            }
+        if (line.equals("exit")) {
+            informServerOfLogoutAndLeave();
         }
     }
 
