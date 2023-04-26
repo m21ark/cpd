@@ -9,10 +9,13 @@ import java.util.Properties;
 public class GameConfig implements Configurations {
     public static GameConfig instance;
     private final Properties properties;
-    File config = new File("assign2/src/resources/config.properties");
+    File config;
     private boolean testMode;
 
     public GameConfig(boolean testMode) {
+        String workingDir = System.getProperty("user.dir");
+        if (workingDir.contains("assign2")) config = new File("src/resources/config.properties");
+        else config = new File("assign2/src/resources/config.properties");
         // load configurations
         this.testMode = testMode;
         properties = new Properties();
