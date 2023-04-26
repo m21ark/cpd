@@ -126,7 +126,10 @@ public class SocketUtils {
 
                 // Handle read operation
                 int numBytesRead = channel.read(buffer);
-                if (numBytesRead == -1) throw new IOException("Error reading from channel");
+                if (numBytesRead == -1){
+                    // Socket is down
+                    closeSocket(channel.socket());
+                }
                 if (numBytesRead == 0) {
                     // No data available at the moment, wait a bit and try again
                     Thread.sleep(100);

@@ -194,7 +194,7 @@ public class GameModel implements Runnable {
 
         gamePlayers.clear();
         PlayingServer.games.updateHeap(this);
-        System.out.println("Game cleared");
+        Logger.warning("Game cleared");
         gameWinner = new Random().nextInt(MAX_GUESS);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
@@ -213,7 +213,7 @@ public class GameModel implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Game playground");
+        Logger.info("Game playground");
         // TODO: Add max timeout to the game
 
         // if (gamePlayers.size() < NR_MIN_PLAYERS) {

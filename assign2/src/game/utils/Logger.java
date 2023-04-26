@@ -26,6 +26,7 @@ public class Logger {
     }
 
     private static void log(Level level, String color, String message) {
+        // LOGGER.setLevel(java.util.logging.Level.SEVERE);
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         String className = stackTrace[3].getClassName();
         String methodName = stackTrace[3].getMethodName();

@@ -50,10 +50,11 @@ public class Client implements Serializable { // This is the client application 
         if (data.contains("GAME_STARTED")) {
             System.out.println("Game started. Time to play!");
             String[] parts = data.split(" ");
-            System.out.println("You have " + parts[1] + " guesses.");
             MAX_NR_GUESSES = Integer.parseInt(parts[1]);
             NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
             MAX_GUESS = Integer.parseInt(parts[3]);
+            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
+            System.out.println("There are " + NR_MAX_PLAYERS + " players.");
 
             return true;
         } else if (data.contains("QUEUE_UPDATE")) {
@@ -100,7 +101,7 @@ public class Client implements Serializable { // This is the client application 
     protected void playGame() {
         Registry registry;
         try {
-            registry = LocateRegistry.getRegistry("localhost", GameConfig.getInstance().getRMIReg());
+            registry = LocateRegistry.getRegistry(GameConfig.getInstance().getAddress(), GameConfig.getInstance().getRMIReg());
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
             gameServer.queueGame(this.player, token);
         } catch (IOException | NotBoundException e) {
@@ -221,7 +222,7 @@ public class Client implements Serializable { // This is the client application 
                 waitForGameStart(socketChannel);
                 gameLoop();
 
-                System.out.println("Do you want to play again? (y/n)");
+                System.out.println("\nDo you want to play again? (y/n)");
                 String answer = (new Scanner(System.in)).nextLine().strip().toLowerCase();
                 if (answer.equals("y")) continue;
                 System.out.println("Thanks for playing!");
@@ -245,7 +246,7 @@ public class Client implements Serializable { // This is the client application 
             int guess = getIntegerInput();
             serverResponse = sendGuess(String.valueOf(guess));
 
-            System.out.println(serverResponse);
+            Logger.info(serverResponse);
 
             if (serverResponse.contains("GUESS_CORRECT")) {
                 break;
@@ -259,6 +260,7 @@ public class Client implements Serializable { // This is the client application 
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains("GAME_END")) {
+                System.out.println("The game ended! The correct number was " + data.split(" ")[1]);
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
@@ -272,8 +274,7 @@ public class Client implements Serializable { // This is the client application 
                 String arg = data.split(" ")[1];
                 if (Integer.parseInt(arg) > 0) System.out.println("You won!");
                 else System.out.println("You lost!");
-                System.out.println("Points: " + arg);
-
+                System.out.println("Points: " + arg + " --> New Rank = " + (player.getRank() + Integer.parseInt(arg)));
                 arg = data.split(" ")[2];
                 System.out.println("Position: " + arg);
                 return true;
