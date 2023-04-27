@@ -98,6 +98,11 @@ public class MyConcurrentList<E> implements Iterable<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return elements.iterator();
+        lock.readLock().lock();
+        try {
+            return elements.iterator();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }

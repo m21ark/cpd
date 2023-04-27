@@ -180,9 +180,8 @@ public class SocketUtils {
             }
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            return "DISCONNECTED";
         }
-        return null;
     }
 
 

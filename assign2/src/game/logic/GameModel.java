@@ -11,7 +11,6 @@ import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.util.*;
 
@@ -25,6 +24,7 @@ public class GameModel implements Runnable {
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private final MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
     private int gameWinner = new Random().nextInt(MAX_GUESS);
+    private boolean gameStarted = false;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
@@ -66,13 +66,13 @@ public class GameModel implements Runnable {
         return null;
     }
 
+
     public void notifyPlayers(CommunicationProtocol protocol, String... args) {
 
         Logger.info("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
         List<PlayingServer.WrappedPlayerSocket> toRemove = new ArrayList<>();
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
 
-            System.out.println("lel");
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
                 SocketUtils.sendToClient(connection, protocol, args);
@@ -80,17 +80,13 @@ public class GameModel implements Runnable {
                 toRemove.add(gamePlayer);
             }
         }
-        System.out.println("lel1");
 
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
-            System.out.println("lel2");
             gamePlayers.remove(gamePlayer);
             System.out.println("Removed player " + gamePlayer.getName() + " from game " + this);
         }
-        System.out.println("lel3");
 
         if (!toRemove.isEmpty()) PlayingServer.games.updateHeap(this);
-        System.out.println("lel4");
 
     }
 
@@ -143,6 +139,8 @@ public class GameModel implements Runnable {
         String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
         if (s == null) {
             return GuessErgo.NOT_PLAYED;
+        } else if (s.equals("DISCONNECTED")) {
+            return GuessErgo.ALREADY_LEFT_GAME;
         }
 
         int guess = Integer.parseInt(Objects.requireNonNull(s));
@@ -178,6 +176,7 @@ public class GameModel implements Runnable {
                 Logger.info("Game timed out!");
                 break;
             }
+
             if (finishedPlayers == gameSize) break;
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
                 GuessErgo response;
@@ -240,10 +239,13 @@ public class GameModel implements Runnable {
         Logger.info("Game playground");
         // TODO: Add max timeout to the game
 
+        gameStarted = true;
         notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
 
         gameLoop();
         endGame();
+
+        gameStarted = false;
     }
 
     public MyConcurrentList<PlayingServer.WrappedPlayerSocket> getGamePlayers() {
@@ -306,7 +308,21 @@ public class GameModel implements Runnable {
         PlayingServer.games.updateHeap(this);
     }
 
-    public void removePlayerNotify(PlayingServer.WrappedPlayerSocket wrappedPlayerSocket) {
-        notifyPlayers(CommunicationProtocol.PLAYER_LEFT, wrappedPlayerSocket.getToken());
+    public void playerLeftNotify() {
+        if (!gameStarted) {
+            notifyPlayers(CommunicationProtocol.PLAYER_LEFT);
+            return;
+        }
+
+        CommunicationProtocol protocol = CommunicationProtocol.PLAYER_LEFT;
+
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+
+            Socket connection = gamePlayer.getConnection();
+            if (connection.isConnected() && !connection.isClosed()) {
+                SocketUtils.sendToClient(connection, protocol);
+            }
+        }
+
     }
 }

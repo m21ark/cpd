@@ -175,15 +175,16 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
+                tokenState.getModel().playerLeftNotify(); // TODO : verificar
+                System.out.println("removed player from game");
+            }
+            else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
+                queueToPlay.removeWhere(x -> x.getToken().equals(token));
+            }
         }
 
-        if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
-            tokenState.getModel().removePlayerNotify(new WrappedPlayerSocket(gamePlayer, socket)); // TODO : verificar
-            System.out.println("removed player from game");
-        }
-        else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
-            queueToPlay.removeWhere(x -> x.getToken().equals(token));
-        }
     }
 
     public static class WrappedPlayerSocket extends GamePlayer {
