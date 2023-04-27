@@ -5,6 +5,8 @@ import game.logic.structures.MyConcurrentList;
 import game.logic.structures.Pair;
 import game.protocols.CommunicationProtocol;
 import game.protocols.GuessErgo;
+import game.protocols.TokenState;
+import game.server.GameServer;
 import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
@@ -70,6 +72,7 @@ public class GameModel implements Runnable {
         List<PlayingServer.WrappedPlayerSocket> toRemove = new ArrayList<>();
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
 
+            System.out.println("lel");
             Socket connection = gamePlayer.getConnection();
             if (connection.isConnected() && !connection.isClosed()) {
                 SocketUtils.sendToClient(connection, protocol, args);
@@ -77,11 +80,18 @@ public class GameModel implements Runnable {
                 toRemove.add(gamePlayer);
             }
         }
+        System.out.println("lel1");
+
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
+            System.out.println("lel2");
             gamePlayers.remove(gamePlayer);
             System.out.println("Removed player " + gamePlayer.getName() + " from game " + this);
         }
+        System.out.println("lel3");
+
         if (!toRemove.isEmpty()) PlayingServer.games.updateHeap(this);
+        System.out.println("lel4");
+
     }
 
     public void queueUpdate() {
@@ -128,20 +138,13 @@ public class GameModel implements Runnable {
         //while (guessesLeft(gamePlayer.getToken()) > 0) {
         Socket connection = gamePlayer.getConnection();
         if (connection.isClosed()) {
-            Logger.info("Player left game");
             return GuessErgo.ALREADY_LEFT_GAME;
         }
         String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
         if (s == null) {
             return GuessErgo.NOT_PLAYED;
-        } else if (s.contains("LOGOUT")) {
-            try {
-                connection.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return GuessErgo.LEFT_GAME;
         }
+
         int guess = Integer.parseInt(Objects.requireNonNull(s));
 
 
@@ -177,9 +180,17 @@ public class GameModel implements Runnable {
             }
             if (finishedPlayers == gameSize) break;
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-                GuessErgo response = responseToGuess(gamePlayer);
-                if (response == GuessErgo.WINNING_MOVE || response == GuessErgo.LEFT_GAME) {
+                GuessErgo response;
+                try {
+                    response = responseToGuess(gamePlayer);
+                } catch (Exception e) {
+                    response = GuessErgo.ALREADY_LEFT_GAME;
+                }
+
+                if (response == GuessErgo.WINNING_MOVE || (response == GuessErgo.ALREADY_LEFT_GAME &&
+                        !gamePlayer.hasLeftGame())) {
                     finishedPlayers++;
+                    gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED) {
                     if (guessesLeft(gamePlayer.getToken()) == 0) {
                         finishedPlayers++;
@@ -212,6 +223,7 @@ public class GameModel implements Runnable {
 
             SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token)), String.valueOf(i), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
             player.setRank(player.getRank() + leaderboard.get(token)); // TODO: salvar no ficheiro
+            GameServer.clientsStates.put(token, new TokenState());
         }
 
         gamePlayers.clear();
@@ -245,6 +257,8 @@ public class GameModel implements Runnable {
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
         PlayingServer.games.updateHeap(this);
+        GameServer.clientsStates.put(client.getToken(), new TokenState(this));
+
     }
 
     public boolean isFull() {
@@ -269,7 +283,7 @@ public class GameModel implements Runnable {
     private Map<String, Integer> getLeaderboard() {
         List<String> leaderboard = new ArrayList<>();
 
-        // Sort descendently by guesses left and then by distance to the answer
+        // Sort descendant by guesses left and then by distance to the answer
         List<Map.Entry<String, Pair<Integer, Integer>>> sorted = new ArrayList<>(playerGuesses.entrySet());
 
         // <token, <num_guesses_left, best_guess>>
@@ -290,5 +304,9 @@ public class GameModel implements Runnable {
     public void removePlayer(PlayingServer.WrappedPlayerSocket player) {
         gamePlayers.remove(player);
         PlayingServer.games.updateHeap(this);
+    }
+
+    public void removePlayerNotify(PlayingServer.WrappedPlayerSocket wrappedPlayerSocket) {
+        notifyPlayers(CommunicationProtocol.PLAYER_LEFT, wrappedPlayerSocket.getToken());
     }
 }

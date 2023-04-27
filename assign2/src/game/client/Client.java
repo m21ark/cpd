@@ -58,22 +58,27 @@ public class Client implements Serializable { // This is the client application 
     }
 
     private static boolean dealWithServerGuessResponse(String data) {
+        boolean ret = false;
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
             System.out.println("Guess is too low!");
-            return true;
-        } else if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
+            ret = true;
+        } if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
             System.out.println("Guess is too high!");
-            return true;
+            ret = true;
         } else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
             System.out.println("Your guess is correct!");
             System.out.println("Waiting for other players to finish...");
-            return true;
+            ret = true;
         } else if (data.contains(CommunicationProtocol.GAME_END.name())) {
             System.out.println("Game over!");
-            return true;
+            ret = true;
         }
-        Logger.error("Invalid response from server: " + data);
-        return false;
+        if (data.contains(CommunicationProtocol.PLAYER_LEFT.name())) {
+            System.out.println("A Player left the game!");
+            return ret;
+        }
+        if (!ret) Logger.error("Invalid response from server: " + data);
+        return ret;
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
@@ -91,10 +96,15 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("There are " + NR_MAX_PLAYERS + " players.");
 
             return true;
-        } else if (data.contains("QUEUE_UPDATE")) {
+        }
+        if (data.contains("QUEUE_UPDATE")) {
             String[] parts = data.split(" ");
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
         }
+        if (data.contains("PLAYER_LEFT")) {
+            System.out.println("A player left the game lobby.");
+        }
+
 
         return false;
     }
@@ -318,13 +328,24 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void informServerOfLogoutAndLeave(){
+        /*
         try {
             System.out.println("Logging out at your request...");
             SocketUtils.NIOWrite(socketChannel, CommunicationProtocol.LOGOUT.name());
             this.socketChannel.close();
         } catch (IOException e) {
             System.out.println("Error closing socket channel at logout: " + e.getMessage());
+        }*/
+        Registry registry;
+        try {
+            System.out.println("Logging out at your request...");
+            registry = LocateRegistry.getRegistry(GameConfig.getInstance().getAddress(), GameConfig.getInstance().getRMIReg());
+            GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
+            gameServer.logoutGame(this.player, token);
+        } catch (IOException | NotBoundException e) {
+            e.printStackTrace();
         }
+
         System.exit(0);
     }
 

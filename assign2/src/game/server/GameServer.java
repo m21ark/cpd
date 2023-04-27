@@ -2,6 +2,7 @@ package game.server;
 
 import game.config.Configurations;
 import game.config.GameConfig;
+import game.protocols.TokenState;
 import game.utils.Logger;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ public class GameServer {
 
     public static PlayingServer playingServer;
     public static Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
+    public static Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
     private ExecutorService executorService;
     private ServerSocketChannel serverSocket;

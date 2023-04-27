@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 public class MyConcurrentList<E> implements Iterable<E> {
     private final List<E> elements;
@@ -81,6 +82,15 @@ public class MyConcurrentList<E> implements Iterable<E> {
         lock.writeLock().lock();
         try {
             elements.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void removeWhere(Predicate<E> predicate) {
+        lock.writeLock().lock();
+        try {
+            elements.removeIf(predicate::test);
         } finally {
             lock.writeLock().unlock();
         }

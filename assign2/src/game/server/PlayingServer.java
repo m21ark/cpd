@@ -6,14 +6,17 @@ import game.logic.GameModel;
 import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
+import game.protocols.TokenState;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
     public static final GameHeap games = new GameHeap();
@@ -81,7 +84,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             // Check if the players are still connected to the server
             // TODO: usar rmi para avisar quando um jogador sai do jogo ... o de baixo n parece ser muito eficiente
             // com rmi, tiramos logo do jogo mal e podemos notificar os outros jogadores no momento
-            if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
+            // if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
 
             if (game.isAvailable()) {
                 var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
@@ -155,15 +158,40 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         if (!gamesAvailable) {
             addToQueue(client, token);
+            GameServer.clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED ));
             // TODO: send message to client that he is in queue, waiting for games to end ... NOT priority
         }
 
+    }
+
+    @Override
+    public void logoutGame(GamePlayer gamePlayer, String token) throws RemoteException {
+        Socket socket = GameServer.getSocket(token);
+        System.out.println("leaving game");
+
+        TokenState tokenState = GameServer.clientsStates.get(token);
+
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
+            tokenState.getModel().removePlayerNotify(new WrappedPlayerSocket(gamePlayer, socket)); // TODO : verificar
+            System.out.println("removed player from game");
+        }
+        else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
+            queueToPlay.removeWhere(x -> x.getToken().equals(token));
+        }
     }
 
     public static class WrappedPlayerSocket extends GamePlayer {
 
         private final Socket connection;
         private int tolerance;
+        private boolean leftGame = false;
+        ReentrantLock lock = new ReentrantLock();
 
         private String token;
 
@@ -181,6 +209,14 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             this.score = client.getScore();
             this.connection = connection;
             this.tolerance = tolerance;
+        }
+
+        public boolean hasLeftGame() {
+            return leftGame;
+        }
+
+        public void setLeftGame(boolean leftGame) {
+            this.leftGame = leftGame;
         }
 
         public String getToken() {
