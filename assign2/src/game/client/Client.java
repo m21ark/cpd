@@ -106,20 +106,17 @@ public class Client implements Serializable { // This is the client application 
             MAX_NR_GUESSES = Integer.parseInt(parts[1]);
             NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
             MAX_GUESS = Integer.parseInt(parts[3]);
-            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
             System.out.println("There are " + NR_MAX_PLAYERS + " players.");
-
+            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
             return true;
         }
+
         if (data.contains("QUEUE_UPDATE")) {
             String[] parts = data.split(" ");
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
         }
-        if (data.contains("PLAYER_LEFT")) {
-            System.out.println("A player left the game lobby.");
-        }
 
-
+        if (data.contains("PLAYER_LEFT"))  System.out.println("A player left the game lobby.");
         return false;
     }
 

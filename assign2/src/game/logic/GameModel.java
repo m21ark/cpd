@@ -11,6 +11,8 @@ import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.*;
 
@@ -219,14 +221,10 @@ public class GameModel implements Runnable {
 
             if (player.getConnection().isClosed()) continue;
 
-            SocketUtils.sendToClient(player.getConnection(),
-                    CommunicationProtocol.GAME_RESULT,
-                    String.valueOf(leaderboard.get(token).getFirst()),
-                    String.valueOf(leaderboard.get(token).getSecond()),
-                    String.valueOf(leaderboard.size()),
-                    String.valueOf(playerGuesses.get(token).getSecond()),
-                    String.valueOf(gameWinner));
-            player.setRank(player.getRank() + leaderboard.get(token).getFirst()); // TODO: salvar no ficheiro
+            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token).getFirst()), String.valueOf(leaderboard.get(token).getSecond()), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
+            int newRank = player.getRank() + leaderboard.get(token).getFirst();
+            player.setRank(newRank);
+            updateRank(player.getName(), newRank); // saving to file
             GameServer.clientsStates.put(token, new TokenState());
         }
 
@@ -238,6 +236,40 @@ public class GameModel implements Runnable {
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
     }
+
+    private void updateRank(String username, int rank) {
+        Logger.info("Updating persistant rank for user " + username);
+        // TODO: ADD LOCK HERE TO WRITE TO FILE
+        try {
+
+            RandomAccessFile raf = new RandomAccessFile("users.txt", "rw");
+            Formatter formatter = new Formatter();
+
+            // Read the file line by line
+            String line;
+            while ((line = raf.readLine()) != null) {
+
+                // Split the line into its components
+                String[] parts = line.split(",");
+
+                // Check if the username matches
+                if (parts[0].equals(username)) {
+                    // Update the score
+                    long pointer = raf.getFilePointer();
+                    raf.seek(pointer - line.length() - 1);
+                    String updatedLine = formatter.format("%s,%s,%s,%05d", parts[0], parts[1], parts[2], rank).toString();
+                    raf.writeBytes(updatedLine);
+                    break;
+                }
+            }
+
+            raf.close();
+            Logger.info("Updated persistant rank for user " + username);
+        } catch (IOException e) {
+            throw new RuntimeException("Error updating score in file.");
+        }
+    }
+
 
     @Override
     public void run() {
