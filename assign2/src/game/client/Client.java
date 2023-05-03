@@ -14,6 +14,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Client implements Serializable { // This is the client application runner.
 
@@ -116,7 +117,7 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
         }
 
-        if (data.contains("PLAYER_LEFT"))  System.out.println("A player left the game lobby.");
+        if (data.contains("PLAYER_LEFT")) System.out.println("A player left the game lobby.");
         return false;
     }
 
@@ -277,6 +278,25 @@ public class Client implements Serializable { // This is the client application 
     public void startGame() throws IOException {
         System.out.println("Welcome to the game!");
 
+        StringBuilder sb = new StringBuilder();
+        // Check if there's a reconnect
+        if (checkIfReconnect(sb)) {
+            System.out.println("Reconnecting to game...");
+
+            String[] parts = sb.toString().split(" ");
+            MAX_NR_GUESSES = Integer.parseInt(parts[1]);
+            NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
+            MAX_GUESS = Integer.parseInt(parts[3]);
+            System.out.println("Welcome back " + player.getName() + "!");
+            System.out.println("There are " + NR_MAX_PLAYERS + " players.");
+            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
+
+            gameLoop();
+            socketChannel.close(); // TODO : incorporar no while abaixo dps
+            // TODO: theres a problem cleaning the game.. (token not found warning on server)
+            return;
+        }
+
         int option = 0;
         while (option != 2) {
             option = this.options();
@@ -296,6 +316,20 @@ public class Client implements Serializable { // This is the client application 
             }
         }
         socketChannel.close();
+    }
+
+    private boolean checkIfReconnect(StringBuilder dataBuffer) {
+        AtomicBoolean x = new AtomicBoolean(false);
+        SocketUtils.NIORead(socketChannel, (data) -> {
+            if (data.contains("GAME_RECONNECT")) {
+                x.set(true);
+                dataBuffer.append(data);
+                return true;
+            } else if (data.contains("MENU_CONNECT")) return true;
+            x.set(false);
+            return true;
+        });
+        return x.get();
     }
 
     public void getTokenFromServer() {

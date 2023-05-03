@@ -167,7 +167,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     @Override
     public void logoutGame(GamePlayer gamePlayer, String token) throws RemoteException {
         Socket socket = GameServer.getSocket(token);
-        System.out.println("leaving game");
 
         TokenState tokenState = GameServer.clientsStates.get(token);
 
@@ -177,8 +176,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             e.printStackTrace();
         } finally {
             if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
-                tokenState.getModel().playerLeftNotify(); // TODO : verificar
-                System.out.println("removed player from game");
+                tokenState.getModel().playerLeftNotify(); // TODO : verificar se isto funciona
+                Logger.info("removed player from game");
             }
             else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
                 queueToPlay.removeWhere(x -> x.getToken().equals(token));

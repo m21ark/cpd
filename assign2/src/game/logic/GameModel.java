@@ -18,9 +18,9 @@ import java.util.*;
 
 public class GameModel implements Runnable {
 
-    private static final int NR_MAX_PLAYERS = GameConfig.getInstance().getNrMaxPlayers();
-    private static final int MAX_GUESS = GameConfig.getInstance().getMaxGuess();
-    private static final int MAX_NR_GUESSES = GameConfig.getInstance().getMaxNrGuess();
+    public static final int NR_MAX_PLAYERS = GameConfig.getInstance().getNrMaxPlayers();
+    public static final int MAX_GUESS = GameConfig.getInstance().getMaxGuess();
+    public static final int MAX_NR_GUESSES = GameConfig.getInstance().getMaxNrGuess();
 
     // the following field does not have concurrent access, so it does not need to be thread-safe
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>

@@ -1,5 +1,7 @@
 package game.server;
 
+import game.logic.GameModel;
+import game.protocols.CommunicationProtocol;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
@@ -11,7 +13,6 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Formatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -110,6 +111,13 @@ public class ClientHandler implements Runnable {
         }
 
         Logger.info("Token sent. Adding client to the server's list...");
+
+        if (GameServer.clients.containsKey(token) && isAReturningUser) {
+            Logger.info("Client was in a game. Getting him back in the game...");
+           // TODO: send correct info to client!
+            SocketUtils.sendToClient(socket,CommunicationProtocol.GAME_RECONNECT, String.valueOf(GameModel.MAX_NR_GUESSES), String.valueOf(GameModel.NR_MAX_PLAYERS), String.valueOf(GameModel.MAX_GUESS));
+        }else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+
         GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
     }
 
@@ -189,9 +197,9 @@ public class ClientHandler implements Runnable {
         // TODO: LOCK HERE
         for (String line : persistantUsers) {
             String[] fields = line.split(",");
-            if (fields[0].equals(username) && fields[2].equals(token)) return false;
+            if (fields[0].equals(username) && fields[2].equals(token)) return true;
         }
-        return true;
+        return false;
     }
 
     private boolean registerNewUser(String username, String password) {
@@ -224,7 +232,6 @@ public class ClientHandler implements Runnable {
         SocketUtils.writeData(socket, String.valueOf(authResult));
         return false;
     }
-
 
 
     private void addNewUserToPersistantStorage(String username, String passwordConf, String token) {
