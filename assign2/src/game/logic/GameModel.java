@@ -38,15 +38,15 @@ public class GameModel implements Runnable {
         return MAX_NR_GUESSES;
     }
 
-    private static Map<String, Integer> getLeaderboardScores(List<String> Leaderboard) {
+    private static Map<String, Pair<Integer, Integer>> getLeaderboardScores(List<String> Leaderboard) {
         int numUsers = Leaderboard.size();
         int middleIndex = numUsers / 2;
-        Map<String, Integer> userScores = new HashMap<>();
+        Map<String, Pair<Integer, Integer>> userScores = new HashMap<>();
 
         if (numUsers == 2) {
             // Two users, give the first user a score of 2 and the second user a score of -1
-            userScores.put(Leaderboard.get(0), 2);
-            userScores.put(Leaderboard.get(1), -1);
+            userScores.put(Leaderboard.get(0), new Pair<>(2, 1)); // <score, position>
+            userScores.put(Leaderboard.get(1), new Pair<>(-1, 2));
             return userScores;
         }
 
@@ -55,7 +55,7 @@ public class GameModel implements Runnable {
             int score;
             if (i < middleIndex) score = numUsers - middleIndex + i + 1;
             else score = middleIndex - (i - middleIndex) - 1;
-            userScores.put(Leaderboard.get(i), score);
+            userScores.put(Leaderboard.get(i), new Pair<>(score, i + 1));
         }
         return userScores;
     }
@@ -186,8 +186,7 @@ public class GameModel implements Runnable {
                     response = GuessErgo.ALREADY_LEFT_GAME;
                 }
 
-                if (response == GuessErgo.WINNING_MOVE || (response == GuessErgo.ALREADY_LEFT_GAME &&
-                        !gamePlayer.hasLeftGame())) {
+                if (response == GuessErgo.WINNING_MOVE || (response == GuessErgo.ALREADY_LEFT_GAME && !gamePlayer.hasLeftGame())) {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED) {
@@ -205,7 +204,7 @@ public class GameModel implements Runnable {
 
         notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
 
-        Map<String, Integer> leaderboard = getLeaderboard();
+        Map<String, Pair<Integer, Integer>> leaderboard = getLeaderboard();
 
         // Notify who won and who lost + update ranks
         int i = 0;
@@ -220,8 +219,14 @@ public class GameModel implements Runnable {
 
             if (player.getConnection().isClosed()) continue;
 
-            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token)), String.valueOf(i), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
-            player.setRank(player.getRank() + leaderboard.get(token)); // TODO: salvar no ficheiro
+            SocketUtils.sendToClient(player.getConnection(),
+                    CommunicationProtocol.GAME_RESULT,
+                    String.valueOf(leaderboard.get(token).getFirst()),
+                    String.valueOf(leaderboard.get(token).getSecond()),
+                    String.valueOf(leaderboard.size()),
+                    String.valueOf(playerGuesses.get(token).getSecond()),
+                    String.valueOf(gameWinner));
+            player.setRank(player.getRank() + leaderboard.get(token).getFirst()); // TODO: salvar no ficheiro
             GameServer.clientsStates.put(token, new TokenState());
         }
 
@@ -282,7 +287,7 @@ public class GameModel implements Runnable {
         return sum / gamePlayers.size();
     }
 
-    private Map<String, Integer> getLeaderboard() {
+    private Map<String, Pair<Integer, Integer>> getLeaderboard() {
         List<String> leaderboard = new ArrayList<>();
 
         // Sort descendant by guesses left and then by distance to the answer
