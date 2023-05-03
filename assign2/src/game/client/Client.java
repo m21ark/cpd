@@ -6,8 +6,7 @@ import game.server.GameServerInterface;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.rmi.NotBoundException;
@@ -52,8 +51,22 @@ public class Client implements Serializable { // This is the client application 
         // Authenticate
         if (client.authenticate()) {
 
+            // persist token
+            saveTokenToFile(client.getPlayer().getName(), client.token);
+
             // Start game
             client.startGame();
+        }
+    }
+
+    private static void saveTokenToFile(String username, String token) {
+        // persist token and rank in file
+        try {
+            FileWriter fileWriter = new FileWriter("player_" + username + ".txt");
+            fileWriter.write(token);
+            fileWriter.close();
+        } catch (IOException e) {
+            Logger.error("Error persisting token/rank to file.");
         }
     }
 
@@ -62,7 +75,8 @@ public class Client implements Serializable { // This is the client application 
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
             System.out.println("Guess is too low!");
             ret = true;
-        } if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
+        }
+        if (data.contains(CommunicationProtocol.GUESS_TOO_HIGH.name())) {
             System.out.println("Guess is too high!");
             ret = true;
         } else if (data.contains(CommunicationProtocol.GUESS_CORRECT.name())) {
@@ -161,7 +175,8 @@ public class Client implements Serializable { // This is the client application 
 
             if (username.isEmpty() || password.isEmpty()) System.out.println("Username and password are required!");
             else {
-                serverResult = serverAuthenticate(username, password);
+                String tok = getTokenFromFile(username); // check if token exists in file
+                serverResult = serverAuthenticate(username, password, tok);
                 break;
             }
         }
@@ -181,6 +196,19 @@ public class Client implements Serializable { // This is the client application 
         }
 
         return serverResult == 1;
+    }
+
+    private String getTokenFromFile(String username) {
+        // check if token exists in file
+        try {
+            File file = new File("player_" + username + ".txt");
+            Scanner scanner = new Scanner(file);
+            String token = scanner.nextLine();
+            scanner.close();
+            return token;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
     }
 
     private boolean registerUser() {
@@ -216,10 +244,10 @@ public class Client implements Serializable { // This is the client application 
         return false;
     }
 
-    private int serverAuthenticate(String username, String password) {
+    private int serverAuthenticate(String username, String password, String tok) {
 
         // send username and password to server
-        SocketUtils.writeData(socketChannel, username + "," + password);
+        SocketUtils.writeData(socketChannel, username + "," + password + "," + (tok == null ? "0" : tok));
 
         String data = SocketUtils.readData(socketChannel);
         int code = Integer.parseInt(data.split(",")[0]);
@@ -327,7 +355,7 @@ public class Client implements Serializable { // This is the client application 
         });
     }
 
-    public void informServerOfLogoutAndLeave(){
+    public void informServerOfLogoutAndLeave() {
         /*
         try {
             System.out.println("Logging out at your request...");

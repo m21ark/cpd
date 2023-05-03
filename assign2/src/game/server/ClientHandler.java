@@ -6,10 +6,12 @@ import game.utils.SocketUtils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Formatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ public class ClientHandler implements Runnable {
     public static boolean DEBUG_MODE = false;
     private final Socket socket;
     private File persistantUsersFile;
-    private List<String> persistantUsers; // Format: username:password:token  (token is optional)
+    private List<String> persistantUsers; // Format: username:password:token:score
 
     // should every handler have its own version of the file?
 
@@ -25,6 +27,34 @@ public class ClientHandler implements Runnable {
         this.socket = accept;
 
         loadPersistantStorage();
+    }
+
+    public static void saveNewTokenToFile(String username, String newToken) {
+        try {
+            // TODO : lock here
+            RandomAccessFile raf = new RandomAccessFile("users.txt", "rw");
+
+            // Read the file line by line
+            String line;
+            while ((line = raf.readLine()) != null) {
+
+                // Split the line into its components
+                String[] parts = line.split(",");
+
+                // Check if the username matches
+                if (parts[0].equals(username)) {
+                    // Update the token and leave the loop
+                    long pointer = raf.getFilePointer();
+                    raf.seek(pointer - line.length() - 1);
+                    raf.writeBytes(line.replace(parts[2], newToken));
+                    break;
+                }
+            }
+            raf.close();
+            Logger.info("Updated token for user '" + username + "' to " + newToken);
+        } catch (IOException e) {
+            Logger.error("Could not save new token to file.");
+        }
     }
 
     private void loadPersistantStorage() {
@@ -85,19 +115,20 @@ public class ClientHandler implements Runnable {
     private String authenticateUser() {
 
         // Authenticate client
-        String username, password;
+        String username, password, token;
         boolean newUser = false;
 
-        // Read username and password from client and try to authenticate
-        String username_password = SocketUtils.readData(socket);
+        // Read username, password, token from client and try to authenticate
+        String username_password_tok = SocketUtils.readData(socket);
 
-        if (username_password == null) {
-            Logger.warning("Client closed connection or took long to respond.");
+        if (username_password_tok == null) {
+            Logger.error("Client closed connection or took long to respond.");
             return "";
         }
 
-        username = username_password.split(",")[0];
-        password = username_password.split(",")[1];
+        username = username_password_tok.split(",")[0];
+        password = username_password_tok.split(",")[1];
+        token = username_password_tok.split(",")[2];
 
         Logger.info("Client connected with username : " + username + " and password : " + password);
         String authPair = authenticate(username, password);
@@ -105,7 +136,23 @@ public class ClientHandler implements Runnable {
         String rank = authPair.split(",")[1];
         Logger.info("Authentication result : " + authResult);
 
-        String token = generateRandomToken();
+        // check if token is valid
+        if (authResult == 1) {
+            if (token.equals("0")) {
+                Logger.info("Client has no token. Generating a new one.");
+                token = generateRandomToken();
+                saveNewTokenToFile(username, token);
+            } else {
+                Logger.info("Client has a token. Checking if it's valid.");
+                if (!checkIfValidToken(username, token) /*GameServer.clients.containsKey(token)*/) {
+                    Logger.info("Client's token is invalid. Generating a new one.");
+                    token = generateRandomToken();
+                    saveNewTokenToFile(username, token);
+                } else {
+                    Logger.info("Client's token is valid.");
+                }
+            }
+        } else token = generateRandomToken();
 
         // Respond to client
         SocketUtils.writeData(socket, authResult + "," + token + "," + rank);
@@ -124,12 +171,21 @@ public class ClientHandler implements Runnable {
             Logger.info("New user detected. Adding to persistant storage.");
             addNewUserToPersistantStorage(username, password, token);
             SocketUtils.writeData(socket, "1");
-        } else Logger.warning("User already exists.");
+        }
 
         // write to client
         Logger.info("Sending token to client: " + username + " <-> " + token);
         SocketUtils.writeData(socket, token);
         return token;
+    }
+
+    private boolean checkIfValidToken(String username, String token) {
+        // TODO: LOCK HERE
+        for (String line : persistantUsers) {
+            String[] fields = line.split(",");
+            if (fields[0].equals(username) && fields[3].equals(token)) return true;
+        }
+        return false;
     }
 
     private boolean registerNewUser(String username, String password) {
@@ -165,7 +221,6 @@ public class ClientHandler implements Runnable {
 
 
     private void updateRank(String username, int rank) {
-        // TODO: ADD LOCK HERE TO WRITE TO FILE
 
         for (String line : persistantUsers) {
             String[] fields = line.split(",");
@@ -174,8 +229,40 @@ public class ClientHandler implements Runnable {
         }
 
         Logger.info("Updated volatile rank for user " + username);
+        updateRankInFile(username, rank);
+        Logger.info("Updated persistant rank for user " + username);
+    }
 
-        // TODO: this is updating the list, but not the file
+    private void updateRankInFile(String username, int newScore) {
+
+        // TODO: ADD LOCK HERE TO WRITE TO FILE
+        try {
+
+            RandomAccessFile raf = new RandomAccessFile("users.txt", "rw");
+            Formatter formatter = new Formatter();
+
+            // Read the file line by line
+            String line;
+            while ((line = raf.readLine()) != null) {
+
+                // Split the line into its components
+                String[] parts = line.split(",");
+
+                // Check if the username matches
+                if (parts[0].equals(username)) {
+                    // Update the score
+                    long pointer = raf.getFilePointer();
+                    raf.seek(pointer - line.length());
+                    String updatedLine = formatter.format("%s,%s,%05d\n", parts[0], parts[1], newScore).toString();
+                    raf.writeBytes(updatedLine);
+                    break;
+                }
+            }
+
+            raf.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error updating score in file.");
+        }
     }
 
 
@@ -184,7 +271,7 @@ public class ClientHandler implements Runnable {
 
         // Append the new entry to the users.txt file
         // Format: username,password,token,rank
-        String newEntry = username + "," + passwordConf + "," + token + "," + 0;
+        String newEntry = username + "," + passwordConf + "," + token + "," + "00000";
         FileWriter writer = null; // Append mode
 
         try {
