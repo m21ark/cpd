@@ -5,7 +5,7 @@ import game.config.GameConfig;
 import game.protocols.TokenState;
 import game.utils.Logger;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
@@ -20,14 +20,15 @@ import java.util.concurrent.Executors;
 
 // Lembrar de ver isto melhor ... https://hackernoon.com/implementing-an-event-loop-in-java-for-fun-and-profit
 
-public class GameServer {
+public class GameServer implements Serializable {
 
-    public static PlayingServer playingServer;
-    public static Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
-    public static Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
+    public transient PlayingServer playingServer;
+    public Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
+    public Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
-    private ExecutorService executorService;
-    private ServerSocketChannel serverSocket;
+    private transient ExecutorService executorService;
+    private transient ServerSocketChannel serverSocket;
+    static GameServer instance = null;
 
     public GameServer(Configurations configurations) {
         super();
@@ -35,7 +36,28 @@ public class GameServer {
     }
 
     public static Socket getSocket(String token) {
-        return clients.get(token);
+        return instance.clients.get(token);
+    }
+
+    public static GameServer getInstance() {
+        return instance;
+    }
+
+    public static GameServer checkSerializableServer() {
+        // if files exists call and deserialize server
+        try {
+            FileInputStream fileIn = new FileInputStream("gameServer.ser");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            GameServer gameServer = (GameServer) in.readObject();
+            in.close();
+            fileIn.close();
+            return gameServer;
+        } catch (FileNotFoundException e) {
+            return null;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static void main(String[] args) throws IOException {
@@ -45,8 +67,28 @@ public class GameServer {
             ClientHandler.DEBUG_MODE = true;
         } else configurations = GameConfig.getInstance();
 
-        GameServer gameServer = new GameServer(configurations);
+        GameServer gameServer = checkSerializableServer();
+        if (gameServer == null) {
+             gameServer = new GameServer(configurations);
+        } else {
+            Logger.info("Using previous server instance.");
+        }
+
+        GameServer.setInstance(gameServer);
+
+        System.out.println(gameServer.clients);
+
+        ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("gameServer.ser", gameServer);
+        serializer.start();
         gameServer.start();
+
+        // Add a shutdown hook to stop the serializer, to properly stop the ScheduledExecutorService
+        Runtime.getRuntime().addShutdownHook(new Thread(serializer::stop));
+
+    }
+
+    private static void setInstance(GameServer gameServer) {
+        GameServer.instance = gameServer;
     }
 
     public void init() {

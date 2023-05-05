@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class GameConfig implements Configurations {
+public class GameConfig implements Configurations, java.io.Serializable {
     public static GameConfig instance;
     private final Properties properties;
     File config;

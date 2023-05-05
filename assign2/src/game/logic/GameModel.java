@@ -225,7 +225,7 @@ public class GameModel implements Runnable {
             int newRank = player.getRank() + leaderboard.get(token).getFirst();
             player.setRank(newRank);
             updateRank(player.getName(), newRank); // saving to file
-            GameServer.clientsStates.put(token, new TokenState());
+            GameServer.getInstance().clientsStates.put(token, new TokenState());
         }
 
         gamePlayers.clear();
@@ -296,7 +296,7 @@ public class GameModel implements Runnable {
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
         PlayingServer.games.updateHeap(this);
-        GameServer.clientsStates.put(client.getToken(), new TokenState(this));
+        GameServer.getInstance().clientsStates.put(client.getToken(), new TokenState(this));
 
     }
 

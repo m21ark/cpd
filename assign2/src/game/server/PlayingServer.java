@@ -158,7 +158,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         if (!gamesAvailable) {
             addToQueue(client, token);
-            GameServer.clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED ));
+            GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED ));
             // TODO: send message to client that he is in queue, waiting for games to end ... NOT priority
         }
 
@@ -168,7 +168,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public void logoutGame(GamePlayer gamePlayer, String token) throws RemoteException {
         Socket socket = GameServer.getSocket(token);
 
-        TokenState tokenState = GameServer.clientsStates.get(token);
+        TokenState tokenState = GameServer.getInstance().clientsStates.get(token);
 
         try {
             socket.close();

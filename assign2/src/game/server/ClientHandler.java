@@ -112,13 +112,13 @@ public class ClientHandler implements Runnable {
 
         Logger.info("Token sent. Adding client to the server's list...");
 
-        if (GameServer.clients.containsKey(token) && isAReturningUser) {
+        if (GameServer.instance.clients.containsKey(token) && isAReturningUser) {
             Logger.info("Client was in a game. Getting him back in the game...");
            // TODO: send correct info to client!
             SocketUtils.sendToClient(socket,CommunicationProtocol.GAME_RECONNECT, String.valueOf(GameModel.MAX_NR_GUESSES), String.valueOf(GameModel.NR_MAX_PLAYERS), String.valueOf(GameModel.MAX_GUESS));
         }else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
-        GameServer.clients.put(token, socket); //TODO: lock here --> we are writting
+        GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
     }
 
     private String authenticateUser() {
