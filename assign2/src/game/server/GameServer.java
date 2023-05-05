@@ -2,6 +2,7 @@ package game.server;
 
 import game.config.Configurations;
 import game.config.GameConfig;
+import game.logic.structures.MyConcurrentMap;
 import game.protocols.TokenState;
 import game.utils.Logger;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.Executors;
 public class GameServer implements Serializable {
 
     public transient PlayingServer playingServer;
-    public Map<String, Socket> clients = new HashMap<>(); // TODO: tornar isto thread safe
+    public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
     public Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
     private transient ExecutorService executorService;
@@ -76,7 +77,7 @@ public class GameServer implements Serializable {
 
         GameServer.setInstance(gameServer);
 
-        System.out.println(gameServer.clients);
+        System.out.println(gameServer.clients.getMap());
 
         ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("gameServer.ser", gameServer);
         serializer.start();
