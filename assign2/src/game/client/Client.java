@@ -371,6 +371,8 @@ public class Client implements Serializable { // This is the client application 
                 if (!tryToReconnect()) {
                     System.out.println("Sorry :( !!! server is in maintenance.");
                     System.exit(0);
+                } else {
+                    continue; // do not lose the numGuesses (hard to know how many guesses were left though)
                 }
             }
 
