@@ -3,7 +3,7 @@ package game.protocols;
 
 import game.logic.GameModel;
 
-public class TokenState {
+public class TokenState implements java.io.Serializable{
     public enum TokenStateEnum {
         PLAYING, // player is playing
         NOT_PLAYING, // player is not playing

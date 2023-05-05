@@ -15,6 +15,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,7 +24,7 @@ import java.util.concurrent.Executors;
 
 public class GameServer implements Serializable {
 
-    public transient PlayingServer playingServer;
+    public PlayingServer playingServer;
     public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
     public Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
     private final Configurations configurations;
@@ -63,21 +64,30 @@ public class GameServer implements Serializable {
 
     public static void main(String[] args) throws IOException {
         Configurations configurations;
-        if (Arrays.stream(args).toList().contains("-debug")) {
+        List<String> argsList = Arrays.stream(args).toList();
+        if (argsList.contains("-debug")) {
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
         } else configurations = GameConfig.getInstance();
 
         GameServer gameServer = checkSerializableServer();
         if (gameServer == null) {
+            // ! argsList.contains("-restart") ... ??
+            // ...pode dar jeito para n estar sempre a dar restart de um ficheiro visto que as configurações podem mudar
              gameServer = new GameServer(configurations);
         } else {
             Logger.info("Using previous server instance.");
+
+            // necessary to set the static instance of GameConfig to the previous instance
+            GameConfig.instance = (GameConfig) gameServer.configurations;
         }
 
         GameServer.setInstance(gameServer);
 
         System.out.println(gameServer.clients.getMap());
+        System.out.println(gameServer.clientsStates);
+        System.out.println(gameServer.playingServer);
+        System.out.println(gameServer.configurations);
 
         ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("gameServer.ser", gameServer);
         serializer.start();

@@ -20,7 +20,7 @@ public class ScheduledSerializer<T extends Serializable> {
     }
 
     public void start() {
-        scheduler.scheduleAtFixedRate(this::serializeObject, 0, 1, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(this::serializeObject, 0, 30, TimeUnit.SECONDS);
     }
 
     public void stop() {

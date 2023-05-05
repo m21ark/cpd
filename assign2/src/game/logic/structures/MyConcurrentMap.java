@@ -6,9 +6,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
 
 public class MyConcurrentMap<K, S> implements Serializable {
 
@@ -84,8 +81,5 @@ public class MyConcurrentMap<K, S> implements Serializable {
         }
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Transient {
-    }
 }
 

@@ -16,7 +16,7 @@ import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.*;
 
-public class GameModel implements Runnable {
+public class GameModel implements Runnable, java.io.Serializable {
 
     public static final int NR_MAX_PLAYERS = GameConfig.getInstance().getNrMaxPlayers();
     public static final int MAX_GUESS = GameConfig.getInstance().getMaxGuess();
@@ -88,7 +88,7 @@ public class GameModel implements Runnable {
             System.out.println("Removed player " + gamePlayer.getName() + " from game " + this);
         }
 
-        if (!toRemove.isEmpty()) PlayingServer.games.updateHeap(this);
+        if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
 
     }
 
@@ -229,7 +229,7 @@ public class GameModel implements Runnable {
         }
 
         gamePlayers.clear();
-        PlayingServer.games.updateHeap(this);
+        PlayingServer.getInstance().games.updateHeap(this);
         Logger.warning("Game cleared");
         gameWinner = new Random().nextInt(MAX_GUESS);
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
@@ -295,7 +295,7 @@ public class GameModel implements Runnable {
 
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
         gamePlayers.add(client);
-        PlayingServer.games.updateHeap(this);
+        PlayingServer.getInstance().games.updateHeap(this);
         GameServer.getInstance().clientsStates.put(client.getToken(), new TokenState(this));
 
     }
@@ -342,7 +342,7 @@ public class GameModel implements Runnable {
 
     public void removePlayer(PlayingServer.WrappedPlayerSocket player) {
         gamePlayers.remove(player);
-        PlayingServer.games.updateHeap(this);
+        PlayingServer.getInstance().games.updateHeap(this);
     }
 
     public void playerLeftNotify() {
@@ -361,5 +361,9 @@ public class GameModel implements Runnable {
             }
         }
 
+    }
+
+    public boolean gameStarted() {
+        return gameStarted;
     }
 }

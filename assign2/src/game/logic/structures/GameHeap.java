@@ -2,31 +2,20 @@ package game.logic.structures;
 
 import game.logic.GameModel;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class GameHeap implements Iterable<GameModel> {
+public class GameHeap implements Iterable<GameModel>, Serializable {
     private final PriorityQueue<GameModel> heap;
     private final ReadWriteLock lock;
 
     public GameHeap() {
-        Comparator<GameModel> comparator = (g1, g2) -> {
 
-            // TODO: could change this to allow to compare by game rating median too (in case of draw), or even create
-            // a different comparator for each game mode
-
-            if (g1.isFull() && !g2.isFull()) {
-                return 1;
-            } else if (!g1.isFull() && g2.isFull()) {
-                return -1;
-            }
-
-            return Integer.compare(g2.getCurrentPlayers(), g1.getCurrentPlayers());
-        };
-        heap = new PriorityQueue<>(comparator);
+        heap = new PriorityQueue<>(new GameComparator());
         lock = new ReentrantReadWriteLock(true);
     }
 
@@ -107,6 +96,20 @@ public class GameHeap implements Iterable<GameModel> {
 
         } finally {
             lock.writeLock().unlock();
+        }
+    }
+
+
+    private static class GameComparator implements Comparator<GameModel>, Serializable {
+        @Override
+        public int compare(GameModel g1, GameModel g2) {
+            if (g1.isFull() && !g2.isFull()) {
+                return 1;
+            } else if (!g1.isFull() && g2.isFull()) {
+                return -1;
+            }
+
+            return Integer.compare(g2.getCurrentPlayers(), g1.getCurrentPlayers());
         }
     }
 }

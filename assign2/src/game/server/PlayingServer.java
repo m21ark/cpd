@@ -11,6 +11,7 @@ import game.utils.Logger;
 import game.utils.SocketUtils;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -19,14 +20,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
-    public static final GameHeap games = new GameHeap();
+
+    static PlayingServer instance = null;
+    public final GameHeap games = new GameHeap();
     public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
-    private final ExecutorService executorGameService;
+    private transient ExecutorService executorGameService;
+
+    static public PlayingServer getInstance() {
+        return instance;
+    }
 
     PlayingServer() throws RemoteException {
         super();
 
-        // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razao o enunciado diz que tem de ser fixo
+        instance = this;
+        // TODO: é possivel permitir mais jogos, mesmo com o mesmo numero de threads ... por alguma razão o enunciado diz que tem de ser fixo
         executorGameService = Executors.newFixedThreadPool(5);
 
         for (int i = 0; i < 5; i++) games.addGame(new GameModel(new MyConcurrentList<>()));
@@ -176,7 +184,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             e.printStackTrace();
         } finally {
             if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
-                tokenState.getModel().playerLeftNotify(); // TODO : verificar se isto funciona
+                tokenState.getModel().playerLeftNotify(); // TODO : verificar se isto funciona ... tirar da lista de clients tb
                 Logger.info("removed player from game");
             }
             else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
@@ -186,9 +194,36 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
     }
 
+    @Serial
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+        out.defaultWriteObject();
+
+
+    }
+
+    @Serial
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+        in.defaultReadObject();
+
+        executorGameService = Executors.newFixedThreadPool(5);
+
+        System.out.println(games.getSize());
+
+        // restart the games ... after failure
+        for (GameModel game : games) {
+            System.out.println("EEEEEE");
+            if (game.gameStarted()) {
+                System.out.println("Game restarted");
+                executorGameService.submit(game);
+            }
+        }
+
+
+    }
+
     public static class WrappedPlayerSocket extends GamePlayer {
 
-        private final Socket connection;
+        private transient final Socket connection;
         private int tolerance;
         private boolean leftGame = false;
         ReentrantLock lock = new ReentrantLock();
