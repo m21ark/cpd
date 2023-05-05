@@ -23,16 +23,19 @@ public class Client implements Serializable { // This is the client application 
     private static int MAX_NR_GUESSES = -1;
     SocketChannel socketChannel;
     GamePlayer player;
+    private String password;
     private String token;
     private int rank;
 
-    public Client() throws IOException {
+    public void openConnection() throws IOException {
         GameConfig config = GameConfig.getInstance();
-
         InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
+        socketChannel = SocketChannel.open(address);
+    }
 
+    public Client() throws IOException {
         try {
-            socketChannel = SocketChannel.open(address);
+            openConnection();
         } catch (Exception e) {
             Logger.error("Server is not running");
             System.exit(0);
@@ -165,7 +168,7 @@ public class Client implements Serializable { // This is the client application 
             System.out.print("| Enter username: ");
             username = scanner.nextLine().strip();
             System.out.print("| Enter password: ");
-            String password = scanner.nextLine().strip();
+            password = scanner.nextLine().strip();
             System.out.println("+-------------------------+");
 
 
@@ -336,6 +339,20 @@ public class Client implements Serializable { // This is the client application 
         this.token = SocketUtils.readData(socketChannel);
     }
 
+    public boolean tryToReconnect() {
+        // serverAuthenticate(username, password, tok)
+        socketChannel = null;
+        while (socketChannel == null) { // add timeout
+            try {
+                openConnection();
+            } catch (IOException e) {
+                socketChannel = null;
+            }
+        }
+        serverAuthenticate(player.getName(), password , token);
+        return true;
+    }
+
     protected void gameLoop() {
         int numGuesses = MAX_NR_GUESSES;
         Scanner scanner = new Scanner(System.in);
@@ -350,7 +367,13 @@ public class Client implements Serializable { // This is the client application 
 
             if (serverResponse.contains("GUESS_CORRECT")) {
                 break;
+            } else if (serverResponse.contains("DISCONNECTED")) {
+                if (!tryToReconnect()) {
+                    System.out.println("Sorry :( !!! server is in maintenance.");
+                    System.exit(0);
+                }
             }
+
             numGuesses--;
         }
 
@@ -387,14 +410,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void informServerOfLogoutAndLeave() {
-        /*
-        try {
-            System.out.println("Logging out at your request...");
-            SocketUtils.NIOWrite(socketChannel, CommunicationProtocol.LOGOUT.name());
-            this.socketChannel.close();
-        } catch (IOException e) {
-            System.out.println("Error closing socket channel at logout: " + e.getMessage());
-        }*/
+
         Registry registry;
         try {
             System.out.println("Logging out at your request...");

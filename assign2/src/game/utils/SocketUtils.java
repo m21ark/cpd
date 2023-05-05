@@ -214,7 +214,7 @@ public class SocketUtils {
             }
 
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            return false;
         }
         return false;
     }

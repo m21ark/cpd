@@ -211,9 +211,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         // restart the games ... after failure
         for (GameModel game : games) {
-            System.out.println("EEEEEE");
             if (game.gameStarted()) {
-                System.out.println("Game restarted");
+                Logger.info("Game has been restarted after server failure");
                 executorGameService.submit(game);
             }
         }

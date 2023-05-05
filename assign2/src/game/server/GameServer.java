@@ -84,11 +84,6 @@ public class GameServer implements Serializable {
 
         GameServer.setInstance(gameServer);
 
-        System.out.println(gameServer.clients.getMap());
-        System.out.println(gameServer.clientsStates);
-        System.out.println(gameServer.playingServer);
-        System.out.println(gameServer.configurations);
-
         ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("gameServer.ser", gameServer);
         serializer.start();
         gameServer.start();
