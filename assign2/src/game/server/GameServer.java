@@ -11,6 +11,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
@@ -48,7 +50,7 @@ public class GameServer implements Serializable {
     public static GameServer checkSerializableServer() {
         // if files exists call and deserialize server
         try {
-            FileInputStream fileIn = new FileInputStream("gameServer.ser");
+            FileInputStream fileIn = new FileInputStream("cache/gameServer.ser");
             ObjectInputStream in = new ObjectInputStream(fileIn);
             GameServer gameServer = (GameServer) in.readObject();
             in.close();
@@ -65,6 +67,7 @@ public class GameServer implements Serializable {
     public static void main(String[] args) throws IOException {
         Configurations configurations;
         List<String> argsList = Arrays.stream(args).toList();
+        Files.createDirectories(Paths.get("cache"));
         if (argsList.contains("-debug")) {
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
@@ -84,7 +87,7 @@ public class GameServer implements Serializable {
 
         GameServer.setInstance(gameServer);
 
-        ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("gameServer.ser", gameServer);
+        ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("cache/gameServer.ser", gameServer);
         serializer.start();
         gameServer.start();
 

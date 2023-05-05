@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -35,8 +37,8 @@ public class ScheduledSerializer<T extends Serializable> {
             out.close();
             fileOut.close();
             System.out.println("Serialized object saved to " + filename);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
+            System.out.println("Error serializing object to " + filename);
         }
     }
 }

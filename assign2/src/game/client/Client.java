@@ -9,6 +9,8 @@ import game.utils.SocketUtils;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -66,7 +68,8 @@ public class Client implements Serializable { // This is the client application 
     private static void saveTokenToFile(String username, String token) {
         // persist token and rank in file
         try {
-            FileWriter fileWriter = new FileWriter("player_" + username + ".txt");
+            Files.createDirectories(Paths.get("cache"));
+            FileWriter fileWriter = new FileWriter("cache/player_" + username + ".txt");
             fileWriter.write(token);
             fileWriter.close();
         } catch (IOException e) {
