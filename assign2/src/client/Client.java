@@ -104,7 +104,12 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
-        SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
+        try {
+            SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
+        } catch (Exception e) {
+            System.out.println("The server closed your connection.");
+            System.exit(0);
+        }
     }
 
     public boolean dealWithServerMessages(String data) {

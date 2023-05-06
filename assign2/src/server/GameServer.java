@@ -63,7 +63,7 @@ public class GameServer implements Serializable {
         } catch (FileNotFoundException e) {
             return null;
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            Logger.error("Retrieving previous server instance failed: " + e.getMessage());
         }
         return null;
     }

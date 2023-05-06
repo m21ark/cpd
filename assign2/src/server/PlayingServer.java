@@ -20,14 +20,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
 
+    public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
     static PlayingServer instance = null;
     public final GameHeap games = new GameHeap();
-    public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
     private transient ExecutorService executorGameService;
-
-    static public PlayingServer getInstance() {
-        return instance;
-    }
 
     PlayingServer() throws RemoteException {
         super();
@@ -37,6 +33,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         executorGameService = Executors.newFixedThreadPool(5);
 
         for (int i = 0; i < 5; i++) games.addGame(new GameModel(new MyConcurrentList<>()));
+    }
+
+    static public PlayingServer getInstance() {
+        return instance;
     }
 
     private boolean rankMode(GamePlayer client, String token) {
@@ -165,7 +165,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         if (!gamesAvailable) {
             addToQueue(client, token);
-            GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED ));
+            GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
             // TODO: send message to client that he is in queue, waiting for games to end ... NOT priority
         }
 
@@ -185,8 +185,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
                 tokenState.getModel().playerLeftNotify(); // TODO : verificar se isto funciona ... tirar da lista de clients tb
                 Logger.info("removed player from game");
-            }
-            else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
+            } else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
                 queueToPlay.removeWhere(x -> x.getToken().equals(token));
             }
         }
@@ -221,11 +220,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
     public static class WrappedPlayerSocket extends GamePlayer {
 
-        private transient final Socket connection;
+        ReentrantLock lock = new ReentrantLock();
+        private transient Socket connection;
         private int tolerance;
         private boolean leftGame = false;
-        ReentrantLock lock = new ReentrantLock();
-
         private String token;
 
         public WrappedPlayerSocket(GamePlayer client, Socket connection) {
@@ -266,6 +264,18 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         public Socket getConnection() {
             return connection;
+        }
+
+        public void setConnection(Socket newSocket) {
+            lock.lock(); // todo: does this need locks?
+            try {
+                connection.close();
+                connection = newSocket;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
         }
 
         public int getTolerance() {

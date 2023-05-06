@@ -150,6 +150,8 @@ public class ClientHandler implements Runnable {
 
                 GameModel model = gs.clientsStates.get(token).getModel();
 
+                model.upadtePlayerSocket(token, socket);
+
                 String guessDirection = model.getGameWinner() - model.getBestGuess(token) > 0 ? "higher" : "lower";
 
                 SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, // Protocol

@@ -88,12 +88,22 @@ public class GameModel implements Runnable, java.io.Serializable {
             }
         }
 
+        // TODO: COMENTEI ISTO PORQUE DEITAVA LG O PLAYER FORA E IMPEDIA RECONNECTS
+/*
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
             gamePlayers.remove(gamePlayer);
             Logger.warning("Removed player '" + gamePlayer.getName() + "' from the game.");
         }
 
-        if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
+        if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);*/
+    }
+
+    public void upadtePlayerSocket(String token, Socket newSocket) {
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
+            if (gamePlayer.getToken().equals(token)) {
+                gamePlayer.setConnection(newSocket);
+                break;
+            }
     }
 
     public void queueUpdate() {
