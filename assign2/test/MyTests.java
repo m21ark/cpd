@@ -1,6 +1,6 @@
 import game.client.Client;
 import game.config.GameConfig;
-import game.logic.GameModel;
+import game.server.GameModel;
 import game.logic.structures.MyConcurrentList;
 import game.server.ClientHandler;
 import game.server.GameServer;

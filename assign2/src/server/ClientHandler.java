@@ -1,7 +1,6 @@
 package game.server;
 
 import game.config.GameConfig;
-import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
 import game.protocols.TokenState;
 import game.utils.Logger;
@@ -125,47 +124,48 @@ public class ClientHandler implements Runnable {
 
         Logger.info("Token sent. Adding client to the server's list...");
 
-
-        if (isAReturningUser) {
-
-            GameServer gs = GameServer.getInstance();
-            TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
-
-            switch (ts) {
-                case QUEUED -> {
-                    Logger.info("Client was in the queue. Getting him back in the queue...");
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
-                }
-                case PLAYGROUND -> {
-                    Logger.info("Client was in the playground. Getting him back in the playground...");
-                    String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, max_num_players);
-                }
-                case PLAYING -> {
-                    Logger.info("Client was in a game. Getting him back in the game...");
-
-                    GameModel model = gs.clientsStates.get(token).getModel();
-
-                    String guessDirection = model.getGameWinner() - model.getBestGuess(token) > 0 ? "higher" : "lower";
-
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, // Protocol
-                            String.valueOf(GameModel.MAX_NR_GUESSES), // Max number of guesses
-                            String.valueOf(GameModel.NR_MAX_PLAYERS), // NUmber of players
-                            String.valueOf(GameModel.MAX_GUESS), // Max guess
-                            String.valueOf(model.getGuessesLeft(token)), // Guesses left
-                            String.valueOf(model.getBestGuess(token)), // Best guess yet
-                            guessDirection // If the guess is higher or lower
-                    );
-                }
-                default -> {
-                    Logger.error("Player was in an unknown state. Sending him back to the menu...");
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
-                }
-            }
-
-        } else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+        if (isAReturningUser) dealWithReturningUser(token);
+        else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
         GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
+    }
+
+    private void dealWithReturningUser(String token) {
+
+        GameServer gs = GameServer.getInstance();
+        TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
+
+        switch (ts) {
+            case QUEUED -> {
+                Logger.info("Client was in the queue. Getting him back in the queue...");
+                SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
+            }
+            case PLAYGROUND -> {
+                Logger.info("Client was in the playground. Getting him back in the playground...");
+                String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
+                SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, max_num_players);
+            }
+            case PLAYING -> {
+                Logger.info("Client was in a game. Getting him back in the game...");
+
+                GameModel model = gs.clientsStates.get(token).getModel();
+
+                String guessDirection = model.getGameWinner() - model.getBestGuess(token) > 0 ? "higher" : "lower";
+
+                SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, // Protocol
+                        String.valueOf(GameModel.MAX_NR_GUESSES), // Max number of guesses
+                        String.valueOf(GameModel.NR_MAX_PLAYERS), // NUmber of players
+                        String.valueOf(GameModel.MAX_GUESS), // Max guess
+                        String.valueOf(model.getGuessesLeft(token)), // Guesses left
+                        String.valueOf(model.getBestGuess(token)), // Best guess yet
+                        guessDirection // If the guess is higher or lower
+                );
+            }
+            default -> {
+                Logger.error("Player was in an unknown state. Sending him back to the menu...");
+                SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+            }
+        }
     }
 
     private String authenticateUser() {

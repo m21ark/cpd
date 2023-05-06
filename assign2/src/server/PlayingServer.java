@@ -2,7 +2,6 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.config.GameConfig;
-import game.logic.GameModel;
 import game.logic.structures.GameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;

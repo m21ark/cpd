@@ -1,4 +1,4 @@
-package game.logic;
+package game.server;
 
 import game.config.GameConfig;
 import game.logic.structures.MyConcurrentList;
@@ -90,11 +90,10 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
             gamePlayers.remove(gamePlayer);
-            Logger.info("Removed player " + gamePlayer.getName() + " from game " + this);
+            Logger.warning("Removed player '" + gamePlayer.getName() + "' from the game.");
         }
 
         if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
-
     }
 
     public void queueUpdate() {

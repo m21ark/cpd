@@ -1,6 +1,6 @@
 package game.logic.structures;
 
-import game.logic.GameModel;
+import game.server.GameModel;
 
 import java.io.Serializable;
 import java.util.Comparator;

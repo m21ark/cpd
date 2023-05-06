@@ -1,7 +1,7 @@
 package game.protocols;
 
 
-import game.logic.GameModel;
+import game.server.GameModel;
 
 public class TokenState implements java.io.Serializable {
     private TokenStateEnum state;
