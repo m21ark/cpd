@@ -267,15 +267,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         }
 
         public void setConnection(Socket newSocket) {
-            lock.lock(); // todo: does this need locks?
-            try {
-                connection.close();
-                connection = newSocket;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
-            }
+            connection = newSocket;
         }
 
         public int getTolerance() {

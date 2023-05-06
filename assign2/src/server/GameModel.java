@@ -193,16 +193,14 @@ public class GameModel implements Runnable, java.io.Serializable {
                 break;
             }
 
+
             if (finishedPlayers == gameSize) break;
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
                 GuessErgo response;
-                try {
-                    response = responseToGuess(gamePlayer);
-                } catch (Exception e) {
-                    response = GuessErgo.ALREADY_LEFT_GAME;
-                }
 
-                if (response == GuessErgo.WINNING_MOVE || (response == GuessErgo.ALREADY_LEFT_GAME && !gamePlayer.hasLeftGame())) {
+                response = responseToGuess(gamePlayer);
+
+                if (response == GuessErgo.WINNING_MOVE) {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED) {

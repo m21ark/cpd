@@ -134,7 +134,9 @@ public class ClientHandler implements Runnable {
         System.out.println("here0");
         GameServer gs = GameServer.getInstance();
         System.out.println("here0.4");
-        TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
+        var aux = gs.clientsStates.get(token);
+        System.out.println("here0.5");
+        TokenState.TokenStateEnum ts = aux.getState();
         System.out.println("here1");
         switch (ts) {
             case QUEUED -> {
