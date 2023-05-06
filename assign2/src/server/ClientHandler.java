@@ -38,7 +38,7 @@ public class ClientHandler implements Runnable {
     public static void saveNewTokenToFile(String username, String newToken) {
         try {
             // TODO : lock here
-            RandomAccessFile raf = new RandomAccessFile("users.txt", "rw");
+            RandomAccessFile raf = new RandomAccessFile("database/users.txt", "rw");
 
             // Read the file line by line
             String line;
@@ -66,22 +66,22 @@ public class ClientHandler implements Runnable {
     private void loadPersistantStorage() {
         try {
 
-            // Check if the users.txt file exists
-            String dir = "users.txt";
+            // Check if the database/users.txt file exists
+            String dir = "database/users.txt";
             persistantUsersFile = new File(dir);
 
             if (!persistantUsersFile.exists()) {
                 // If it doesn't exist, create it
-                if (persistantUsersFile.createNewFile()) Logger.warning("Created new users.txt file.");
-                else Logger.warning("Failed to create users.txt file.");
+                if (persistantUsersFile.createNewFile()) Logger.warning("Created new database/users.txt file.");
+                else Logger.warning("Failed to create database/users.txt file.");
             }
 
-            // Read the lines from the users.txt file
+            // Read the lines from the database/users.txt file
             Path path = Paths.get(dir);
             this.persistantUsers = Files.readAllLines(path);
 
         } catch (IOException e) {
-            Logger.error("Could not intialize users.txt file.");
+            Logger.error("Could not intialize database/users.txt file.");
         }
     }
 
@@ -272,7 +272,7 @@ public class ClientHandler implements Runnable {
     private void addNewUserToPersistantStorage(String username, String passwordConf, String token) {
         // TODO: ADD LOCK HERE TO WRITE TO FILE
 
-        // Append the new entry to the users.txt file
+        // Append the new entry to the database/users.txt file
         // Format: username,password,token,rank
         String newEntry = username + "," + passwordConf + "," + token + "," + "00000";
         FileWriter writer = null; // Append mode

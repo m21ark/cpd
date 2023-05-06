@@ -242,7 +242,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         // TODO: ADD LOCK HERE TO WRITE TO FILE
         try {
 
-            RandomAccessFile raf = new RandomAccessFile("users.txt", "rw");
+            RandomAccessFile raf = new RandomAccessFile("database/users.txt", "rw");
             Formatter formatter = new Formatter();
 
             // Read the file line by line
