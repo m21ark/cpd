@@ -205,7 +205,7 @@ public class Client implements Serializable { // This is the client application 
     private String getTokenFromFile(String username) {
         // check if token exists in file
         try {
-            File file = new File("player_" + username + ".txt");
+            File file = new File("cache/player_" + username + ".txt");
             Scanner scanner = new Scanner(file);
             String token = scanner.nextLine();
             scanner.close();

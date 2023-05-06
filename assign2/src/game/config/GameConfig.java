@@ -83,4 +83,8 @@ public class GameConfig implements Configurations, java.io.Serializable {
     public int getNrMaxPlayers() {
         return Integer.parseInt(properties.getProperty("nrMaxPlayersInGame"));
     }
+
+    public long getTokenLifeSpan() {
+        return Integer.parseInt(properties.getProperty("tokenLifeSpanMin"));
+    }
 }

@@ -1,7 +1,9 @@
 package game.server;
 
+import game.config.GameConfig;
 import game.logic.GameModel;
 import game.protocols.CommunicationProtocol;
+import game.protocols.TokenState;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
@@ -13,6 +15,8 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,7 +87,16 @@ public class ClientHandler implements Runnable {
 
     private String generateRandomToken() {
         UUID uuid = UUID.randomUUID();
-        return uuid.toString().replace("-", "");
+        Instant expiration = Instant.now().plus(GameConfig.getInstance().getTokenLifeSpan(), ChronoUnit.MINUTES);
+        return uuid.toString().replace("-", "") + String.format("%010d", expiration.getEpochSecond());
+    }
+
+    public static boolean isTokenStillValid(String token) {
+        // Check if the token is valid
+        if (token.length() != 42) return false;
+        String expiration = token.substring(32);
+        Instant expirationDate = Instant.ofEpochSecond(Long.parseLong(expiration));
+        return Instant.now().isBefore(expirationDate);
     }
 
     public String authenticate(String username, String password) {
@@ -112,11 +125,32 @@ public class ClientHandler implements Runnable {
 
         Logger.info("Token sent. Adding client to the server's list...");
 
-        if (GameServer.instance.clients.containsKey(token) && isAReturningUser) {
-            Logger.info("Client was in a game. Getting him back in the game...");
-           // TODO: send correct info to client!
-            SocketUtils.sendToClient(socket,CommunicationProtocol.GAME_RECONNECT, String.valueOf(GameModel.MAX_NR_GUESSES), String.valueOf(GameModel.NR_MAX_PLAYERS), String.valueOf(GameModel.MAX_GUESS));
-        }else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+
+        if (isAReturningUser) {
+
+            GameServer gs = GameServer.getInstance();
+            TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
+
+            switch (ts) {
+                case QUEUED: {
+                    Logger.info("Client was in the queue. Getting him back in the queue...");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT /* TODO QUEUE UPDATE INFO */);
+                }
+                case PLAYGROUND: {
+                    Logger.info("Client was in the playground. Getting him back in the playground...");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT /* TODO QUEUE UPDATE INFO */);
+                }
+                case PLAYING: {
+                    Logger.info("Client was in a game. Getting him back in the game...");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, String.valueOf(GameModel.MAX_NR_GUESSES), String.valueOf(GameModel.NR_MAX_PLAYERS), String.valueOf(GameModel.MAX_GUESS));
+                }
+                default: {
+                    Logger.error("Player was in an unknown state. Sending him back to the menu...");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+                }
+            }
+
+        } else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
         GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
     }
@@ -194,6 +228,7 @@ public class ClientHandler implements Runnable {
     }
 
     private boolean isValidTok(String username, String token) {
+        if (!isTokenStillValid(token)) return false;
         // TODO: LOCK HERE
         for (String line : persistantUsers) {
             String[] fields = line.split(",");

@@ -7,7 +7,7 @@ public class TokenState implements java.io.Serializable{
     public enum TokenStateEnum {
         PLAYING, // player is playing
         NOT_PLAYING, // player is not playing
-        QUEUED, // player is queued
+        QUEUED, PLAYGROUND, // player is queued
     }
 
     private TokenStateEnum state;
