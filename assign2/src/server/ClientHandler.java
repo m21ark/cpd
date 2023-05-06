@@ -63,6 +63,14 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    public static boolean isTokenStillValid(String token) {
+        // Check if the token is valid
+        if (token.length() != 42) return false;
+        String expiration = token.substring(32);
+        Instant expirationDate = Instant.ofEpochSecond(Long.parseLong(expiration));
+        return Instant.now().isBefore(expirationDate);
+    }
+
     private void loadPersistantStorage() {
         try {
 
@@ -89,14 +97,6 @@ public class ClientHandler implements Runnable {
         UUID uuid = UUID.randomUUID();
         Instant expiration = Instant.now().plus(GameConfig.getInstance().getTokenLifeSpan(), ChronoUnit.MINUTES);
         return uuid.toString().replace("-", "") + String.format("%010d", expiration.getEpochSecond());
-    }
-
-    public static boolean isTokenStillValid(String token) {
-        // Check if the token is valid
-        if (token.length() != 42) return false;
-        String expiration = token.substring(32);
-        Instant expirationDate = Instant.ofEpochSecond(Long.parseLong(expiration));
-        return Instant.now().isBefore(expirationDate);
     }
 
     public String authenticate(String username, String password) {
@@ -132,19 +132,32 @@ public class ClientHandler implements Runnable {
             TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
 
             switch (ts) {
-                case QUEUED: {
+                case QUEUED -> {
                     Logger.info("Client was in the queue. Getting him back in the queue...");
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT /* TODO QUEUE UPDATE INFO */);
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
                 }
-                case PLAYGROUND: {
+                case PLAYGROUND -> {
                     Logger.info("Client was in the playground. Getting him back in the playground...");
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT /* TODO QUEUE UPDATE INFO */);
+                    String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, max_num_players);
                 }
-                case PLAYING: {
+                case PLAYING -> {
                     Logger.info("Client was in a game. Getting him back in the game...");
-                    SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, String.valueOf(GameModel.MAX_NR_GUESSES), String.valueOf(GameModel.NR_MAX_PLAYERS), String.valueOf(GameModel.MAX_GUESS));
+
+                    GameModel model = gs.clientsStates.get(token).getModel();
+
+                    String guessDirection = model.getGameWinner() - model.getBestGuess(token) > 0 ? "higher" : "lower";
+
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.GAME_RECONNECT, // Protocol
+                            String.valueOf(GameModel.MAX_NR_GUESSES), // Max number of guesses
+                            String.valueOf(GameModel.NR_MAX_PLAYERS), // NUmber of players
+                            String.valueOf(GameModel.MAX_GUESS), // Max guess
+                            String.valueOf(model.getGuessesLeft(token)), // Guesses left
+                            String.valueOf(model.getBestGuess(token)), // Best guess yet
+                            guessDirection // If the guess is higher or lower
+                    );
                 }
-                default: {
+                default -> {
                     Logger.error("Player was in an unknown state. Sending him back to the menu...");
                     SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
                 }

@@ -45,6 +45,11 @@ public class GameModel implements Runnable, java.io.Serializable {
         int middleIndex = numUsers / 2;
         Map<String, Pair<Integer, Integer>> userScores = new HashMap<>();
 
+        if (numUsers == 1) {
+            userScores.put(Leaderboard.get(0), new Pair<>(0, 1));
+            return userScores;
+        }
+
         if (numUsers == 2) {
             // Two users, give the first user a score of 2 and the second user a score of -1
             userScores.put(Leaderboard.get(0), new Pair<>(2, 1)); // <score, position>
@@ -85,7 +90,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
             gamePlayers.remove(gamePlayer);
-            System.out.println("Removed player " + gamePlayer.getName() + " from game " + this);
+            Logger.info("Removed player " + gamePlayer.getName() + " from game " + this);
         }
 
         if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
@@ -122,9 +127,14 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     }
 
-    public int guessesLeft(String token) {
+    public int getGuessesLeft(String token) {
         Pair<Integer, Integer> guesses = playerGuesses.get(token);
         return (guesses == null) ? MAX_NR_GUESSES : guesses.getFirst();
+    }
+
+    public int getBestGuess(String token) {
+        Pair<Integer, Integer> guesses = playerGuesses.get(token);
+        return (guesses == null) ? -1 : guesses.getSecond();
     }
 
     public int getGameWinner() {
@@ -192,7 +202,7 @@ public class GameModel implements Runnable, java.io.Serializable {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED) {
-                    if (guessesLeft(gamePlayer.getToken()) == 0) {
+                    if (getGuessesLeft(gamePlayer.getToken()) == 0) {
                         finishedPlayers++;
                     }
                 }
@@ -223,6 +233,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
             SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token).getFirst()), String.valueOf(leaderboard.get(token).getSecond()), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
             int newRank = player.getRank() + leaderboard.get(token).getFirst();
+            if (newRank < 0) newRank = 0;
             player.setRank(newRank);
             updateRank(player.getName(), newRank); // saving to file
             GameServer.getInstance().clientsStates.put(token, new TokenState());
@@ -297,7 +308,6 @@ public class GameModel implements Runnable, java.io.Serializable {
         gamePlayers.add(client);
         PlayingServer.getInstance().games.updateHeap(this);
         GameServer.getInstance().clientsStates.put(client.getToken(), new TokenState(this));
-
     }
 
     public boolean isFull() {

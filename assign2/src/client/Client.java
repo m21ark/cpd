@@ -16,7 +16,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.InputMismatchException;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client implements Serializable { // This is the client application runner.
 
@@ -28,12 +28,7 @@ public class Client implements Serializable { // This is the client application 
     private String password;
     private String token;
     private int rank;
-
-    public void openConnection() throws IOException {
-        GameConfig config = GameConfig.getInstance();
-        InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
-        socketChannel = SocketChannel.open(address);
-    }
+    private int numGuesses;
 
     public Client() throws IOException {
         try {
@@ -102,6 +97,12 @@ public class Client implements Serializable { // This is the client application 
         return ret;
     }
 
+    public void openConnection() throws IOException {
+        GameConfig config = GameConfig.getInstance();
+        InetSocketAddress address = new InetSocketAddress(config.getAddress(), config.getPort());
+        socketChannel = SocketChannel.open(address);
+    }
+
     public void waitForGameStart(SocketChannel socketChannel) {
         SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
     }
@@ -113,6 +114,7 @@ public class Client implements Serializable { // This is the client application 
             MAX_NR_GUESSES = Integer.parseInt(parts[1]);
             NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
             MAX_GUESS = Integer.parseInt(parts[3]);
+            this.numGuesses = MAX_NR_GUESSES;
             System.out.println("There are " + NR_MAX_PLAYERS + " players.");
             System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
             return true;
@@ -282,26 +284,23 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void startGame() throws IOException {
-        System.out.println("Welcome to the game!");
 
         StringBuilder sb = new StringBuilder();
-        // Check if there's a reconnect
-        if (checkIfReconnect(sb)) {
-            System.out.println("Reconnecting to game...");
+        int res = checkIfReconnect(sb);
+        if (res > 0) {
+            switch (res) {
+                case 1 -> gameReconnect(sb);
+                case 2 -> queueReconnect(sb);
+                case 3 -> playgroundReconnect(sb);
+                default -> {
+                    System.out.println("Reconnect failed!");
+                    System.exit(0);
+                }
+            }
+            return; // TODO: This is a temporary fix
+        }  // else : no reconnect
 
-            String[] parts = sb.toString().split(" ");
-            MAX_NR_GUESSES = Integer.parseInt(parts[1]);
-            NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
-            MAX_GUESS = Integer.parseInt(parts[3]);
-            System.out.println("Welcome back " + player.getName() + "!");
-            System.out.println("There are " + NR_MAX_PLAYERS + " players.");
-            System.out.println("You have " + MAX_NR_GUESSES + " guesses.");
-
-            gameLoop();
-            socketChannel.close(); // TODO : incorporar no while abaixo dps
-            // TODO: theres a problem cleaning the game.. (token not found warning on server)
-            return;
-        }
+        System.out.println("Welcome to the game!");
 
         int option = 0;
         while (option != 2) {
@@ -311,30 +310,72 @@ public class Client implements Serializable { // This is the client application 
                 waitForGameStart(socketChannel);
                 gameLoop();
 
-                // Clear the input stream
-                while (System.in.available() > 0) System.in.read();
-
-                System.out.println("\nDo you want to play again? (y/n)");
-                String answer = (new Scanner(System.in)).nextLine().strip().toLowerCase();
-                if (answer.equals("y")) continue;
-                System.out.println("Thanks for playing!");
-                break;
+                if (!wantsToPlayAgain()) break;
             }
         }
         socketChannel.close();
     }
 
-    private boolean checkIfReconnect(StringBuilder dataBuffer) {
-        AtomicBoolean x = new AtomicBoolean(false);
+    private boolean wantsToPlayAgain() {
+        // Clear the input stream
+        try {
+            while (System.in.available() > 0) System.in.read();
+            System.out.println("\nDo you want to play again? (y/n)");
+            String answer = (new Scanner(System.in)).nextLine().strip().toLowerCase();
+            if (answer.equals("y")) return true;
+            System.out.println("Thanks for playing!");
+            return false;
+        } catch (IOException e) {
+            Logger.error("Error reading input stream when asking to play again!");
+        }
+        return false;
+    }
+
+    private void playgroundReconnect(StringBuilder sb) {
+        System.out.println("Reconnecting to playground...");
+    }
+
+    private void queueReconnect(StringBuilder sb) {
+        System.out.println("Reconnecting to queue...");
+    }
+
+    private void gameReconnect(StringBuilder sb) {
+        System.out.println("Reconnecting to game...");
+
+        String[] parts = sb.toString().split(" ");
+        MAX_NR_GUESSES = Integer.parseInt(parts[1]);
+        NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
+        MAX_GUESS = Integer.parseInt(parts[3]);
+        this.numGuesses = Integer.parseInt(parts[4]);
+        int bestGuess = Integer.parseInt(parts[5]);
+        String guessDirection = parts[6];
+
+        System.out.println("Welcome back " + player.getName() + "!");
+        System.out.println("There are " + NR_MAX_PLAYERS + " players.");
+        System.out.println("You have " + numGuesses + " guesses left.");
+        if (bestGuess != -1) {
+            System.out.println("Your best guess so far is " + bestGuess + ".");
+            System.out.println("The number is " + guessDirection + " than your best guess.");
+        }
+
+        gameLoop(); // TODO: should this link back to the main loop?
+    }
+
+    private int checkIfReconnect(StringBuilder dataBuffer) {
+        AtomicInteger x = new AtomicInteger(-1);
         SocketUtils.NIORead(socketChannel, (data) -> {
-            if (data.contains("GAME_RECONNECT")) {
-                x.set(true);
-                dataBuffer.append(data);
-                return true;
-            } else if (data.contains("MENU_CONNECT")) return true;
-            x.set(false);
+            if (data.contains("MENU_CONNECT")) x.set(0);
+            else if (data.contains("GAME_RECONNECT")) x.set(1);
+            else if (data.contains("QUEUE_RECONNECT")) x.set(2);
+            else if (data.contains("PLAYGROUND_RECONNECT")) x.set(3);
+            dataBuffer.append(data);
             return true;
         });
+
+        if (x.get() == -1) {
+            System.out.println("Server response not recognized. Shutting down...");
+            System.exit(0);
+        }
         return x.get();
     }
 
@@ -352,12 +393,11 @@ public class Client implements Serializable { // This is the client application 
                 socketChannel = null;
             }
         }
-        serverAuthenticate(player.getName(), password , token);
+        serverAuthenticate(player.getName(), password, token);
         return true;
     }
 
     protected void gameLoop() {
-        int numGuesses = MAX_NR_GUESSES;
         Scanner scanner = new Scanner(System.in);
         String serverResponse;
 

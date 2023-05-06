@@ -3,16 +3,9 @@ package game.protocols;
 
 import game.logic.GameModel;
 
-public class TokenState implements java.io.Serializable{
-    public enum TokenStateEnum {
-        PLAYING, // player is playing
-        NOT_PLAYING, // player is not playing
-        QUEUED, PLAYGROUND, // player is queued
-    }
-
+public class TokenState implements java.io.Serializable {
     private TokenStateEnum state;
     private GameModel model = null;
-
     public TokenState() {
         this.state = TokenStateEnum.NOT_PLAYING;
     }
@@ -27,9 +20,12 @@ public class TokenState implements java.io.Serializable{
         this.model = model;
     }
 
-
     public GameModel getModel() {
         return model;
+    }
+
+    public void setModel(GameModel model) {
+        this.model = model;
     }
 
     public TokenStateEnum getState() {
@@ -40,7 +36,10 @@ public class TokenState implements java.io.Serializable{
         this.state = state;
     }
 
-    public void setModel(GameModel model) {
-        this.model = model;
+    public enum TokenStateEnum {
+        PLAYING, // player is playing
+        NOT_PLAYING, // player is not playing
+        QUEUED,  // player is queued
+        PLAYGROUND,  // TODO: player is in playground (not implemented)
     }
 }

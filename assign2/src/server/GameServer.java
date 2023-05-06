@@ -26,13 +26,13 @@ import java.util.concurrent.Executors;
 
 public class GameServer implements Serializable {
 
+    static GameServer instance = null;
+    private final Configurations configurations;
     public PlayingServer playingServer;
     public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
     public Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
-    private final Configurations configurations;
     private transient ExecutorService executorService;
     private transient ServerSocketChannel serverSocket;
-    static GameServer instance = null;
 
     public GameServer(Configurations configurations) {
         super();
@@ -45,6 +45,10 @@ public class GameServer implements Serializable {
 
     public static GameServer getInstance() {
         return instance;
+    }
+
+    private static void setInstance(GameServer gameServer) {
+        GameServer.instance = gameServer;
     }
 
     public static GameServer checkSerializableServer() {
@@ -77,7 +81,7 @@ public class GameServer implements Serializable {
         if (gameServer == null) {
             // ! argsList.contains("-restart") ... ??
             // ...pode dar jeito para n estar sempre a dar restart de um ficheiro visto que as configurações podem mudar
-             gameServer = new GameServer(configurations);
+            gameServer = new GameServer(configurations);
         } else {
             Logger.info("Using previous server instance.");
 
@@ -94,10 +98,6 @@ public class GameServer implements Serializable {
         // Add a shutdown hook to stop the serializer, to properly stop the ScheduledExecutorService
         Runtime.getRuntime().addShutdownHook(new Thread(serializer::stop));
 
-    }
-
-    private static void setInstance(GameServer gameServer) {
-        GameServer.instance = gameServer;
     }
 
     public void init() {

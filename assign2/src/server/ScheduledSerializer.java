@@ -1,11 +1,12 @@
 package game.server;
 
+import game.config.GameConfig;
+import game.utils.Logger;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,7 @@ public class ScheduledSerializer<T extends Serializable> {
     }
 
     public void start() {
-        scheduler.scheduleAtFixedRate(this::serializeObject, 0, 30, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::serializeObject, 0, GameConfig.getInstance().getServerCacheInterval(), TimeUnit.SECONDS);
     }
 
     public void stop() {
@@ -36,9 +37,9 @@ public class ScheduledSerializer<T extends Serializable> {
             out.writeObject(objectToSerialize);
             out.close();
             fileOut.close();
-            System.out.println("Serialized object saved to " + filename);
+            Logger.warning("Serialized object saved to " + filename);
         } catch (IOException ignored) {
-            System.out.println("Error serializing object to " + filename);
+            Logger.error("Error serializing object to " + filename);
         }
     }
 }
