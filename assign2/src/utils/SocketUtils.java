@@ -60,9 +60,7 @@ public class SocketUtils {
     }
 
     public static void sendToClient(Socket connection, CommunicationProtocol message, String... args) {
-        Logger.info("Sending to client mK: " + message.toString() + " " + String.join(" ", args));
         SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
-        Logger.info("Sent to client mK: " + message + String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {
@@ -110,7 +108,7 @@ public class SocketUtils {
 
                 // Handle read operation
                 int numBytesRead = channel.read(buffer);
-                if (numBytesRead == -1){
+                if (numBytesRead == -1) {
                     // Socket is down
                     closeSocket(channel.socket());
                 }
@@ -148,10 +146,8 @@ public class SocketUtils {
                 // Logger.info("Waiting for data...");
                 buffer.clear();
                 if (timeout != null) {
-                    if (timeout == 0)
-                        nChannelsReady = selector.selectNow(); // neither blocking nor waiting
-                    else
-                        nChannelsReady = selector.select(timeout); // wait for timeout ms
+                    if (timeout == 0) nChannelsReady = selector.selectNow(); // neither blocking nor waiting
+                    else nChannelsReady = selector.select(timeout); // wait for timeout ms
                 } else {
                     nChannelsReady = selector.select();
                 }
@@ -163,7 +159,7 @@ public class SocketUtils {
 
                 // Handle read operation
                 int numBytesRead = channel.read(buffer);
-                if (numBytesRead == -1){
+                if (numBytesRead == -1) {
                     // Socket is down
                     closeSocket(channel.socket());
                 }

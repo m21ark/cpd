@@ -23,7 +23,12 @@ public class ScheduledSerializer<T extends Serializable> {
     }
 
     public void start() {
-        scheduler.scheduleAtFixedRate(this::serializeObject, 0, GameConfig.getInstance().getServerCacheInterval(), TimeUnit.SECONDS);
+        long delta = GameConfig.getInstance().getServerCacheInterval();
+        if (delta == 0) {
+            Logger.warning("Server cache interval is not set. Server cache will not be saved.");
+            return;
+        }
+        scheduler.scheduleAtFixedRate(this::serializeObject, 0, delta, TimeUnit.SECONDS);
     }
 
     public void stop() {

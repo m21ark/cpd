@@ -377,10 +377,6 @@ public class Client implements Serializable { // This is the client application 
             return true;
         });
 
-        if (x.get() == -1) {
-            System.out.println("Server response not recognized. Shutting down...");
-            System.exit(0);
-        }
         return x.get();
     }
 

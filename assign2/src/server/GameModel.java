@@ -6,8 +6,6 @@ import game.logic.structures.Pair;
 import game.protocols.CommunicationProtocol;
 import game.protocols.GuessErgo;
 import game.protocols.TokenState;
-import game.server.GameServer;
-import game.server.PlayingServer;
 import game.utils.Logger;
 import game.utils.SocketUtils;
 
@@ -78,24 +76,21 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         Logger.info("Notifying clients: " + protocol.name() + " | args = " + String.join(";", args));
         List<PlayingServer.WrappedPlayerSocket> toRemove = new ArrayList<>();
-        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
 
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
-            if (connection.isConnected() && !connection.isClosed()) {
+
+            if (connection.isConnected() && !connection.isClosed())
                 SocketUtils.sendToClient(connection, protocol, args);
-            } else {
-                toRemove.add(gamePlayer);
-            }
+            else toRemove.add(gamePlayer);
         }
 
-        // TODO: COMENTEI ISTO PORQUE DEITAVA LG O PLAYER FORA E IMPEDIA RECONNECTS
-/*
         for (PlayingServer.WrappedPlayerSocket gamePlayer : toRemove) {
             gamePlayers.remove(gamePlayer);
             Logger.warning("Removed player '" + gamePlayer.getName() + "' from the game.");
         }
 
-        if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);*/
+        if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
     }
 
     public void upadtePlayerSocket(String token, Socket newSocket) {

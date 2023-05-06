@@ -131,10 +131,11 @@ public class ClientHandler implements Runnable {
     }
 
     private void dealWithReturningUser(String token) {
-
+        System.out.println("here0");
         GameServer gs = GameServer.getInstance();
+        System.out.println("here0.4");
         TokenState.TokenStateEnum ts = gs.clientsStates.get(token).getState();
-
+        System.out.println("here1");
         switch (ts) {
             case QUEUED -> {
                 Logger.info("Client was in the queue. Getting him back in the queue...");
@@ -164,10 +165,11 @@ public class ClientHandler implements Runnable {
                 );
             }
             default -> {
-                Logger.error("Player was in an unknown state. Sending him back to the menu...");
+                Logger.info("Player doesnt have a state to recover. Sending him to the menu...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             }
         }
+        System.out.println("here2 ");
     }
 
     private String authenticateUser() {
