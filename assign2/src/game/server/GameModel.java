@@ -22,7 +22,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     // the following field does not have concurrent access, so it does not need to be thread-safe
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
-    private final MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
+    private final MyConcurrentList<game.server.PlayingServer.WrappedPlayerSocket> gamePlayers;
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
 

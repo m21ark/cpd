@@ -28,7 +28,7 @@ public class MyTests {
     public static void setup() {
         String[] args = new String[1];
         args[0] = "-debug";
-        // start server on a different thread
+        // start game.server on a different thread
         new Thread(() -> {
             try {
                 GameServer.main(args);
@@ -39,7 +39,7 @@ public class MyTests {
 
 
         try {
-            Thread.sleep(1000); // wait for server to start
+            Thread.sleep(1000); // wait for game.server to start
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -60,7 +60,7 @@ public class MyTests {
                 client.getTokenFromServer();
                 clients.add(client); // this is a mocked player
             } catch (IOException e) {
-                Assertions.fail("Could not create client");
+                Assertions.fail("Could not create game.client");
             }
         }
 
@@ -200,7 +200,7 @@ public class MyTests {
     @Test
     public void authenticateClientConcurrent() {
 
-        GameConfig.instance = new GameConfig(); // resetting the config to production environment
+        GameConfig.instance = new GameConfig(); // resetting the game.config to production environment
         ClientHandler.DEBUG_MODE = false;
 
         List<Thread> threads = new ArrayList<>();
@@ -249,7 +249,7 @@ public class MyTests {
             Assertions.assertEquals(1, returnCode);
         }
         Assertions.assertEquals(NUM_OF_CLIENTS, returnCodes.size());
-        GameConfig.instance = new GameConfig(); // resetting the config to development environment
+        GameConfig.instance = new GameConfig(); // resetting the game.config to development environment
         ClientHandler.DEBUG_MODE = true;
     }
 
@@ -259,7 +259,7 @@ public class MyTests {
         This test is a bit slow, has the auth is updating the users.txt file over and over again
          */
 
-        GameConfig.instance = new GameConfig(); // resetting the config to production environment
+        GameConfig.instance = new GameConfig(); // resetting the game.config to production environment
         ClientHandler.DEBUG_MODE = false;
 
 
@@ -274,7 +274,7 @@ public class MyTests {
                 e.printStackTrace();
             }
         }
-        GameConfig.instance = new GameConfig(); // resetting the config to development environment
+        GameConfig.instance = new GameConfig(); // resetting the game.config to development environment
         ClientHandler.DEBUG_MODE = true;
     }
 

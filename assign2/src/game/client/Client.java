@@ -18,7 +18,7 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Client implements Serializable { // This is the client application runner.
+public class Client implements Serializable { // This is the game.client application runner.
 
     private static int NR_MAX_PLAYERS = -1;
     private static int MAX_GUESS = -1;
@@ -93,7 +93,7 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("A Player left the game!");
             return ret;
         }
-        if (!ret) Logger.error("Invalid response from server: " + data);
+        if (!ret) Logger.error("Invalid response from game.server: " + data);
         return ret;
     }
 
@@ -108,7 +108,7 @@ public class Client implements Serializable { // This is the client application 
         try {
             SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
         } catch (Exception e) {
-            System.out.println("The server closed your connection.");
+            System.out.println("The game.server closed your connection.");
             System.exit(0);
         }
     }
@@ -134,13 +134,13 @@ public class Client implements Serializable { // This is the client application 
 
         if (data.contains(CommunicationProtocol.PLAYER_LEFT.toString()))
             System.out.println("A player left the game lobby.");
-        else System.out.println("Invalid response from server: " + data);
+        else System.out.println("Invalid response from game.server: " + data);
 
         return false;
     }
 
     private void verifyUserWantToLeave() {
-        // check for user input while waiting for server response
+        // check for user input while waiting for game.server response
         // if user inputs "exit", close the socket and exit the program
         try {
             if (System.in.available() <= 0) return;
@@ -245,7 +245,7 @@ public class Client implements Serializable { // This is the client application 
             answer = "CANCEL_NEW_USER";
         }
 
-        // send answer to server
+        // send answer to game.server
         SocketUtils.writeData(socketChannel, answer);
 
         if (answer.equals("CANCEL_NEW_USER")) {
@@ -257,7 +257,7 @@ public class Client implements Serializable { // This is the client application 
             return false;
         }
 
-        // final outcome from server's registering
+        // final outcome from game.server's registering
         int ret = Integer.parseInt(SocketUtils.readData(socketChannel));
 
         if (ret == 1) {
@@ -271,7 +271,7 @@ public class Client implements Serializable { // This is the client application 
 
     private int serverAuthenticate(String username, String password, String tok) {
 
-        // send username and password to server
+        // send username and password to game.server
         SocketUtils.writeData(socketChannel, username + "," + password + "," + (tok == null ? "0" : tok));
 
         String data = SocketUtils.readData(socketChannel);
@@ -468,7 +468,7 @@ public class Client implements Serializable { // This is the client application 
                 System.out.println("The game ended!");
                 return true;
             }
-            Logger.error("Invalid response from server: " + data);
+            Logger.error("Invalid response from game.server: " + data);
             return false;
         });
 
@@ -493,7 +493,7 @@ public class Client implements Serializable { // This is the client application 
                 else System.out.println("It took you " + (finalNumGuesses - 1) + " guesses to win");
                 return true;
             }
-            Logger.error("Invalid response from server: " + data);
+            Logger.error("Invalid response from game.server: " + data);
             return false;
         });
     }

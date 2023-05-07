@@ -88,7 +88,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // now we just need to check the first game
         for (GameModel game : games) {
 
-            // Check if the players are still connected to the server
+            // Check if the players are still connected to the game.server
             // TODO: usar rmi para avisar quando um jogador sai do jogo ... o de baixo n parece ser muito eficiente
             // com rmi, tiramos logo do jogo mal e podemos notificar os outros jogadores no momento
             // if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
@@ -208,7 +208,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // restart the games ... after failure
         for (GameModel game : games) {
             if (game.gameStarted()) {
-                Logger.info("Game has been restarted after server failure");
+                Logger.info("Game has been restarted after game.server failure");
                 executorGameService.submit(game);
             }
         }

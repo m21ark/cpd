@@ -122,7 +122,7 @@ public class ClientHandler implements Runnable {
             if (token.equals("")) return; // Authentication failed
         }
 
-        Logger.info("Token sent. Adding client to the server's list...");
+        Logger.info("Token sent. Adding game.client to the game.server's list...");
 
         if (isAReturningUser) dealWithReturningUser(token);
         else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
@@ -146,7 +146,7 @@ public class ClientHandler implements Runnable {
             case QUEUED -> {
                 Logger.info("Client was in the queue. Getting him back in the queue...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
-                // TODO: send the client the current queue position
+                // TODO: send the game.client the current queue position
             }
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");
@@ -162,7 +162,7 @@ public class ClientHandler implements Runnable {
                 String max_num_players = String.valueOf(GameConfig.getInstance().getNrMaxPlayers());
                 SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, playerCount, max_num_players);
 
-                model.updatePlayerSocket(token, socket);  // connect the client to the same playground
+                model.updatePlayerSocket(token, socket);  // connect the game.client to the same playground
             }
             case PLAYING -> {
                 Logger.info("Client was in a game. Getting him back in the game...");
@@ -201,11 +201,11 @@ public class ClientHandler implements Runnable {
 
     private String authenticateUser() {
 
-        // Authenticate client
+        // Authenticate game.client
         String username, password, token;
         boolean newUser = false;
 
-        // Read username, password, token from client and try to authenticate
+        // Read username, password, token from game.client and try to authenticate
         String username_password_tok = SocketUtils.readData(socket);
 
         if (username_password_tok == null) {
@@ -226,10 +226,10 @@ public class ClientHandler implements Runnable {
         if (authResult == 1) token = checkIfValidToken(username, token);
         else token = generateRandomToken();
 
-        // Respond to client
+        // Respond to game.client
         SocketUtils.writeData(socket, authResult + "," + token + "," + rank);
 
-        // if auth fails, close socket for this client
+        // if auth fails, close socket for this game.client
         if (authResult == 2) {
             SocketUtils.closeSocket(socket);
             return "";
@@ -245,8 +245,8 @@ public class ClientHandler implements Runnable {
             SocketUtils.writeData(socket, "1");
         }
 
-        // write to client
-        Logger.info("Sending token to client: " + username + " <-> " + token);
+        // write to game.client
+        Logger.info("Sending token to game.client: " + username + " <-> " + token);
         SocketUtils.writeData(socket, token);
         return token;
     }
@@ -282,10 +282,10 @@ public class ClientHandler implements Runnable {
     }
 
     private boolean registerNewUser(String password) {
-        // client will answer if they want to add a new entry
+        // game.client will answer if they want to add a new entry
         int authResult;
 
-        // Read password confirmation from client
+        // Read password confirmation from game.client
         String passwordConf = SocketUtils.readData(socket);
 
         if (passwordConf == null) {
@@ -306,7 +306,7 @@ public class ClientHandler implements Runnable {
             return true;
         }
 
-        // Respond to client
+        // Respond to game.client
         SocketUtils.writeData(socket, String.valueOf(authResult));
         return false;
     }

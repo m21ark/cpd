@@ -52,7 +52,7 @@ public class GameServer implements Serializable {
     }
 
     public static GameServer checkSerializableServer() {
-        // if files exists call and deserialize server
+        // if files exists call and deserialize game.server
         try {
             FileInputStream fileIn = new FileInputStream("cache/gameServer.ser");
             ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -63,7 +63,7 @@ public class GameServer implements Serializable {
         } catch (FileNotFoundException e) {
             return null;
         } catch (IOException | ClassNotFoundException e) {
-            Logger.error("Retrieving previous server instance failed: " + e.getMessage());
+            Logger.error("Retrieving previous game.server instance failed: " + e.getMessage());
         }
         return null;
     }
@@ -85,7 +85,7 @@ public class GameServer implements Serializable {
             // ...pode dar jeito para não estar sempre a dar _restart de um ficheiro visto que as configurações podem mudar
             gameServer = new GameServer(configurations);
         } else {
-            Logger.info("Using previous server instance.");
+            Logger.info("Using previous game.server instance.");
 
             // necessary to set the static instance of GameConfig to the previous instance
             GameConfig.instance = (GameConfig) gameServer.configurations;
@@ -116,7 +116,7 @@ public class GameServer implements Serializable {
             serverSocket.configureBlocking(false);
             Logger.info("Server started on port " + configurations.getPort());
         } catch (IOException e) {
-            Logger.error("Could not open server socket on port " + configurations.getPort());
+            Logger.error("Could not open game.server socket on port " + configurations.getPort());
             System.exit(1);
         }
     }
