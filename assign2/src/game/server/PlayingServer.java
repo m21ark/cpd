@@ -88,11 +88,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // now we just need to check the first game
         for (GameModel game : games) {
 
-            // Check if the players are still connected to the game.server
-            // TODO: usar rmi para avisar quando um jogador sai do jogo ... o de baixo n parece ser muito eficiente
-            // com rmi, tiramos logo do jogo mal e podemos notificar os outros jogadores no momento
-            // if (!checkIfPlayersAreStillConnected(game)) notifyQueueUpdate(game);
-
             if (game.isAvailable()) {
                 var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
                 player.setToken(token);
@@ -108,7 +103,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 }
                 return true;
             } else {
-                // TODO return false?
+                break;
             }
         }
         return false;
@@ -117,27 +112,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     private void notifyPlaygroundUpdate(GameModel game) {
         game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
-
-    /* //TODO: ver se isto é preciso
-    private boolean checkIfPlayersAreStillConnected(GameModel game) {
-        for (WrappedPlayerSocket player : game.getGamePlayers()) {
-
-            // Check if they logged out or lost connection
-            try {
-                String s = SocketUtils.NIORead(player.getConnection().getChannel(), (String x) -> {
-                    if (x.contains(CommunicationProtocol.LOGOUT.name())) {
-                        Logger.warning("Player logged out of the game");
-                        game.removePlayer(player);
-                    }
-                    return true;
-                }, 100L);
-            } catch (Exception e) {
-                Logger.warning("Player " + player.getToken() + " lost connection");
-                return false;
-            }
-        }
-        return true;
-    }*/
 
     public void addToQueue(GamePlayer client, String token) {
         Logger.warning("No games available, player will be set to a queue");
@@ -181,7 +155,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             e.printStackTrace();
         } finally {
             if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
-                tokenState.getModel().playerLeftNotify(); // TODO : verificar se isto funciona ... tirar da lista de clients tb
+                tokenState.getModel().playerLeftNotify(); // TODO : tirar da lista de clients
                 Logger.info("removed player from game");
             } else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
                 queueToPlay.removeWhere(x -> x.getToken().equals(token));

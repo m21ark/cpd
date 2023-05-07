@@ -150,7 +150,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         Socket connection = gamePlayer.getConnection();
         if (connection.isClosed()) return GuessErgo.ALREADY_LEFT_GAME;
 
-        String s = SocketUtils.NIORead(connection.getChannel(), null, 50L); // TODO: is this timeout ok?
+        String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
 
         if (s == null) return GuessErgo.NOT_PLAYED;
         else if (s.equals(CommunicationProtocol.DISCONNECTED.toString())) return GuessErgo.ALREADY_LEFT_GAME;
