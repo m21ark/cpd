@@ -127,7 +127,12 @@ public class ClientHandler implements Runnable {
         if (isAReturningUser) dealWithReturningUser(token);
         else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
+        System.out.println("here 3 : " + GameServer.instance.clients.size());
+        System.out.println(GameServer.instance.clientsStates);
+        // GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
         GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
+        System.out.println(GameServer.instance.clientsStates);
+        System.out.println("here 4 : " + GameServer.instance.clients.size());
     }
 
     private void dealWithReturningUser(String token) {
@@ -145,8 +150,13 @@ public class ClientHandler implements Runnable {
             }
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");
+                System.out.println("here lol 1");
+                String playerCount = String.valueOf(aux.getModel().getCurrentPlayers());
+                System.out.println("here lol 2");
                 String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
-                SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, String.valueOf(aux.getModel().getCurrentPlayers()), max_num_players);
+                System.out.println("here 5");
+                SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, playerCount, max_num_players);
+                System.out.println("here 6");
             }
             case PLAYING -> {
                 Logger.info("Client was in a game. Getting him back in the game...");

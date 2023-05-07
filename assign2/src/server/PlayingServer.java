@@ -155,10 +155,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     }
 
     @Override
-    public void queueGame(GamePlayer client, String token) throws RemoteException {
-
-        // TODO: detetar se o player desistiu da queue
-        Logger.info("Added player to queue");
+    public void tryToJoinGame(GamePlayer client, String token) throws RemoteException {
 
         boolean gamesAvailable;
         String mode = GameConfig.getInstance().getMode();
@@ -169,6 +166,9 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         if (!gamesAvailable) {
             addToQueue(client, token);
             GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
+        } else {
+            Logger.info("Player added to playground");
+            GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.PLAYGROUND));
         }
     }
 

@@ -72,12 +72,14 @@ public class GameServer implements Serializable {
         Configurations configurations;
         List<String> argsList = Arrays.stream(args).toList();
         Files.createDirectories(Paths.get("cache"));
+
         if (argsList.contains("-debug")) {
             configurations = new GameConfig(true);
             ClientHandler.DEBUG_MODE = true;
         } else configurations = GameConfig.getInstance();
 
         GameServer gameServer = checkSerializableServer();
+
         if (gameServer == null) {
             // ! argsList.contains("-restart") ... ??
             // ...pode dar jeito para n estar sempre a dar restart de um ficheiro visto que as configurações podem mudar

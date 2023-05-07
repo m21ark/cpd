@@ -156,7 +156,7 @@ public class Client implements Serializable { // This is the client application 
         try {
             registry = LocateRegistry.getRegistry(GameConfig.getInstance().getAddress(), GameConfig.getInstance().getRMIReg());
             GameServerInterface gameServer = (GameServerInterface) registry.lookup("playingServer");
-            gameServer.queueGame(this.player, token);
+            gameServer.tryToJoinGame(this.player, token);
             System.out.println("Waiting for other players to join...");
             System.out.println("Type 'exit' to leave the game lobby.");
         } catch (IOException | NotBoundException e) {
@@ -195,9 +195,11 @@ public class Client implements Serializable { // This is the client application 
 
         switch (serverResult) {
             case 0 -> {
-                if (registerUser()) this.player = new GamePlayer(username, rank);
-                else return false;
-                return true;
+                if (registerUser()) {
+                    this.player = new GamePlayer(username, rank);
+                    return true;
+                }
+                return false;
             }
             case 1 -> {
                 System.out.println("Login successful!");
@@ -242,7 +244,14 @@ public class Client implements Serializable { // This is the client application 
         // send answer to server
         SocketUtils.writeData(socketChannel, answer);
 
-        if (answer.equals("CANCEL_NEW_USER")) return false;
+        if (answer.equals("CANCEL_NEW_USER")) {
+            try {
+                socketChannel.close();
+            } catch (IOException e) {
+                System.out.println("Error closing socket channel.");
+            }
+            return false;
+        }
 
         // final outcome from server's registering
         int ret = Integer.parseInt(SocketUtils.readData(socketChannel));

@@ -6,8 +6,9 @@ import game.server.GameModel;
 public class TokenState implements java.io.Serializable {
     private TokenStateEnum state;
     private GameModel model = null;
+
     public TokenState() {
-        this.state = TokenStateEnum.NOT_PLAYING;
+        this.state = TokenStateEnum.MENU;
     }
 
     public TokenState(GameModel model) {
@@ -37,9 +38,9 @@ public class TokenState implements java.io.Serializable {
     }
 
     public enum TokenStateEnum {
-        PLAYING, // player is playing
-        NOT_PLAYING, // player is not playing
+        MENU, // player is in the menu after login
         QUEUED,  // player is queued
-        PLAYGROUND,  // TODO: player is in playground (not implemented)
+        PLAYGROUND,  // player is in the playground
+        PLAYING // player is playing
     }
 }

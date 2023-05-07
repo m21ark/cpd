@@ -196,7 +196,6 @@ public class GameModel implements Runnable, java.io.Serializable {
                 break;
             }
 
-
             if (finishedPlayers == gameSize) break;
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
                 GuessErgo response;
@@ -213,7 +212,6 @@ public class GameModel implements Runnable, java.io.Serializable {
                 }
             }
         }
-
 
     }
 
