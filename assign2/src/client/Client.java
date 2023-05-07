@@ -46,7 +46,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public static void main(String[] args) throws IOException {
-        // Logger.setLevel(java.util.logging.Level.SEVERE);
+        Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
