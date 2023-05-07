@@ -37,6 +37,11 @@ public class TokenState implements java.io.Serializable {
         this.state = state;
     }
 
+    @Override
+    public String toString() {
+        return "TokenState{" + "state=" + state + ", model=" + model + '}';
+    }
+
     public enum TokenStateEnum {
         MENU, // player is in the menu after login
         QUEUED,  // player is queued

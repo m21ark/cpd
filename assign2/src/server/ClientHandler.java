@@ -128,7 +128,6 @@ public class ClientHandler implements Runnable {
         else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
         System.out.println("here 3 : " + GameServer.instance.clients.size());
-        System.out.println(GameServer.instance.clientsStates);
         // GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
         GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
         System.out.println(GameServer.instance.clientsStates);
@@ -136,10 +135,18 @@ public class ClientHandler implements Runnable {
     }
 
     private void dealWithReturningUser(String token) {
+        System.out.println("here -1");
+        System.out.println(GameServer.getInstance().clientsStates);
         System.out.println("here0");
         GameServer gs = GameServer.getInstance();
         System.out.println("here0.4");
         var aux = gs.clientsStates.get(token);
+        if (aux == null) {
+            Logger.info("Couldn't find a state to recover.");
+            SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+            return;
+        }
+        System.out.println(aux);
         System.out.println("here0.5");
         TokenState.TokenStateEnum ts = aux.getState();
         System.out.println("here1");
@@ -147,21 +154,37 @@ public class ClientHandler implements Runnable {
             case QUEUED -> {
                 Logger.info("Client was in the queue. Getting him back in the queue...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
+                // TODO: send the client the current queue position
             }
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");
                 System.out.println("here lol 1");
-                String playerCount = String.valueOf(aux.getModel().getCurrentPlayers());
+                var aux2 = aux.getModel();
+                System.out.println("here lol 1.5");
+                System.out.println(aux2);
+                if (aux2 == null) {
+                    Logger.info("Couldn't find a model to recover to playground.");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+                    return;
+                }
+                String playerCount = String.valueOf(aux2.getCurrentPlayers()); // TODO: PROBLEM 1: CONCURRENT ACCESS LOCKED HERE
                 System.out.println("here lol 2");
                 String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
                 System.out.println("here 5");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, playerCount, max_num_players);
                 System.out.println("here 6");
+                // TODO: send the client the same playground
             }
             case PLAYING -> {
                 Logger.info("Client was in a game. Getting him back in the game...");
 
                 GameModel model = gs.clientsStates.get(token).getModel();
+
+                if (model == null) {
+                    Logger.info("Couldn't find a model to recover to game.");
+                    SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+                    return;
+                }
 
                 model.upadtePlayerSocket(token, socket);
 
@@ -176,8 +199,12 @@ public class ClientHandler implements Runnable {
                         guessDirection // If the guess is higher or lower
                 );
             }
+            case MENU -> {
+                Logger.info("Client was in the menu. Sending him back to the menu...");
+                SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
+            }
             default -> {
-                Logger.info("Player doesnt have a state to recover. Sending him to the menu...");
+                Logger.info("Unforseen state. Sending player to the main menu...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             }
         }

@@ -291,6 +291,12 @@ public class GameModel implements Runnable, java.io.Serializable {
         // TODO: Add max timeout to the game
 
         gameStarted = true;
+
+        // update the state of the players to playing
+        var clients = GameServer.getInstance().clientsStates;
+        for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
+            clients.put(client.getToken(), new TokenState(this));
+
         notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
 
         gameLoop();
