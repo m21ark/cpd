@@ -113,7 +113,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public boolean dealWithServerMessages(String data) {
-        if (data.contains("GAME_STARTED")) {
+        if (data.contains(CommunicationProtocol.GAME_STARTED.toString())) {
             System.out.println("Game started. Time to play!");
             String[] parts = data.split(" ");
             MAX_NR_GUESSES = Integer.parseInt(parts[1]);
@@ -125,12 +125,13 @@ public class Client implements Serializable { // This is the client application 
             return true;
         }
 
-        if (data.contains("QUEUE_UPDATE")) {
+        if (data.contains(CommunicationProtocol.PLAYGROUND_UPDATE.toString())) {
             String[] parts = data.split(" ");
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
         }
 
-        if (data.contains("PLAYER_LEFT")) System.out.println("A player left the game lobby.");
+        if (data.contains(CommunicationProtocol.PLAYER_LEFT.toString()))
+            System.out.println("A player left the game lobby.");
         return false;
     }
 
@@ -369,10 +370,10 @@ public class Client implements Serializable { // This is the client application 
     private int checkIfReconnect(StringBuilder dataBuffer) {
         AtomicInteger x = new AtomicInteger(-1);
         SocketUtils.NIORead(socketChannel, (data) -> {
-            if (data.contains("MENU_CONNECT")) x.set(0);
-            else if (data.contains("GAME_RECONNECT")) x.set(1);
-            else if (data.contains("QUEUE_RECONNECT")) x.set(2);
-            else if (data.contains("PLAYGROUND_RECONNECT")) x.set(3);
+            if (data.contains(CommunicationProtocol.MENU_CONNECT.toString())) x.set(0);
+            else if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())) x.set(1);
+            else if (data.contains(CommunicationProtocol.QUEUE_RECONNECT.toString())) x.set(2);
+            else if (data.contains(CommunicationProtocol.PLAYGROUND_RECONNECT.toString())) x.set(3);
             dataBuffer.append(data);
             return true;
         });
@@ -409,9 +410,9 @@ public class Client implements Serializable { // This is the client application 
 
             Logger.info(serverResponse);
 
-            if (serverResponse.contains("GUESS_CORRECT")) {
+            if (serverResponse.contains(CommunicationProtocol.GUESS_CORRECT.toString())) {
                 break;
-            } else if (serverResponse.contains("DISCONNECTED")) {
+            } else if (serverResponse.contains(CommunicationProtocol.DISCONNECTED.toString())) {
                 if (!tryToReconnect()) {
                     System.out.println("Sorry :( !!! server is in maintenance.");
                     System.exit(0);
@@ -428,7 +429,7 @@ public class Client implements Serializable { // This is the client application 
         }
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
-            if (data.contains("GAME_END")) {
+            if (data.contains(CommunicationProtocol.GAME_END.toString())) {
                 System.out.println("The game ended! The correct number was " + data.split(" ")[1]);
                 return true;
             }
@@ -438,7 +439,7 @@ public class Client implements Serializable { // This is the client application 
 
         int finalNumGuesses = MAX_NR_GUESSES - numGuesses + 1;
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
-            if (data.contains("GAME_RESULT")) {
+            if (data.contains(CommunicationProtocol.GAME_RESULT.toString())) {
 
                 // Points , Position/Players
                 String[] args = data.split(" ");
@@ -489,7 +490,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     private String sendGuess(String guess) {
-        SocketUtils.NIOWrite(socketChannel, String.valueOf(guess));
+        SocketUtils.sendToServer(socketChannel.socket(), CommunicationProtocol.GUESS, String.valueOf(guess));
         return SocketUtils.NIORead(socketChannel, Client::dealWithServerGuessResponse);
     }
 

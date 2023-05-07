@@ -72,7 +72,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             executorGameService.submit(game);
         } else {
             Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-            game.queueUpdate(); // check if a ranked player waiting can enter this updated game
+            game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
             //TODO: adicionar timeout para o caso de n haver mais jogadores
             //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
         }
@@ -98,12 +98,11 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 player.setToken(token);
                 game.addPlayer(player);
                 if (game.isFull()) {
-
                     Logger.info("Game started");
                     executorGameService.submit(game);
                 } else {
                     Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-                    notifyQueueUpdate(game);
+                    notifyPlaygroundUpdate(game);
                     //TODO: adicionar timeout para o caso de n haver mais jogadores
                     //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
@@ -116,8 +115,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         return false;
     }
 
-    private void notifyQueueUpdate(GameModel game) {
-        game.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
+    private void notifyPlaygroundUpdate(GameModel game) {
+        game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
 
     private boolean checkIfPlayersAreStillConnected(GameModel game) {
@@ -146,9 +145,13 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // probably it should not be a queue has in rank mode the order is not that important, and we don't want
         // to discard some players
 
-        var player = new WrappedPlayerSocket(client, GameServer.getSocket(token));
+        Socket s = GameServer.getSocket(token);
+        var player = new WrappedPlayerSocket(client, s);
         player.setToken(token);
         queueToPlay.add(player);
+
+        // Informing player that he was sent to queue
+        SocketUtils.NIOWrite(s.getChannel(), CommunicationProtocol.QUEUE_ADD.toString());
     }
 
     @Override
@@ -166,9 +169,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         if (!gamesAvailable) {
             addToQueue(client, token);
             GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
-            // TODO: send message to client that he is in queue, waiting for games to end ... NOT priority
         }
-
     }
 
     @Override

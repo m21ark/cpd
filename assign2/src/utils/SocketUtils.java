@@ -63,6 +63,10 @@ public class SocketUtils {
         SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
     }
 
+    public static void sendToServer(Socket connection, CommunicationProtocol message, String... args) {
+        SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
+    }
+
     public static void closeSocket(Socket socket) {
         try {
             socket.close();
@@ -176,7 +180,7 @@ public class SocketUtils {
             }
 
         } catch (IOException | InterruptedException e) {
-            return "DISCONNECTED";
+            return CommunicationProtocol.DISCONNECTED.toString();
         }
     }
 

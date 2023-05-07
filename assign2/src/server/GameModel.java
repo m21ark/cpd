@@ -101,8 +101,8 @@ public class GameModel implements Runnable, java.io.Serializable {
             }
     }
 
-    public void queueUpdate() {
-        this.notifyPlayers(CommunicationProtocol.QUEUE_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
+    public void playgroundUpdate() {
+        this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
 
         // Check if there's a player in queue suitable for this game
         // Only for the ranking mode
@@ -155,8 +155,11 @@ public class GameModel implements Runnable, java.io.Serializable {
         String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
         if (s == null) {
             return GuessErgo.NOT_PLAYED;
-        } else if (s.equals("DISCONNECTED")) {
+        } else if (s.equals(CommunicationProtocol.DISCONNECTED.toString())) {
             return GuessErgo.ALREADY_LEFT_GAME;
+        } else if (!s.contains(CommunicationProtocol.GUESS.toString())) {
+            Logger.warning("Client sent something that isn't a guess...");
+            return GuessErgo.NOT_PLAYED;
         }
 
         int guess = Integer.parseInt(Objects.requireNonNull(s));
@@ -216,7 +219,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     public void endGame() {
 
-        notifyPlayers(CommunicationProtocol.GAME_END, String.valueOf(gameWinner));
+        notifyPlayers(CommunicationProtocol.GAME_END);
 
         Map<String, Pair<Integer, Integer>> leaderboard = getLeaderboard();
 
