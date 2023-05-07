@@ -119,7 +119,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
 
-    private boolean checkIfPlayersAreStillConnected(GameModel game) {
+    /*private boolean checkIfPlayersAreStillConnected(GameModel game) {
         for (WrappedPlayerSocket player : game.getGamePlayers()) {
 
             // Check if they logged out or lost connection
@@ -130,14 +130,14 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                         game.removePlayer(player);
                     }
                     return true;
-                }, 100L); // TODO: timeout number ?
+                }, 100L);
             } catch (Exception e) {
                 Logger.warning("Player " + player.getToken() + " lost connection");
                 return false;
             }
         }
         return true;
-    }
+    }*/
 
     public void addToQueue(GamePlayer client, String token) {
         Logger.warning("No games available, player will be set to a queue");

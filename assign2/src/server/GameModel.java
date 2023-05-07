@@ -366,14 +366,10 @@ public class GameModel implements Runnable, java.io.Serializable {
             return;
         }
 
-        CommunicationProtocol protocol = CommunicationProtocol.PLAYER_LEFT;
-
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-
             Socket connection = gamePlayer.getConnection();
-            if (connection.isConnected() && !connection.isClosed()) {
-                SocketUtils.sendToClient(connection, protocol);
-            }
+            if (connection.isConnected() && !connection.isClosed())
+                SocketUtils.sendToClient(connection, CommunicationProtocol.PLAYER_LEFT);
         }
 
     }

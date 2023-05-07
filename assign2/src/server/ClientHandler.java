@@ -146,7 +146,7 @@ public class ClientHandler implements Runnable {
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");
                 String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
-                SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, max_num_players);
+                SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, String.valueOf(aux.getModel().getCurrentPlayers()), max_num_players);
             }
             case PLAYING -> {
                 Logger.info("Client was in a game. Getting him back in the game...");
