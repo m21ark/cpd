@@ -430,7 +430,7 @@ public class Client implements Serializable { // This is the client application 
 
         serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains(CommunicationProtocol.GAME_END.toString())) {
-                System.out.println("The game ended! The correct number was " + data.split(" ")[1]);
+                System.out.println("The game ended!");
                 return true;
             }
             Logger.error("Invalid response from server: " + data);
@@ -443,12 +443,19 @@ public class Client implements Serializable { // This is the client application 
 
                 // Points , Position/Players
                 String[] args = data.split(" ");
-                if (Integer.parseInt(args[1]) > 0) System.out.println("You won!");
+                int delta = Integer.parseInt(args[4]) - Integer.parseInt(args[5]);
+
+                if (delta != 0) System.out.println("The correct number was " + Integer.parseInt(args[5]));
+                else System.out.println("You guessed the correct number " + Integer.parseInt(args[5]));
+
+                if (Integer.parseInt(args[1]) > 0 || delta == 0) System.out.println("You won!");
                 else System.out.println("You lost!");
+
                 System.out.println("Points: " + args[1] + " --> New Rank = " + (player.getRank() + Integer.parseInt(args[1])));
                 System.out.println("Position: " + args[2] + "/" + args[3]);
-                int delta = Integer.parseInt(args[4]) - Integer.parseInt(args[5]);
-                System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + (finalNumGuesses - 1) + " guesses");
+                if (delta != 0)
+                    System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + (finalNumGuesses - 1) + " guesses");
+                else System.out.println("It took you " + (finalNumGuesses - 1) + " guesses to win");
                 return true;
             }
             Logger.error("Invalid response from server: " + data);

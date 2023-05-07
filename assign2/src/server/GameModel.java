@@ -23,7 +23,7 @@ public class GameModel implements Runnable, java.io.Serializable {
     // the following field does not have concurrent access, so it does not need to be thread-safe
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private final MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers;
-    private int gameWinner = new Random().nextInt(MAX_GUESS);
+    private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
@@ -162,7 +162,7 @@ public class GameModel implements Runnable, java.io.Serializable {
             return GuessErgo.NOT_PLAYED;
         }
 
-        int guess = Integer.parseInt(Objects.requireNonNull(s));
+        int guess = Integer.parseInt(s.split(" ")[1]);
 
 
         if (guess == gameWinner) {
