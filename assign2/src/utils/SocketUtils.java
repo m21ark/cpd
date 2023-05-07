@@ -111,6 +111,8 @@ public class SocketUtils {
                 if (numBytesRead == -1) {
                     // Socket is down
                     closeSocket(channel.socket());
+                    System.out.println("Socket is down");
+                    System.exit(0);
                 }
                 if (numBytesRead == 0) {
                     continue;
@@ -143,7 +145,7 @@ public class SocketUtils {
             int nChannelsReady;
 
             while (true) {
-                Logger.info("Waiting for data...");
+                //Logger.info("Waiting for data...");
                 buffer.clear();
                 if (timeout != null) {
                     if (timeout == 0) nChannelsReady = selector.selectNow(); // neither blocking nor waiting
@@ -154,7 +156,7 @@ public class SocketUtils {
 
 
                 if (nChannelsReady == 0 && timeout != null) {
-                    Logger.info("No data available after " + timeout + "ms");
+                    // Logger.info("No data available after " + timeout + "ms");
                     return null;
                 }
 

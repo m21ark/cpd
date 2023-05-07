@@ -104,6 +104,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
+        // TODO: still problem for same login on menu
         try {
             SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
         } catch (Exception e) {
@@ -302,8 +303,6 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public void startGame() {
-
-        System.out.println("SOCKET CHANNEL: " + socketChannel);
 
         StringBuilder sb = new StringBuilder();
         int res = checkIfReconnect(sb);
