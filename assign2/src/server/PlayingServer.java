@@ -44,7 +44,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         // This mode uses the player's rank to determine the order of the players in the game
 
         int rankDelta = GameConfig.getInstance().getBaseRankDelta();
-        GameModel game = null;
+        GameModel game;
 
         // try to find a game with the given rank tolerance
         // TODO: ver o que acontece quando um com mais de 500 n entra no primeiro jogo
@@ -107,10 +107,9 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                     //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
                 return true;
+            } else {
+                // TODO return false?
             }
-            // else {
-            //     return false;
-            // }
         }
         return false;
     }
@@ -119,7 +118,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
 
-    /*private boolean checkIfPlayersAreStillConnected(GameModel game) {
+    /* //TODO: ver se isto é preciso
+    private boolean checkIfPlayersAreStillConnected(GameModel game) {
         for (WrappedPlayerSocket player : game.getGamePlayers()) {
 
             // Check if they logged out or lost connection
@@ -245,7 +245,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         }
 
         public void setLeftGame(boolean leftGame) {
-            this.leftGame = leftGame;
+            this.leftGame = leftGame; // TODO: FAZ SE SET MAS NUNCA SE USA
         }
 
         public String getToken() {

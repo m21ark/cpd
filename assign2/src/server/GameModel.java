@@ -222,9 +222,8 @@ public class GameModel implements Runnable, java.io.Serializable {
         Map<String, Pair<Integer, Integer>> leaderboard = getLeaderboard();
 
         // Notify who won and who lost + update ranks
-        int i = 0;
         for (String token : leaderboard.keySet()) {
-            i++;
+
             PlayingServer.WrappedPlayerSocket player = getPlayer(token);
 
             if (player == null) {

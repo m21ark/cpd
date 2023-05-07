@@ -7,7 +7,5 @@ public interface Configurations {
 
     int getRMIReg();
 
-    boolean isTestMode();
-
     String getMode();
 }

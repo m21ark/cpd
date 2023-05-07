@@ -19,10 +19,6 @@ public class SocketUtils {
         return new String(bytes);
     }
 
-    public static ByteBuffer prepareData(String data) {
-        return ByteBuffer.wrap(data.getBytes());
-    }
-
     public static String readData(SocketChannel socket) {
         return readData(socket.socket());
     }
@@ -184,7 +180,7 @@ public class SocketUtils {
     }
 
 
-    public static boolean NIOWrite(SocketChannel channel, String data) {
+    public static void NIOWrite(SocketChannel channel, String data) {
         // register a SocketChannel for writing data asynchronously (non-blocking)
         try {
             // Configure the channel to be non-blocking and register it with the selector for writing
@@ -205,7 +201,7 @@ public class SocketUtils {
                 totalBytesWritten += numBytesWritten;
                 if (totalBytesWritten == data.length()) {
                     Logger.info("Wrote to channel: |" + data + "|");
-                    return true;
+                    return;
                 }
 
                 // Not all bytes were written, retry after a short delay
@@ -213,9 +209,8 @@ public class SocketUtils {
             }
 
         } catch (IOException | InterruptedException e) {
-            return false;
+            Logger.error("Error writing to socket: " + e.getMessage());
         }
-        return false;
     }
 
 

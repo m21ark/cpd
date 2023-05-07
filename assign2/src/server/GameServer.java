@@ -74,7 +74,7 @@ public class GameServer implements Serializable {
         Files.createDirectories(Paths.get("cache"));
 
         if (argsList.contains("-debug")) {
-            configurations = new GameConfig(true);
+            configurations = new GameConfig();
             ClientHandler.DEBUG_MODE = true;
         } else configurations = GameConfig.getInstance();
 
@@ -82,7 +82,7 @@ public class GameServer implements Serializable {
 
         if (gameServer == null) {
             // ! argsList.contains("-restart") ... ??
-            // ...pode dar jeito para n estar sempre a dar restart de um ficheiro visto que as configurações podem mudar
+            // ...pode dar jeito para não estar sempre a dar _restart de um ficheiro visto que as configurações podem mudar
             gameServer = new GameServer(configurations);
         } else {
             Logger.info("Using previous server instance.");

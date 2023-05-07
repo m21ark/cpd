@@ -200,7 +200,7 @@ public class MyTests {
     @Test
     public void authenticateClientConcurrent() {
 
-        GameConfig.instance = new GameConfig(false); // resetting the config to production environment
+        GameConfig.instance = new GameConfig(); // resetting the config to production environment
         ClientHandler.DEBUG_MODE = false;
 
         List<Thread> threads = new ArrayList<>();
@@ -249,7 +249,7 @@ public class MyTests {
             Assertions.assertEquals(1, returnCode);
         }
         Assertions.assertEquals(NUM_OF_CLIENTS, returnCodes.size());
-        GameConfig.instance = new GameConfig(true); // resetting the config to development environment
+        GameConfig.instance = new GameConfig(); // resetting the config to development environment
         ClientHandler.DEBUG_MODE = true;
     }
 
@@ -259,7 +259,7 @@ public class MyTests {
         This test is a bit slow, has the auth is updating the users.txt file over and over again
          */
 
-        GameConfig.instance = new GameConfig(false); // resetting the config to production environment
+        GameConfig.instance = new GameConfig(); // resetting the config to production environment
         ClientHandler.DEBUG_MODE = false;
 
 
@@ -274,7 +274,7 @@ public class MyTests {
                 e.printStackTrace();
             }
         }
-        GameConfig.instance = new GameConfig(true); // resetting the config to development environment
+        GameConfig.instance = new GameConfig(); // resetting the config to development environment
         ClientHandler.DEBUG_MODE = true;
     }
 

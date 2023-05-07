@@ -74,7 +74,7 @@ public class GameHeap implements Iterable<GameModel>, Serializable {
     public GameModel getGameWithClosestRank(int rank, int rankDelta) {
         lock.writeLock().lock();
         try {
-            GameModel closestGame = null;
+            GameModel closestGame;
             int closestRank = Integer.MAX_VALUE;
 
             for (GameModel game : heap)

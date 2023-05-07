@@ -4,7 +4,7 @@ package game.protocols;
 import game.server.GameModel;
 
 public class TokenState implements java.io.Serializable {
-    private TokenStateEnum state;
+    private final TokenStateEnum state;
     private GameModel model = null;
 
     public TokenState() {
@@ -20,16 +20,8 @@ public class TokenState implements java.io.Serializable {
         return model;
     }
 
-    public void setModel(GameModel model) {
-        this.model = model;
-    }
-
     public TokenStateEnum getState() {
         return state;
-    }
-
-    public void setState(TokenStateEnum state) {
-        this.state = state;
     }
 
     @Override

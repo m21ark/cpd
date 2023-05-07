@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
-public class MyConcurrentList<E> implements Iterable<E>, java.io.Serializable{
+public class MyConcurrentList<E> implements Iterable<E>, java.io.Serializable {
     private final List<E> elements;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
@@ -90,7 +90,7 @@ public class MyConcurrentList<E> implements Iterable<E>, java.io.Serializable{
     public void removeWhere(Predicate<E> predicate) {
         lock.writeLock().lock();
         try {
-            elements.removeIf(predicate::test);
+            elements.removeIf(predicate);
         } finally {
             lock.writeLock().unlock();
         }

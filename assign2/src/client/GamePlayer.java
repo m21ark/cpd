@@ -29,7 +29,4 @@ public class GamePlayer implements Serializable {
         return score;
     }
 
-    public void addScore(int score) {
-        this.score += score;
-    }
 }

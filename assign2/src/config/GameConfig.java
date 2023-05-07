@@ -10,14 +10,12 @@ public class GameConfig implements Configurations, java.io.Serializable {
     public static GameConfig instance;
     private final Properties properties;
     File config;
-    private boolean testMode;
 
-    public GameConfig(boolean testMode) {
+    public GameConfig() {
         String workingDir = System.getProperty("user.dir");
         if (workingDir.contains("assign2")) config = new File("src/resources/config.properties");
         else config = new File("assign2/src/resources/config.properties");
         // load configurations
-        this.testMode = testMode;
         properties = new Properties();
         InputStream inputStream;
         try {
@@ -31,7 +29,7 @@ public class GameConfig implements Configurations, java.io.Serializable {
 
     public static GameConfig getInstance() {
         if (instance == null) {
-            instance = new GameConfig(false);
+            instance = new GameConfig();
         }
         return instance;
     }
@@ -51,21 +49,12 @@ public class GameConfig implements Configurations, java.io.Serializable {
     }
 
     @Override
-    public boolean isTestMode() {
-        return testMode;
-    }
-
-    @Override
     public String getMode() {
         return properties.getProperty("mode");
     }
 
     public int getBaseRankDelta() {
         return Integer.parseInt(properties.getProperty("baseRankDelta"));
-    }
-
-    public int getMaxRankDelta() {
-        return Integer.parseInt(properties.getProperty("maxRankDelta"));
     }
 
     public long getGameTimeout() {

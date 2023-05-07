@@ -301,7 +301,7 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    public void startGame() throws IOException {
+    public void startGame() {
 
         StringBuilder sb = new StringBuilder();
         int res = checkIfReconnect(sb);
@@ -435,7 +435,6 @@ public class Client implements Serializable { // This is the client application 
     }
 
     protected void gameLoop() {
-        Scanner scanner = new Scanner(System.in);
         String serverResponse;
 
         while (numGuesses > 0) {
@@ -463,7 +462,7 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("You are out of guesses! Waiting for game to end...");
         }
 
-        serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
+        SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains(CommunicationProtocol.GAME_END.toString())) {
                 System.out.println("The game ended!");
                 return true;
@@ -473,7 +472,7 @@ public class Client implements Serializable { // This is the client application 
         });
 
         int finalNumGuesses = MAX_NR_GUESSES - numGuesses + 1;
-        serverResponse = SocketUtils.NIORead(socketChannel, (data) -> {
+        SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains(CommunicationProtocol.GAME_RESULT.toString())) {
 
                 // Points , Position/Players
@@ -536,27 +535,12 @@ public class Client implements Serializable { // This is the client application 
         return SocketUtils.NIORead(socketChannel, Client::dealWithServerGuessResponse);
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
     public SocketChannel getSocketChannel() {
         return socketChannel;
-    }
-
-    public void setSocketChannel(SocketChannel socketChannel) {
-        this.socketChannel = socketChannel;
     }
 
     public GamePlayer getPlayer() {
         return player;
     }
 
-    public void setPlayer(GamePlayer player) {
-        this.player = player;
-    }
 }

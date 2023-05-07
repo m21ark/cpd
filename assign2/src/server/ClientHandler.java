@@ -234,7 +234,7 @@ public class ClientHandler implements Runnable {
             SocketUtils.closeSocket(socket);
             return "";
         } else if (authResult == 0) {
-            if (registerNewUser(username, password)) newUser = true;
+            if (registerNewUser(password)) newUser = true;
             else return "";
         }
 
@@ -281,9 +281,9 @@ public class ClientHandler implements Runnable {
         return false;
     }
 
-    private boolean registerNewUser(String username, String password) {
+    private boolean registerNewUser(String password) {
         // client will answer if they want to add a new entry
-        int authResult = 0;
+        int authResult;
 
         // Read password confirmation from client
         String passwordConf = SocketUtils.readData(socket);
@@ -303,7 +303,6 @@ public class ClientHandler implements Runnable {
             authResult = 2;
         } else {
             Logger.info("Password was confirmed.");
-            authResult = 1;
             return true;
         }
 
@@ -319,7 +318,7 @@ public class ClientHandler implements Runnable {
         // Append the new entry to the database/users.txt file
         // Format: username,password,token,rank
         String newEntry = username + "," + passwordConf + "," + token + "," + "00000";
-        FileWriter writer = null; // Append mode
+        FileWriter writer; // Append mode
 
         try {
             writer = new FileWriter(persistantUsersFile, true);
