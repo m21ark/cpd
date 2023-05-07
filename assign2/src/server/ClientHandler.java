@@ -127,29 +127,21 @@ public class ClientHandler implements Runnable {
         if (isAReturningUser) dealWithReturningUser(token);
         else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
-        System.out.println("here 3 : " + GameServer.instance.clients.size());
-        // GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
         GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
-        System.out.println(GameServer.instance.clientsStates);
-        System.out.println("here 4 : " + GameServer.instance.clients.size());
     }
 
     private void dealWithReturningUser(String token) {
-        System.out.println("here -1");
-        System.out.println(GameServer.getInstance().clientsStates);
-        System.out.println("here0");
+
         GameServer gs = GameServer.getInstance();
-        System.out.println("here0.4");
-        var aux = gs.clientsStates.get(token);
-        if (aux == null) {
+        TokenState tokenState = gs.clientsStates.get(token);
+
+        if (tokenState == null) {
             Logger.info("Couldn't find a state to recover.");
             SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             return;
         }
-        System.out.println(aux);
-        System.out.println("here0.5");
-        TokenState.TokenStateEnum ts = aux.getState();
-        System.out.println("here1");
+
+        TokenState.TokenStateEnum ts = tokenState.getState();
         switch (ts) {
             case QUEUED -> {
                 Logger.info("Client was in the queue. Getting him back in the queue...");
@@ -158,22 +150,19 @@ public class ClientHandler implements Runnable {
             }
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");
-                System.out.println("here lol 1");
-                var aux2 = aux.getModel();
-                System.out.println("here lol 1.5");
-                System.out.println(aux2);
-                if (aux2 == null) {
+
+                GameModel model = tokenState.getModel();
+                if (model == null) {
                     Logger.info("Couldn't find a model to recover to playground.");
                     SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
                     return;
                 }
-                String playerCount = String.valueOf(aux2.getCurrentPlayers()); // TODO: PROBLEM 1: CONCURRENT ACCESS LOCKED HERE
-                System.out.println("here lol 2");
-                String max_num_players = String.valueOf(GameConfig.getInstance().getMaxNrGuess());
-                System.out.println("here 5");
+
+                String playerCount = String.valueOf(model.getCurrentPlayers());
+                String max_num_players = String.valueOf(GameConfig.getInstance().getNrMaxPlayers());
                 SocketUtils.sendToClient(socket, CommunicationProtocol.PLAYGROUND_RECONNECT, playerCount, max_num_players);
-                System.out.println("here 6");
-                // TODO: send the client the same playground
+
+                model.updatePlayerSocket(token, socket);  // connect the client to the same playground
             }
             case PLAYING -> {
                 Logger.info("Client was in a game. Getting him back in the game...");
@@ -208,7 +197,6 @@ public class ClientHandler implements Runnable {
                 SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             }
         }
-        System.out.println("here2 ");
     }
 
     private String authenticateUser() {

@@ -68,7 +68,7 @@ public class MyTests {
         for (int i = 0; i < 500; i++) {
             client = clients.get(i);
             try {
-                Method privateMethod = client.getClass().getDeclaredMethod("playGame");
+                Method privateMethod = client.getClass().getDeclaredMethod("askToPlayGame");
                 privateMethod.setAccessible(true);
                 privateMethod.invoke(client);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {

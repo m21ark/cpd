@@ -295,7 +295,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         // update the state of the players to playing
         var clients = GameServer.getInstance().clientsStates;
         for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
-            clients.put(client.getToken(), new TokenState(this));
+            clients.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYING));
 
         notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
 
@@ -314,9 +314,10 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
     public void addPlayer(PlayingServer.WrappedPlayerSocket client) {
+        Logger.info("Player added to playground");
         gamePlayers.add(client);
         PlayingServer.getInstance().games.updateHeap(this);
-        GameServer.getInstance().clientsStates.put(client.getToken(), new TokenState(this));
+        GameServer.getInstance().clientsStates.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYGROUND));
     }
 
     public boolean isFull() {
@@ -380,5 +381,13 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     public boolean gameStarted() {
         return gameStarted;
+    }
+
+    public void updatePlayerSocket(String token, Socket socket) {
+        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
+            if (gamePlayer.getToken().equals(token)) {
+                gamePlayer.setConnection(socket);
+                break;
+            }
     }
 }

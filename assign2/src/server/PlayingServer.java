@@ -166,9 +166,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         if (!gamesAvailable) {
             addToQueue(client, token);
             GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.QUEUED));
-        } else {
-            Logger.info("Player added to playground");
-            GameServer.getInstance().clientsStates.put(token, new TokenState(null, TokenState.TokenStateEnum.PLAYGROUND));
         }
     }
 

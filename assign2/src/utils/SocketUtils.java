@@ -94,7 +94,7 @@ public class SocketUtils {
         }
     }
 
-    public static String NIOReadAndInput(SocketChannel channel, IntPredicate dealFunc, VoidPredicate inputFunc) {
+    public static void NIOReadAndInput(SocketChannel channel, IntPredicate dealFunc, VoidPredicate inputFunc) {
         // register a SocketChannel for reading data asynchronously (non-blocking)
         try {
             // Configure the channel to be non-blocking and register it with the selector for reading
@@ -121,14 +121,13 @@ public class SocketUtils {
                 }
 
                 String msg = new String(buffer.array(), 0, numBytesRead);
-                if (dealFunc == null) return msg;
-                if (dealFunc.func(msg)) return msg;
+                if (dealFunc == null) return;
+                if (dealFunc.func(msg)) return;
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
     public static String NIORead(SocketChannel channel, IntPredicate dealFunc) {

@@ -11,11 +11,6 @@ public class TokenState implements java.io.Serializable {
         this.state = TokenStateEnum.MENU;
     }
 
-    public TokenState(GameModel model) {
-        this.state = TokenStateEnum.PLAYING;
-        this.model = model;
-    }
-
     public TokenState(GameModel model, TokenStateEnum state) {
         this.state = state;
         this.model = model;

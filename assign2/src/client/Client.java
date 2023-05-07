@@ -46,7 +46,7 @@ public class Client implements Serializable { // This is the client application 
     }
 
     public static void main(String[] args) throws IOException {
-        //Logger.setLevel(java.util.logging.Level.SEVERE);
+        Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
@@ -128,10 +128,13 @@ public class Client implements Serializable { // This is the client application 
         if (data.contains(CommunicationProtocol.PLAYGROUND_UPDATE.toString())) {
             String[] parts = data.split(" ");
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
+            return false;
         }
 
         if (data.contains(CommunicationProtocol.PLAYER_LEFT.toString()))
             System.out.println("A player left the game lobby.");
+        else System.out.println("Invalid response from server: " + data);
+
         return false;
     }
 
@@ -151,7 +154,7 @@ public class Client implements Serializable { // This is the client application 
         }
     }
 
-    protected void playGame() {
+    protected void askToPlayGame() {
         Registry registry;
         try {
             registry = LocateRegistry.getRegistry(GameConfig.getInstance().getAddress(), GameConfig.getInstance().getRMIReg());
@@ -315,20 +318,34 @@ public class Client implements Serializable { // This is the client application 
             return; // TODO: This is a temporary fix
         }  // else : no reconnect
 
-        System.out.println("Welcome to the game!");
+        mainGame(false, false);
+    }
+
+    private void mainGame(boolean reconnect, boolean wasMidGame) {
 
         int option = 0;
+
+        if (!reconnect) System.out.println("Welcome to the game!");
+        else option = 1;
+
         while (option != 2) {
-            option = this.options();
+            if (!reconnect) option = options();
             if (option == 1) {
-                playGame();
-                waitForGameStart(socketChannel);
+                if (!reconnect) askToPlayGame();
+                if (!wasMidGame) waitForGameStart(socketChannel);
+
                 gameLoop();
 
+                reconnect = false;
+                wasMidGame = false;
                 if (!wantsToPlayAgain()) break;
             }
         }
-        socketChannel.close();
+        try {
+            socketChannel.close();
+        } catch (IOException e) {
+            System.out.println("Error closing socket channel to close the game.");
+        }
     }
 
     private boolean wantsToPlayAgain() {
@@ -348,10 +365,19 @@ public class Client implements Serializable { // This is the client application 
 
     private void playgroundReconnect(StringBuilder sb) {
         System.out.println("Reconnecting to playground...");
+
+        String[] parts = sb.toString().split(" ");
+        int numPlayers = Integer.parseInt(parts[1]);
+        NR_MAX_PLAYERS = Integer.parseInt(parts[2]);
+
+        System.out.println("Welcome back " + player.getName() + "!");
+        System.out.println("There are " + numPlayers + "/" + NR_MAX_PLAYERS + " players in the playground.");
+
+        mainGame(true, false);
     }
 
     private void queueReconnect(StringBuilder sb) {
-        System.out.println("Reconnecting to queue...");
+        System.out.println("Reconnecting to queue..."); // TODO: Implement this
     }
 
     private void gameReconnect(StringBuilder sb) {
@@ -373,7 +399,7 @@ public class Client implements Serializable { // This is the client application 
             System.out.println("The number is " + guessDirection + " than your best guess.");
         }
 
-        gameLoop(); // TODO: should this link back to the main loop?
+        mainGame(true, true);
     }
 
     private int checkIfReconnect(StringBuilder dataBuffer) {
