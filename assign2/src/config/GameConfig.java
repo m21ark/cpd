@@ -85,10 +85,14 @@ public class GameConfig implements Configurations, java.io.Serializable {
     }
 
     public long getTokenLifeSpan() {
-        return Integer.parseInt(properties.getProperty("tokenLifeSpanMin"));
+        return Integer.parseInt(properties.getProperty("tokenLifeSpanSec"));
     }
 
     public long getServerCacheInterval() {
         return Integer.parseInt(properties.getProperty("serverCacheInterval"));
+    }
+
+    public int getGamePoolSize() {
+        return Integer.parseInt(properties.getProperty("gamePoolSize"));
     }
 }

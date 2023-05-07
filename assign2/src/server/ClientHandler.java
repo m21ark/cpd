@@ -94,7 +94,7 @@ public class ClientHandler implements Runnable {
 
     private String generateRandomToken() {
         UUID uuid = UUID.randomUUID();
-        Instant expiration = Instant.now().plus(GameConfig.getInstance().getTokenLifeSpan(), ChronoUnit.MINUTES);
+        Instant expiration = Instant.now().plus(GameConfig.getInstance().getTokenLifeSpan(), ChronoUnit.SECONDS);
         return uuid.toString().replace("-", "") + String.format("%010d", expiration.getEpochSecond());
     }
 
