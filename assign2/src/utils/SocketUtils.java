@@ -131,6 +131,7 @@ public class SocketUtils {
     }
 
     public static String NIORead(SocketChannel channel, IntPredicate dealFunc, Long timeout) {
+
         // register a SocketChannel for reading data asynchronously (non-blocking)
         try {
             // Configure the channel to be non-blocking and register it with the selector for reading
@@ -142,7 +143,7 @@ public class SocketUtils {
             int nChannelsReady;
 
             while (true) {
-                // Logger.info("Waiting for data...");
+                Logger.info("Waiting for data...");
                 buffer.clear();
                 if (timeout != null) {
                     if (timeout == 0) nChannelsReady = selector.selectNow(); // neither blocking nor waiting
@@ -151,17 +152,21 @@ public class SocketUtils {
                     nChannelsReady = selector.select();
                 }
 
+
                 if (nChannelsReady == 0 && timeout != null) {
-                    //Logger.info("No data available after " + timeout + "ms");
+                    Logger.info("No data available after " + timeout + "ms");
                     return null;
                 }
 
                 // Handle read operation
                 int numBytesRead = channel.read(buffer);
+
                 if (numBytesRead == -1) {
                     // Socket is down
                     closeSocket(channel.socket());
+                    return null;
                 }
+
                 if (numBytesRead == 0) {
                     // No data available at the moment, wait a bit and try again
                     Thread.sleep(100);
@@ -175,6 +180,7 @@ public class SocketUtils {
             }
 
         } catch (IOException | InterruptedException e) {
+            Logger.warning("A player disconnected.");
             return CommunicationProtocol.DISCONNECTED.toString();
         }
     }
@@ -191,7 +197,6 @@ public class SocketUtils {
 
             int totalBytesWritten = 0;
             while (buffer.hasRemaining()) {
-                Logger.info("Waiting to write data...");
                 selector.select();
 
                 // Handle write operation

@@ -147,23 +147,19 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     public GuessErgo responseToGuess(PlayingServer.WrappedPlayerSocket gamePlayer) {
 
-        //while (guessesLeft(gamePlayer.getToken()) > 0) {
         Socket connection = gamePlayer.getConnection();
-        if (connection.isClosed()) {
-            return GuessErgo.ALREADY_LEFT_GAME;
-        }
-        String s = SocketUtils.NIORead(connection.getChannel(), null, 0L);
-        if (s == null) {
-            return GuessErgo.NOT_PLAYED;
-        } else if (s.equals(CommunicationProtocol.DISCONNECTED.toString())) {
-            return GuessErgo.ALREADY_LEFT_GAME;
-        } else if (!s.contains(CommunicationProtocol.GUESS.toString())) {
+        if (connection.isClosed()) return GuessErgo.ALREADY_LEFT_GAME;
+
+        String s = SocketUtils.NIORead(connection.getChannel(), null, 1000L); // TODO: O PROBLEMA TA AQUI! BLOQUEIA
+
+        if (s == null) return GuessErgo.NOT_PLAYED;
+        else if (s.equals(CommunicationProtocol.DISCONNECTED.toString())) return GuessErgo.ALREADY_LEFT_GAME;
+        else if (!s.contains(CommunicationProtocol.GUESS.toString())) {
             Logger.warning("Client sent something that isn't a guess...");
             return GuessErgo.NOT_PLAYED;
         }
 
         int guess = Integer.parseInt(s.split(" ")[1]);
-
 
         if (guess == gameWinner) {
             SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_CORRECT, String.valueOf(gameWinner));
@@ -173,12 +169,11 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         updateGuesses(gamePlayer.getToken(), guess);
 
-        if (guess > gameWinner) {
+        if (guess > gameWinner)
             SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_HIGH);
-        } else {
-            SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
-        }
-        // }
+        else SocketUtils.sendToClient(gamePlayer.getConnection(), CommunicationProtocol.GUESS_TOO_LOW);
+
+
         return GuessErgo.PLAYED;
     }
 
@@ -189,27 +184,26 @@ public class GameModel implements Runnable, java.io.Serializable {
         int finishedPlayers = 0;
         long startTime = System.currentTimeMillis();
         int gameSize = gamePlayers.size();
+
         while (true) {
+
             long elapsedTime = System.currentTimeMillis() - startTime;
             if (elapsedTime > GameConfig.getInstance().getGameTimeout()) {
-                Logger.info("Game timed out!");
+                Logger.info("Game timed out!"); // TODO: notify players and we should also time out individual players
                 break;
             }
 
             if (finishedPlayers == gameSize) break;
-            for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
-                GuessErgo response;
 
-                response = responseToGuess(gamePlayer);
+            for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
+
+                GuessErgo response = responseToGuess(gamePlayer);
 
                 if (response == GuessErgo.WINNING_MOVE) {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
-                } else if (response == GuessErgo.PLAYED) {
-                    if (getGuessesLeft(gamePlayer.getToken()) == 0) {
-                        finishedPlayers++;
-                    }
-                }
+                } else if (response == GuessErgo.PLAYED && getGuessesLeft(gamePlayer.getToken()) == 0)
+                    finishedPlayers++;
             }
         }
 
