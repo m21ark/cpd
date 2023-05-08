@@ -1,4 +1,4 @@
-package game.server;
+package game.server.schedulers;
 
 import game.config.GameConfig;
 import game.utils.Logger;
@@ -7,20 +7,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class ScheduledSerializer<T extends Serializable> {
-    private final String filename;
-    private final T objectToSerialize;
-    private final ScheduledExecutorService scheduler;
-
-    public ScheduledSerializer(String filename, T objectToSerialize) {
-        this.filename = filename;
-        this.objectToSerialize = objectToSerialize;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
-    }
+public record ScheduledSerializer<T extends Serializable>(String filename, T objectToSerialize,
+                                                          ScheduledExecutorService scheduler) {
 
     public void start() {
         long delta = GameConfig.getInstance().getServerCacheInterval();

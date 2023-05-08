@@ -268,7 +268,12 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         }
 
         public void increaseTolerance() {
-            this.tolerance *= 2;
+            lock.lock();
+            try {
+                this.tolerance *= 2;
+            } finally {
+                lock.unlock();
+            }
         }
     }
 }

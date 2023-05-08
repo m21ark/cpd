@@ -4,6 +4,8 @@ import game.config.Configurations;
 import game.config.GameConfig;
 import game.logic.structures.MyConcurrentMap;
 import game.protocols.TokenState;
+import game.server.schedulers.ScheduledRankRelaxer;
+import game.server.schedulers.ScheduledSerializer;
 import game.utils.Logger;
 
 import java.io.*;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 
 public class GameServer implements Serializable {
@@ -26,10 +29,11 @@ public class GameServer implements Serializable {
     static GameServer instance = null;
     private final Configurations configurations;
     public PlayingServer playingServer;
-    public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
-    public MyConcurrentMap<String, TokenState> clientsStates = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
+    public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>();
+    public MyConcurrentMap<String, TokenState> clientsStates = new MyConcurrentMap<>();
     private transient ExecutorService executorService;
     private transient ServerSocketChannel serverSocket;
+    private transient ScheduledExecutorService scheduler;
 
     public GameServer(Configurations configurations) {
         super();
@@ -90,13 +94,12 @@ public class GameServer implements Serializable {
 
         GameServer.setInstance(gameServer);
 
-        ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("cache/gameServer.ser", gameServer);
-        serializer.start();
         gameServer.start();
 
-        // Add a shutdown hook to stop the serializer, to properly stop the ScheduledExecutorService
-        Runtime.getRuntime().addShutdownHook(new Thread(serializer::stop));
+    }
 
+    private ScheduledExecutorService getScheduler() {
+        return scheduler;
     }
 
     public void init() {
@@ -104,6 +107,7 @@ public class GameServer implements Serializable {
         // new ThreadPoolExecutor(10, 20, 60, SECONDS, boundedQueue, new AbortPolicy());
 
         executorService = Executors.newCachedThreadPool();
+        scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
     private void openServerSocket() {
@@ -134,12 +138,25 @@ public class GameServer implements Serializable {
         // Start the RMI registry
         int RMIPort = GameConfig.getInstance().getRMIReg();
         Registry registry = LocateRegistry.createRegistry(RMIPort);
-
+        ScheduledRankRelaxer rankRelaxer;
         // Create an instance of the remote object and bind it to the registry
         playingServer = new PlayingServer();
         registry.rebind("playingServer", playingServer);
 
+        ScheduledSerializer<GameServer> serializer =
+                new ScheduledSerializer<>("cache/gameServer.ser", this, this.getScheduler());
+
+        serializer.start();
+
+        if (!configurations.getMode().equals("Simple")) {
+            rankRelaxer = new ScheduledRankRelaxer(scheduler);
+            rankRelaxer.start();
+        }
+
         acceptConnections();
+
+        // Add a shutdown hook to stop the serializer, to properly stop the ScheduledExecutorService
+        Runtime.getRuntime().addShutdownHook(new Thread(serializer::stop));
     }
 
 }
