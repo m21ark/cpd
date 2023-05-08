@@ -232,7 +232,11 @@ public class GameModel implements Runnable, java.io.Serializable {
 
             if (player.getConnection().isClosed()) continue;
 
-            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token).getFirst()), String.valueOf(leaderboard.get(token).getSecond()), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
+            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT,
+                    String.valueOf(leaderboard.get(token).getFirst()),
+                    String.valueOf(leaderboard.get(token).getSecond()),
+                    String.valueOf(leaderboard.size()),
+                    String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
             int newRank = player.getRank() + leaderboard.get(token).getFirst();
             if (newRank < 0) newRank = 0;
             player.setRank(newRank);
@@ -245,9 +249,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         Logger.warning("Game cleared");
         gameWinner = new Random().nextInt(MAX_GUESS);
         finishedPlayers = 0;
-        // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
-        // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
-        // o gameconfig é um singleton e tem o modo de jogo definido
+        playerGuesses.clear();
     }
 
     private void updateRank(String username, int rank) {
