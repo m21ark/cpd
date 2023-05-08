@@ -59,7 +59,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         GameModel game;
 
         // try to find a game with the given rank tolerance
-        // TODO: ver o que acontece quando um com mais de 500 n entra no primeiro jogo
+        // TODO: IMPORTANTE ! ver o que acontece quando um com mais de 500 n entra no primeiro jogo
 
         game = games.getGameWithClosestRank(client.getRank(), rankDelta);
 

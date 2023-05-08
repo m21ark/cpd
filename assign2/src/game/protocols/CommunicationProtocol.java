@@ -3,14 +3,15 @@ package game.protocols;
 public enum CommunicationProtocol {
 
     // ================== Connection Related ==================
-    PLAYER_LEFT, // TODO: Qual a diferença entre disconnected, logout, left ? --> left está a ser usado para varias coisas ?
-    DISCONNECTED, // Server or game.client informs that they disconnected. No args
+    PLAYER_LEFT, // Server informs client that a player has left the game. No args
+    DISCONNECTED, // Server or client informs that they disconnected. No args
 
     // ================== Game Waiting ==================
     QUEUE_ADD, // Server informs game.client that he will be added to queue. No args
     QUEUE_UPDATE, // TODO: Server informs game.client that the queue has X players in it, that there are Y games and 1 is ending etc
     PLAYGROUND_UPDATE, // Server notifies players in the playground of how many players are still needed to start game. Args: CurrNumPlayers, NeededNumPlayers
     GAME_STARTED, // Server notifies all players that the game has begun. Args: MaxNumGuesses, NumPlayers, MaxValue
+    GAME_TIMEOUT, // Server notifies all players that the game has timed out. No args
 
     // ================== Game related communication ==================
     GUESS, // Player sends guess to game.server. Args: playerGuessValue

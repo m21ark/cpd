@@ -23,10 +23,11 @@ public class GameModel implements Runnable, java.io.Serializable {
     // the following field does not have concurrent access, so it does not need to be thread-safe
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private final MyConcurrentList<game.server.PlayingServer.WrappedPlayerSocket> gamePlayers;
+    int finishedPlayers = 0;
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
-    int finishedPlayers = 0;
     boolean nextGame;
+
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
@@ -203,7 +204,8 @@ public class GameModel implements Runnable, java.io.Serializable {
 
             long elapsedTime = System.currentTimeMillis() - startTime;
             if (elapsedTime > GameConfig.getInstance().getGameTimeout()) {
-                Logger.info("Game timed out!"); // TODO: notify players and we should also time out individual players
+                Logger.info("Game timed out!");
+                notifyPlayers(CommunicationProtocol.GAME_TIMEOUT);
                 break;
             }
 

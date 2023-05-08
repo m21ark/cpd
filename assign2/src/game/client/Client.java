@@ -45,7 +45,7 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public static void main(String[] args) throws IOException {
-        Logger.setLevel(java.util.logging.Level.SEVERE);
+        // Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
@@ -89,9 +89,7 @@ public class Client implements Serializable { // This is the game.client applica
             ret = true;
         }
 
-        if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())
-                || data.contains(CommunicationProtocol.QUEUE_UPDATE.toString())
-                || data.contains(CommunicationProtocol.MENU_CONNECT.toString())) {
+        if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString()) || data.contains(CommunicationProtocol.QUEUE_UPDATE.toString()) || data.contains(CommunicationProtocol.MENU_CONNECT.toString())) {
             return ret;
         }
 
@@ -110,7 +108,6 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
-        // TODO: still problem for same login on menu
         try {
             SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
         } catch (Exception e) {
@@ -300,9 +297,7 @@ public class Client implements Serializable { // This is the game.client applica
         int rank = this.player.getRank();
         String rankString = String.format("%3d", rank);
 
-        String menuHeader = "+-------------------------+\n" + "|    Select an option     |\n"
-                + "|      (Rank = " + rankString + ")       |\n" + "+-------------------------+\n"
-                + "|   1 - Start a new game  |\n" + "|   2 - Exit              |\n" + "+-------------------------+";
+        String menuHeader = "+-------------------------+\n" + "|    Select an option     |\n" + "|      (Rank = " + rankString + ")       |\n" + "+-------------------------+\n" + "|   1 - Start a new game  |\n" + "|   2 - Exit              |\n" + "+-------------------------+";
 
         System.out.println(menuHeader);
 
@@ -328,7 +323,7 @@ public class Client implements Serializable { // This is the game.client applica
                     System.exit(0);
                 }
             }
-            return; // TODO: This is a temporary fix
+            return;
         }  // else : no reconnect
 
         mainGame(false, false);
@@ -450,6 +445,8 @@ public class Client implements Serializable { // This is the game.client applica
         String serverResponse;
 
         while (numGuesses > 0) {
+            if (checkIfGameTimeout()) break;
+
             System.out.println("Guess the number between 1 and " + MAX_GUESS + " (" + numGuesses + " guesses left): ");
             int guess = getIntegerInput();
 
@@ -466,6 +463,11 @@ public class Client implements Serializable { // This is the game.client applica
         if (numGuesses == 0) {
             System.out.println("You are out of guesses! Waiting for game to end...");
         }
+
+        gameEnd();
+    }
+
+    private void gameEnd() {
 
         SocketUtils.NIORead(socketChannel, (data) -> {
             if (data.contains(CommunicationProtocol.GAME_END.toString())) {
@@ -493,14 +495,25 @@ public class Client implements Serializable { // This is the game.client applica
                 System.out.println("Points: " + args[1] + " --> New Rank = " + (player.getRank() + Integer.parseInt(args[1])));
                 System.out.println("Position: " + args[2] + "/" + args[3]);
                 if (delta != 0)
-                    System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) +
-                            " and took you " + (finalNumGuesses - 1) + " guesses");
+                    System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + (finalNumGuesses - 1) + " guesses");
                 else System.out.println("It took you " + (finalNumGuesses - 1) + " guesses to win");
                 return true;
             }
             Logger.error("Invalid response from game.server: " + data);
             return false;
         });
+    }
+
+    private boolean checkIfGameTimeout() {
+        final boolean[] timedOut = {false};
+        SocketUtils.NIORead(socketChannel, (data) -> {
+            if (data.contains(CommunicationProtocol.GAME_TIMEOUT.toString())) {
+                System.out.println("Game timed out!");
+                timedOut[0] = true;
+            }
+            return true;
+        }, 50L);
+        return timedOut[0];
     }
 
     public void informServerOfLogoutAndLeave() {

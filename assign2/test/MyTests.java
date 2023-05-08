@@ -103,7 +103,7 @@ public class MyTests {
         // create 3 threads and start them
         for (int i = 0; i < 3; i++) {
             int finalI = i;
-            threads.add(new Thread(() -> { // TODO: test this better when game is working
+            threads.add(new Thread(() -> {
                 for (int j = 0; j < GameModel.getMaxNrGuesses(); j++) { // MAX numbers of tries ... make this more modular
                     for (int k = 0; k < clients.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
@@ -158,7 +158,7 @@ public class MyTests {
         // create 3 threads and start them
         for (int i = 0; i < 3; i++) {
             int finalI = i;
-            threads.add(new Thread(() -> { // TODO: test this better when game is working
+            threads.add(new Thread(() -> {
                 for (int j = 0; j < 500; j++) { // MAX numbers of tries ... make this more modular
                     for (int k = 0; k < list.size(); k++) {
                         if (k % 3 != finalI) continue; // Dealing with the threads concurrency
