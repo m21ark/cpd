@@ -22,14 +22,16 @@ public class ScheduledRankRelaxer {
     }
 
     private void relaxRanks() {
-        Logger.info("Relaxing ranks");
+        Logger.info("Relaxing tolerance");
         for (GameModel game : playingServer.games) {
-            boolean hasEnoughPlayer =  game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
+            int gameSize = game.getCurrentPlayers();
+            boolean hasEnoughPlayer =  game.playgroundUpdate(false); // check if a ranked player waiting can enter this updated game
             if (hasEnoughPlayer) {
                 Logger.info("Game started");
+                PlayingServer.getInstance().games.updateHeap(game);
                 PlayingServer.executorGameService.submit(game);
-            } else {
-                playingServer.notifyPlaygroundUpdate(game);
+            } else if (gameSize != game.getCurrentPlayers()) {
+                PlayingServer.getInstance().games.updateHeap(game);
             }
         }
     }

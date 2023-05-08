@@ -104,11 +104,18 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
     public boolean playgroundUpdate() {
-        this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
+        return playgroundUpdate(true);
+    }
+
+    public boolean playgroundUpdate(boolean notifyPlayers) {
+        if (notifyPlayers)
+        this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()),
+                String.valueOf(NR_MAX_PLAYERS));
 
         // Check if there's a player in queue suitable for this game
         // Only for the ranking mode
         for (PlayingServer.WrappedPlayerSocket player : PlayingServer.getInstance().queueToPlay) {
+            Logger.info("Player tolerance: " + player.getTolerance() + " | Rank diff: " + Math.abs(this.getRank() - player.getRank()));
             if (player.getTolerance() >= Math.abs(this.getRank() - player.getRank())) {
                 this.addPlayer(player);
                 PlayingServer.getInstance().queueToPlay.remove(player);

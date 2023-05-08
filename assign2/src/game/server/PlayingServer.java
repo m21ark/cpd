@@ -1,5 +1,6 @@
 package game.server;
 
+import game.client.Client;
 import game.client.GamePlayer;
 import game.config.GameConfig;
 import game.logic.structures.GameHeap;
@@ -20,10 +21,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
 
-    public MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
+    public static ExecutorService executorGameService;
     static PlayingServer instance = null;
     public final GameHeap games = new GameHeap();
-    public static ExecutorService executorGameService;
+    public MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
 
     PlayingServer() throws RemoteException {
         super();
@@ -39,9 +40,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         return instance;
     }
 
-    public static void setExecutor(ExecutorService newFixedThreadPool) {
-        executorGameService = newFixedThreadPool;
-    }
 
     public void restartGames() {
         // restart the games ... after failure
@@ -69,8 +67,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         if (game == null) {
             // if the tolerance is too big, just add the player to the queue
             // the player will be added to a game when a game with the given tolerance is available
-            rankDelta *= 2; // increase the tolerance
             var player = new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta);
+            player.increaseTolerance();// increase the tolerance
             player.setToken(token);
             Logger.warning("Player added to queue due to rank tolerance");
             return false;
@@ -85,7 +83,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             executorGameService.submit(game);
         } else {
             Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-            boolean hasEnoughPlayer =  game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
+            boolean hasEnoughPlayer = game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
             if (hasEnoughPlayer) {
                 Logger.info("Game started");
                 executorGameService.submit(game);
@@ -115,8 +113,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 } else {
                     Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
                     notifyPlaygroundUpdate(game);
-                    //TODO: adicionar timeout para o caso de n haver mais jogadores
-                    //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
                 return true;
             } else {
@@ -139,6 +135,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         Socket s = GameServer.getSocket(token);
         var player = new WrappedPlayerSocket(client, s);
+        if (!GameConfig.getInstance().getMode().equals("Simple"))
+            player.setTolerance(GameConfig.getInstance().getBaseRankDelta());
         player.setToken(token);
         queueToPlay.add(player);
 
@@ -178,10 +176,10 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                 tokenState.getModel().playerLeftNotify();
                 tokenState.getModel().removePlayer();
                 Logger.info("removed player from game");
-            if (tokenState.getState() == TokenState.TokenStateEnum.PLAYGROUND) {
-                tokenState.getModel().playerLeftNotify();
-                Logger.info("removed player from game");
-            }
+                if (tokenState.getState() == TokenState.TokenStateEnum.PLAYGROUND) {
+                    tokenState.getModel().playerLeftNotify();
+                    Logger.info("removed player from game");
+                }
             } else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
                 queueToPlay.removeWhere(x -> x.getToken().equals(token));
             }
@@ -265,6 +263,15 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         public int getTolerance() {
             return tolerance;
+        }
+
+        public void setTolerance(int baseRankDelta) {
+            lock.lock();
+            try {
+                this.tolerance = baseRankDelta;
+            } finally {
+                lock.unlock();
+            }
         }
 
         public void increaseTolerance() {
