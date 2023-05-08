@@ -93,7 +93,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         if (!toRemove.isEmpty()) PlayingServer.getInstance().games.updateHeap(this);
     }
 
-    public void upadtePlayerSocket(String token, Socket newSocket) {
+    public void updatePlayerSocket(String token, Socket newSocket) {
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
             if (gamePlayer.getToken().equals(token)) {
                 gamePlayer.setConnection(newSocket);
@@ -197,6 +197,8 @@ public class GameModel implements Runnable, java.io.Serializable {
 
             for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
 
+                if (gamePlayer.getConnection() == null) continue;
+
                 GuessErgo response = responseToGuess(gamePlayer);
 
                 if (response == GuessErgo.WINNING_MOVE) {
@@ -283,15 +285,16 @@ public class GameModel implements Runnable, java.io.Serializable {
         Logger.info("Game playground");
         // TODO: Add max timeout to the game
 
-        gameStarted = true;
+        if (!gameStarted) {
+            gameStarted = true;
 
-        // update the state of the players to playing
-        var clients = GameServer.getInstance().clientsStates;
-        for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
-            clients.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYING));
+            // update the state of the players to playing
+            var clients = GameServer.getInstance().clientsStates;
+            for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
+                clients.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYING));
 
-        notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
-
+            notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
+        }
         gameLoop();
         endGame();
 
@@ -376,11 +379,4 @@ public class GameModel implements Runnable, java.io.Serializable {
         return gameStarted;
     }
 
-    public void updatePlayerSocket(String token, Socket socket) {
-        for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
-            if (gamePlayer.getToken().equals(token)) {
-                gamePlayer.setConnection(socket);
-                break;
-            }
-    }
 }

@@ -175,7 +175,7 @@ public class ClientHandler implements Runnable {
                     return;
                 }
 
-                model.upadtePlayerSocket(token, socket);
+                model.updatePlayerSocket(token, socket);
 
                 String guessDirection = model.getGameWinner() - model.getBestGuess(token) > 0 ? "higher" : "lower";
 

@@ -23,7 +23,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
     static PlayingServer instance = null;
     public final GameHeap games = new GameHeap();
-    private transient ExecutorService executorGameService;
+    private static ExecutorService executorGameService;
 
     PlayingServer() throws RemoteException {
         super();
@@ -37,6 +37,20 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
     static public PlayingServer getInstance() {
         return instance;
+    }
+
+    public static void setExecutor(ExecutorService newFixedThreadPool) {
+        executorGameService = newFixedThreadPool;
+    }
+
+    public void restartGames() {
+        // restart the games ... after failure
+        for (GameModel game : games) {
+            if (game.gameStarted()) {
+                Logger.info("Game has been restarted after game.server failure");
+                executorGameService.submit(game);
+            }
+        }
     }
 
     private boolean rankMode(GamePlayer client, String token) {
@@ -174,19 +188,13 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     @Serial
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
         in.defaultReadObject();
+        int poolSize = GameConfig.getInstance().getGamePoolSize();
 
-        executorGameService = Executors.newFixedThreadPool(5);
+        executorGameService = Executors.newFixedThreadPool(poolSize);
 
         System.out.println(games.getSize());
 
-        // restart the games ... after failure
-        for (GameModel game : games) {
-            if (game.gameStarted()) {
-                Logger.info("Game has been restarted after game.server failure");
-                executorGameService.submit(game);
-            }
-        }
-
+        this.restartGames();
 
     }
 

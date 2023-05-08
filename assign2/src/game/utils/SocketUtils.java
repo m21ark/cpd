@@ -59,8 +59,8 @@ public class SocketUtils {
         SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
     }
 
-    public static void sendToServer(Socket connection, CommunicationProtocol message, String... args) {
-        SocketUtils.NIOWrite(connection.getChannel(), message + " " + String.join(" ", args));
+    public static void sendToServer(SocketChannel channel , CommunicationProtocol message, String... args) {
+        SocketUtils.NIOWrite(channel, message + " " + String.join(" ", args));
     }
 
     public static void closeSocket(Socket socket) {

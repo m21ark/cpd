@@ -16,7 +16,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.InputMismatchException;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client implements Serializable { // This is the game.client application runner.
 
@@ -72,6 +71,16 @@ public class Client implements Serializable { // This is the game.client applica
         }
     }
 
+    //private static boolean dealWithNioReconnect(String data) {
+    //    Logger.info("data : " + data);
+    //    if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())
+    //            || data.contains(CommunicationProtocol.QUEUE_UPDATE.toString())
+    //            || data.contains(CommunicationProtocol.MENU_CONNECT.toString())) {
+    //        return true;
+    //    }
+    //    return false;
+    //}
+
     private static boolean dealWithServerGuessResponse(String data) {
         boolean ret = false;
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
@@ -89,6 +98,7 @@ public class Client implements Serializable { // This is the game.client applica
             System.out.println("Game over!");
             ret = true;
         }
+
         if (data.contains(CommunicationProtocol.PLAYER_LEFT.name())) {
             System.out.println("A Player left the game!");
             return ret;
@@ -404,17 +414,17 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     private int checkIfReconnect(StringBuilder dataBuffer) {
-        AtomicInteger x = new AtomicInteger(-1);
+        final int[] x = {-1};
         SocketUtils.NIORead(socketChannel, (data) -> {
-            if (data.contains(CommunicationProtocol.MENU_CONNECT.toString())) x.set(0);
-            else if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())) x.set(1);
-            else if (data.contains(CommunicationProtocol.QUEUE_RECONNECT.toString())) x.set(2);
-            else if (data.contains(CommunicationProtocol.PLAYGROUND_RECONNECT.toString())) x.set(3);
+            if (data.contains(CommunicationProtocol.MENU_CONNECT.toString())) x[0] = 0;
+            else if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())) x[0] = 1;
+            else if (data.contains(CommunicationProtocol.QUEUE_RECONNECT.toString())) x[0] = 2;
+            else if (data.contains(CommunicationProtocol.PLAYGROUND_RECONNECT.toString())) x[0] = 3;
             dataBuffer.append(data);
             return true;
         });
 
-        return x.get();
+        return x[0];
     }
 
     public void getTokenFromServer() {
@@ -422,7 +432,6 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public boolean tryToReconnect() {
-        // serverAuthenticate(username, password, tok)
         socketChannel = null;
         while (socketChannel == null) { // add timeout
             try {
@@ -441,10 +450,10 @@ public class Client implements Serializable { // This is the game.client applica
         while (numGuesses > 0) {
             System.out.println("Guess the number between 1 and " + MAX_GUESS + " (" + numGuesses + " guesses left): ");
             int guess = getIntegerInput();
+
             serverResponse = sendGuess(String.valueOf(guess));
 
             Logger.info(serverResponse);
-
             if (serverResponse.contains(CommunicationProtocol.GUESS_CORRECT.toString())) {
                 break;
             } else if (serverResponse.contains(CommunicationProtocol.DISCONNECTED.toString())) {
@@ -455,7 +464,6 @@ public class Client implements Serializable { // This is the game.client applica
                     continue; // do not lose the numGuesses (hard to know how many guesses were left though)
                 }
             }
-
             numGuesses--;
         }
 
@@ -532,7 +540,7 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     private String sendGuess(String guess) {
-        SocketUtils.sendToServer(socketChannel.socket(), CommunicationProtocol.GUESS, String.valueOf(guess));
+        SocketUtils.sendToServer(socketChannel, CommunicationProtocol.GUESS, String.valueOf(guess));
         return SocketUtils.NIORead(socketChannel, Client::dealWithServerGuessResponse);
     }
 
