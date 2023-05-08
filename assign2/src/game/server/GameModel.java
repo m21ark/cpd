@@ -1,6 +1,5 @@
 package game.server;
 
-import game.client.GamePlayer;
 import game.config.GameConfig;
 import game.logic.structures.MyConcurrentList;
 import game.logic.structures.Pair;
@@ -253,7 +252,7 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
     private void updateRank(String username, int rank) {
-        Logger.info("Updating persistant rank for user " + username);
+        Logger.info("Updating persistent rank for user " + username);
         // TODO: ADD LOCK HERE TO WRITE TO FILE
         try {
 
@@ -286,9 +285,18 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
     public boolean addFromQueueSimpleMode() {
+        boolean added = false;
         while (gamePlayers.size() < NR_MAX_PLAYERS) {
-            if (PlayingServer.getInstance().queueToPlay.isEmpty()) return false;
+            if (PlayingServer.getInstance().queueToPlay.isEmpty()) {
+                if (added) {
+                    Logger.info("Waiting for more players ... " + this.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
+                    PlayingServer.getInstance().notifyPlaygroundUpdate(this);
+                }
+
+                return false;
+            }
             gamePlayers.add(PlayingServer.getInstance().queueToPlay.poll());
+            added = true;
         }
         return true;
     }

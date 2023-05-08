@@ -123,7 +123,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         return false;
     }
 
-    private void notifyPlaygroundUpdate(GameModel game) {
+    public void notifyPlaygroundUpdate(GameModel game) {
         game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
 
