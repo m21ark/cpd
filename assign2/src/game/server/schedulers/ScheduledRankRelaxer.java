@@ -1,5 +1,6 @@
 package game.server.schedulers;
 
+import game.server.GameModel;
 import game.server.PlayingServer;
 import game.utils.Logger;
 
@@ -22,11 +23,14 @@ public class ScheduledRankRelaxer {
 
     private void relaxRanks() {
         Logger.info("Relaxing ranks");
-        for (PlayingServer.WrappedPlayerSocket player : playingServer.queueToPlay) {
-            player.increaseTolerance();
-            Logger.info("Player " + player.getName()
-                    + " tolerance increased to " + player.getTolerance());
-
+        for (GameModel game : playingServer.games) {
+            boolean hasEnoughPlayer =  game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
+            if (hasEnoughPlayer) {
+                Logger.info("Game started");
+                PlayingServer.executorGameService.submit(game);
+            } else {
+                playingServer.notifyPlaygroundUpdate(game);
+            }
         }
     }
 }

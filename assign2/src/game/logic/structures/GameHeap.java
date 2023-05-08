@@ -48,7 +48,12 @@ public class GameHeap implements Iterable<GameModel>, Serializable {
 
     @Override
     public Iterator<GameModel> iterator() {
-        return heap.iterator();
+        lock.readLock().lock();
+        try {
+            return heap.iterator();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public int getSize() {

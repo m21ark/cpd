@@ -23,7 +23,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     public MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
     static PlayingServer instance = null;
     public final GameHeap games = new GameHeap();
-    private static ExecutorService executorGameService;
+    public static ExecutorService executorGameService;
 
     PlayingServer() throws RemoteException {
         super();
@@ -270,7 +270,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         public void increaseTolerance() {
             lock.lock();
             try {
-                this.tolerance *= 2;
+                this.tolerance += 50;
             } finally {
                 lock.unlock();
             }
