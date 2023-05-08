@@ -88,7 +88,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
             game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
             //TODO: adicionar timeout para o caso de n haver mais jogadores
-            //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
         }
 
         return true;
@@ -113,7 +112,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
                     Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
                     notifyPlaygroundUpdate(game);
                     //TODO: adicionar timeout para o caso de n haver mais jogadores
-                    //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
                 }
                 return true;
             } else {

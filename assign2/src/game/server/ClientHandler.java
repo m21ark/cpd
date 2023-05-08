@@ -295,7 +295,7 @@ public class ClientHandler implements Runnable {
 
         Logger.info("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
 
-        if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
+        if (passwordConf.equals("CANCEL_NEW_USER")) {
             Logger.info("User doesn't want to add a new entry.");
             authResult = 2;
         } else if (!password.equals(passwordConf)) {
