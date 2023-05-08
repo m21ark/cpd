@@ -105,4 +105,16 @@ public class MyConcurrentList<E> implements Iterable<E>, java.io.Serializable {
             lock.readLock().unlock();
         }
     }
+
+    public E poll() {
+        lock.writeLock().lock();
+        try {
+            if (elements.isEmpty()) return null;
+            E element = elements.get(0);
+            elements.remove(0);
+            return element;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 }

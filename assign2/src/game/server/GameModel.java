@@ -27,6 +27,7 @@ public class GameModel implements Runnable, java.io.Serializable {
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
     int finishedPlayers = 0;
+    boolean nextGame;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
@@ -108,10 +109,10 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         // Check if there's a player in queue suitable for this game
         // Only for the ranking mode
-        for (PlayingServer.WrappedPlayerSocket player : PlayingServer.queueToPlay) {
+        for (PlayingServer.WrappedPlayerSocket player : PlayingServer.getInstance().queueToPlay) {
             if (player.getTolerance() >= Math.abs(this.getRank() - player.getRank())) {
                 this.addPlayer(player);
-                PlayingServer.queueToPlay.remove(player);
+                PlayingServer.getInstance().queueToPlay.remove(player);
                 break;
             } else {
                 player.increaseTolerance();
@@ -282,26 +283,52 @@ public class GameModel implements Runnable, java.io.Serializable {
         }
     }
 
+    public boolean addFromQueueSimpleMode() {
+        while (gamePlayers.size() < NR_MAX_PLAYERS) {
+            if (PlayingServer.getInstance().queueToPlay.isEmpty()) return false;
+            gamePlayers.add(PlayingServer.getInstance().queueToPlay.poll());
+        }
+        return true;
+    }
+
+    public boolean addFromQueueRankedMode() {
+        return false;
+    }
+
+    public boolean addFromQueue(){
+        if (GameConfig.getInstance().getMode().equals("Simple")) {
+            return addFromQueueSimpleMode();
+        }
+        return addFromQueueRankedMode();
+    }
 
     @Override
     public void run() {
         Logger.info("Game playground");
         // TODO: Add max timeout to the game
 
-        if (!gameStarted) {
-            gameStarted = true;
+        do {
+            if (!gameStarted) {
+                gameStarted = true;
 
-            // update the state of the players to playing
-            var clients = GameServer.getInstance().clientsStates;
-            for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
-                clients.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYING));
+                // update the state of the players to playing
+                var clients = GameServer.getInstance().clientsStates;
+                for (PlayingServer.WrappedPlayerSocket client : gamePlayers)
+                    clients.put(client.getToken(), new TokenState(this, TokenState.TokenStateEnum.PLAYING));
 
-            notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
+                notifyPlayers(CommunicationProtocol.GAME_STARTED, String.valueOf(MAX_NR_GUESSES), String.valueOf(NR_MAX_PLAYERS), String.valueOf(MAX_GUESS));
+            }
+            gameLoop();
+            endGame();
+
+            nextGame = addFromQueue();
+
+            gameStarted = false;
+            if (nextGame) {
+                Logger.info("Game started ... queue players added to game in order of arrival");
+            }
         }
-        gameLoop();
-        endGame();
-
-        gameStarted = false;
+        while (nextGame);
     }
 
     public MyConcurrentList<PlayingServer.WrappedPlayerSocket> getGamePlayers() {

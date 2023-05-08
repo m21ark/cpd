@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class PlayingServer extends UnicastRemoteObject implements GameServerInterface {
 
-    public static MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
+    public MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
     static PlayingServer instance = null;
     public final GameHeap games = new GameHeap();
     private static ExecutorService executorGameService;
