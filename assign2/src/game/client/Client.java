@@ -108,7 +108,6 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public void waitForGameStart(SocketChannel socketChannel) {
-        // TODO: still problem for same login on menu
         try {
             SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
         } catch (Exception e) {
@@ -320,7 +319,7 @@ public class Client implements Serializable { // This is the game.client applica
                     System.exit(0);
                 }
             }
-            return; // TODO: This is a temporary fix
+            return;
         }  // else : no reconnect
 
         mainGame(false, false);

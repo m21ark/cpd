@@ -99,7 +99,6 @@ public class ClientHandler implements Runnable {
     }
 
     public String authenticate(String username, String password) {
-        // TODO: falta um timout para o caso de o cliente nao responder
         // Check if the username and password match any existing entry
         for (String line : persistentUsers) {
             String[] fields = line.split(",");

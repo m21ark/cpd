@@ -26,8 +26,8 @@ public class GameServer implements Serializable {
     static GameServer instance = null;
     private final Configurations configurations;
     public PlayingServer playingServer;
-    public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
-    public MyConcurrentMap<String, TokenState> clientsStates = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
+    public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>();
+    public MyConcurrentMap<String, TokenState> clientsStates = new MyConcurrentMap<>();
     private transient ExecutorService executorService;
     private transient ServerSocketChannel serverSocket;
 
