@@ -5,50 +5,99 @@ import java.io.Serializable;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class MyConcurrentMap<K, S> implements Serializable {
 
     private Map<K, S> map;
 
+    private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
+
     public MyConcurrentMap() {
         this.map = new HashMap<>();
     }
 
     public S get(K key) {
-        return this.map.get(key);
+        lock.readLock().lock();
+        try {
+            return this.map.get(key);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public void remove(K key) {
-        this.map.remove(key);
+        lock.writeLock().lock();
+        try {
+            this.map.remove(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void clear() {
-        this.map.clear();
+        lock.writeLock().lock();
+        try {
+            this.map.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void put(K key, S value) {
-        this.map.put(key, value);
+        lock.writeLock().lock();
+        try {
+            this.map.put(key, value);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public boolean containsKey(K key) {
-        return this.map.containsKey(key);
+        lock.writeLock().lock();
+        try {
+            return this.map.containsKey(key);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public boolean containsValue(S value) {
-        return this.map.containsValue(value);
+        lock.writeLock().lock();
+        try {
+            return this.map.containsValue(value);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public int size() {
-        return this.map.size();
+        lock.readLock().lock();
+        try {
+            return this.map.size();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public boolean isEmpty() {
-        return this.map.isEmpty();
+        lock.readLock().lock();
+        try {
+            return this.map.isEmpty();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public Map<K, S> getMap() {
-        return this.map;
+        lock.readLock().lock();
+        try {
+            return this.map;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Serial
