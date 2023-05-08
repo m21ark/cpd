@@ -1,5 +1,6 @@
 package game.server;
 
+import game.client.GamePlayer;
 import game.config.GameConfig;
 import game.logic.structures.MyConcurrentList;
 import game.logic.structures.Pair;
@@ -25,6 +26,7 @@ public class GameModel implements Runnable, java.io.Serializable {
     private final MyConcurrentList<game.server.PlayingServer.WrappedPlayerSocket> gamePlayers;
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
+    int finishedPlayers = 0;
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
         this.gamePlayers = gamePlayers;
@@ -181,7 +183,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
         Logger.info("The answer is " + gameWinner);
 
-        int finishedPlayers = 0;
+        finishedPlayers = 0;
         long startTime = System.currentTimeMillis();
         int gameSize = gamePlayers.size();
 
@@ -201,8 +203,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
                 GuessErgo response = responseToGuess(gamePlayer);
 
-                if (response == GuessErgo.WINNING_MOVE
-                        || (response == GuessErgo.ALREADY_LEFT_GAME && !gamePlayer.hasLeftGame())) {
+                if (response == GuessErgo.WINNING_MOVE) {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED && getGuessesLeft(gamePlayer.getToken()) == 0)
@@ -242,6 +243,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         PlayingServer.getInstance().games.updateHeap(this);
         Logger.warning("Game cleared");
         gameWinner = new Random().nextInt(MAX_GUESS);
+        finishedPlayers = 0;
         // TODO: ir buscar à queue os jogadores que estavam à espera e preenche-los aqui
         // se for simple mode preencher por ordem de chegada, senão fazer o modo rankeado
         // o gameconfig é um singleton e tem o modo de jogo definido
@@ -357,9 +359,8 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
 
-    public void removePlayer(PlayingServer.WrappedPlayerSocket player) {
-        gamePlayers.remove(player);
-        PlayingServer.getInstance().games.updateHeap(this);
+    public void removePlayer() {
+        finishedPlayers++;
     }
 
     public void playerLeftNotify() {

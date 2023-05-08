@@ -163,17 +163,26 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
         TokenState tokenState = GameServer.getInstance().clientsStates.get(token);
 
+        Logger.info("Player " + token + " left the game" + " " + tokenState.getState().toString());
         try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING) {
-                tokenState.getModel().playerLeftNotify(); // TODO : tirar da lista de clients
+            if (tokenState.getState() == TokenState.TokenStateEnum.PLAYING
+                    || tokenState.getState() == TokenState.TokenStateEnum.PLAYGROUND) {
+                tokenState.getModel().playerLeftNotify();
+                tokenState.getModel().removePlayer();
                 Logger.info("removed player from game");
+            if (tokenState.getState() == TokenState.TokenStateEnum.PLAYGROUND) {
+                tokenState.getModel().playerLeftNotify();
+                Logger.info("removed player from game");
+            }
             } else if (tokenState.getState() == TokenState.TokenStateEnum.QUEUED) {
                 queueToPlay.removeWhere(x -> x.getToken().equals(token));
             }
+
+            GameServer.getInstance().clientsStates.remove(token);
         }
 
     }
