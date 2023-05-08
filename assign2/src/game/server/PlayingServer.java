@@ -72,7 +72,6 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             rankDelta *= 2; // increase the tolerance
             var player = new WrappedPlayerSocket(client, GameServer.getSocket(token), rankDelta);
             player.setToken(token);
-            queueToPlay.add(player);
             Logger.warning("Player added to queue due to rank tolerance");
             return false;
         }
@@ -86,9 +85,13 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
             executorGameService.submit(game);
         } else {
             Logger.info("Waiting for more players ... " + game.getGamePlayers().size() + " / " + GameModel.getNrMaxPlayers());
-            game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
-            //TODO: adicionar timeout para o caso de n haver mais jogadores
-            //todo : talvez notificar os jogadores que estão na queue de quantos jogadores faltam (ETA)
+            boolean hasEnoughPlayer =  game.playgroundUpdate(); // check if a ranked player waiting can enter this updated game
+            if (hasEnoughPlayer) {
+                Logger.info("Game started");
+                executorGameService.submit(game);
+            } else {
+                notifyPlaygroundUpdate(game);
+            }
         }
 
         return true;
@@ -124,7 +127,8 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
     }
 
     public void notifyPlaygroundUpdate(GameModel game) {
-        game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
+        game.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE,
+                String.valueOf(game.getGamePlayers().size()), String.valueOf(GameConfig.getInstance().getNrMaxPlayers()));
     }
 
     public void addToQueue(GamePlayer client, String token) {

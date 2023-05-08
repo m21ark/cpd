@@ -103,7 +103,7 @@ public class GameModel implements Runnable, java.io.Serializable {
             }
     }
 
-    public void playgroundUpdate() {
+    public boolean playgroundUpdate() {
         this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
 
         // Check if there's a player in queue suitable for this game
@@ -112,11 +112,16 @@ public class GameModel implements Runnable, java.io.Serializable {
             if (player.getTolerance() >= Math.abs(this.getRank() - player.getRank())) {
                 this.addPlayer(player);
                 PlayingServer.getInstance().queueToPlay.remove(player);
-                break;
+                Logger.info("Added player '" + player.getName() + "' to the game." + player.getTolerance());
+                if (this.gamePlayers.size() == NR_MAX_PLAYERS) {
+                    Logger.info("Game is full after accepting queued players, starting game...");
+                    return true;
+                }
             } else {
                 player.increaseTolerance();
             }
         }
+        return false;
     }
 
     public void updateGuesses(String token, int guess) {
@@ -244,7 +249,6 @@ public class GameModel implements Runnable, java.io.Serializable {
         }
 
         gamePlayers.clear();
-        PlayingServer.getInstance().games.updateHeap(this);
         Logger.warning("Game cleared");
         gameWinner = new Random().nextInt(MAX_GUESS);
         finishedPlayers = 0;
@@ -302,7 +306,21 @@ public class GameModel implements Runnable, java.io.Serializable {
     }
 
     public boolean addFromQueueRankedMode() {
-        return false;
+
+        if (PlayingServer.getInstance().queueToPlay.isEmpty()) {
+            return false;
+        }
+
+        Logger.info("Adding players from queue to game" + PlayingServer.getInstance().queueToPlay.size() + " " + PlayingServer.getInstance().queueToPlay.front().getName());
+        gamePlayers.add(PlayingServer.getInstance().queueToPlay.poll());
+
+        for (PlayingServer.WrappedPlayerSocket player : PlayingServer.getInstance().queueToPlay) {
+            Logger.error("Player " + player.getName() + " is in the queue but should not be!");
+        }
+
+
+        // If we have enough players inside the rank threshold, we can start the game
+        return playgroundUpdate();
     }
 
     public boolean addFromQueue(){
@@ -336,6 +354,8 @@ public class GameModel implements Runnable, java.io.Serializable {
             gameStarted = false;
             if (nextGame) {
                 Logger.info("Game started ... queue players added to game in order of arrival");
+            } else {
+                PlayingServer.getInstance().games.updateHeap(this);
             }
         }
         while (nextGame);

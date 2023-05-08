@@ -136,11 +136,15 @@ public class Client implements Serializable { // This is the game.client applica
             String[] parts = data.split(" ");
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
             return false;
+        } else if (data.contains(CommunicationProtocol.QUEUE_ADD.toString())) {
+            System.out.println("Our server is currently on it's max capacity.\n" +
+                    "You will be added to a queue before joining the game lobby.");
+            return false;
         }
 
         if (data.contains(CommunicationProtocol.PLAYER_LEFT.toString()))
             System.out.println("A player left the game lobby.");
-        else System.out.println("Invalid response from game.server: " + data);
+        else Logger.warning("Invalid response from game.server: " + data);
 
         return false;
     }
