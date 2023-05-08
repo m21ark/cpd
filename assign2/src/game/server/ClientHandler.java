@@ -22,8 +22,8 @@ import java.util.UUID;
 public class ClientHandler implements Runnable {
     public static boolean DEBUG_MODE = false;
     private final Socket socket;
-    private File persistantUsersFile;
-    private List<String> persistantUsers; // Format: username:password:token:score
+    private File persistentUsersFile;
+    private List<String> persistentUsers; // Format: username:password:token:score
     private boolean isAReturningUser = false;
 
     // should every handler have its own version of the file?
@@ -31,7 +31,7 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Socket accept) {
         this.socket = accept;
 
-        loadPersistantStorage();
+        loadPersistentStorage();
     }
 
     public static void saveNewTokenToFile(String username, String newToken) {
@@ -70,22 +70,22 @@ public class ClientHandler implements Runnable {
         return Instant.now().isBefore(expirationDate);
     }
 
-    private void loadPersistantStorage() {
+    private void loadPersistentStorage() {
         try {
 
             // Check if the database/users.txt file exists
             String dir = "database/users.txt";
-            persistantUsersFile = new File(dir);
+            persistentUsersFile = new File(dir);
 
-            if (!persistantUsersFile.exists()) {
+            if (!persistentUsersFile.exists()) {
                 // If it doesn't exist, create it
-                if (persistantUsersFile.createNewFile()) Logger.warning("Created new database/users.txt file.");
+                if (persistentUsersFile.createNewFile()) Logger.warning("Created new database/users.txt file.");
                 else Logger.warning("Failed to create database/users.txt file.");
             }
 
             // Read the lines from the database/users.txt file
             Path path = Paths.get(dir);
-            this.persistantUsers = Files.readAllLines(path);
+            this.persistentUsers = Files.readAllLines(path);
 
         } catch (IOException e) {
             Logger.error("Could not intialize database/users.txt file.");
@@ -101,7 +101,7 @@ public class ClientHandler implements Runnable {
     public String authenticate(String username, String password) {
         // TODO: falta um timout para o caso de o cliente nao responder
         // Check if the username and password match any existing entry
-        for (String line : persistantUsers) {
+        for (String line : persistentUsers) {
             String[] fields = line.split(",");
             if (fields[0].equals(username) && fields[1].equals(password))
                 return "1," + fields[3]; // Credentials match an existing entry
@@ -127,7 +127,7 @@ public class ClientHandler implements Runnable {
         if (isAReturningUser) dealWithReturningUser(token);
         else SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
 
-        GameServer.instance.clients.put(token, socket); //TODO: lock here --> we are writting
+        GameServer.instance.clients.put(token, socket);
     }
 
     private void dealWithReturningUser(String token) {
@@ -193,7 +193,7 @@ public class ClientHandler implements Runnable {
                 SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             }
             default -> {
-                Logger.info("Unforseen state. Sending player to the main menu...");
+                Logger.info("Unforeseen state. Sending player to the main menu...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.MENU_CONNECT);
             }
         }
@@ -274,7 +274,7 @@ public class ClientHandler implements Runnable {
     private boolean isValidTok(String username, String token) {
         if (!isTokenStillValid(token)) return false;
         // TODO: LOCK HERE
-        for (String line : persistantUsers) {
+        for (String line : persistentUsers) {
             String[] fields = line.split(",");
             if (fields[0].equals(username) && fields[2].equals(token)) return true;
         }
@@ -321,7 +321,7 @@ public class ClientHandler implements Runnable {
         FileWriter writer; // Append mode
 
         try {
-            writer = new FileWriter(persistantUsersFile, true);
+            writer = new FileWriter(persistentUsersFile, true);
             writer.write(newEntry + System.lineSeparator()); // Add new line separator
             writer.close();
             Logger.info("New user added to persistant storage.");

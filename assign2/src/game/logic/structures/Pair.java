@@ -2,16 +2,11 @@ package game.logic.structures;
 
 import java.io.Serializable;
 
-public class Pair<K, V> implements Serializable {
-    private final K key;
-    private final V value;
-
-    public Pair(K key, V value) {
+public record Pair<K, V>(K key, V value) implements Serializable {
+    public Pair {
         if (key == null || value == null) {
             throw new IllegalArgumentException("Key and value cannot be null");
         }
-        this.key = key;
-        this.value = value;
     }
 
     public K getFirst() { // POR ENQUANTO N E PRECISO LOCKS

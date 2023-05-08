@@ -71,16 +71,6 @@ public class Client implements Serializable { // This is the game.client applica
         }
     }
 
-    //private static boolean dealWithNioReconnect(String data) {
-    //    Logger.info("data : " + data);
-    //    if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())
-    //            || data.contains(CommunicationProtocol.QUEUE_UPDATE.toString())
-    //            || data.contains(CommunicationProtocol.MENU_CONNECT.toString())) {
-    //        return true;
-    //    }
-    //    return false;
-    //}
-
     private static boolean dealWithServerGuessResponse(String data) {
         boolean ret = false;
         if (data.contains(CommunicationProtocol.GUESS_TOO_LOW.name())) {
@@ -97,6 +87,12 @@ public class Client implements Serializable { // This is the game.client applica
         } else if (data.contains(CommunicationProtocol.GAME_END.name())) {
             System.out.println("Game over!");
             ret = true;
+        }
+
+        if (data.contains(CommunicationProtocol.GAME_RECONNECT.toString())
+                || data.contains(CommunicationProtocol.QUEUE_UPDATE.toString())
+                || data.contains(CommunicationProtocol.MENU_CONNECT.toString())) {
+            return ret;
         }
 
         if (data.contains(CommunicationProtocol.PLAYER_LEFT.name())) {
@@ -300,7 +296,9 @@ public class Client implements Serializable { // This is the game.client applica
         int rank = this.player.getRank();
         String rankString = String.format("%3d", rank);
 
-        String menuHeader = "+-------------------------+\n" + "|    Select an option     |\n" + "|      (Rank = " + rankString + ")       |\n" + "+-------------------------+\n" + "|   1 - Start a new game  |\n" + "|   2 - Exit              |\n" + "+-------------------------+";
+        String menuHeader = "+-------------------------+\n" + "|    Select an option     |\n"
+                + "|      (Rank = " + rankString + ")       |\n" + "+-------------------------+\n"
+                + "|   1 - Start a new game  |\n" + "|   2 - Exit              |\n" + "+-------------------------+";
 
         System.out.println(menuHeader);
 
@@ -456,14 +454,8 @@ public class Client implements Serializable { // This is the game.client applica
             Logger.info(serverResponse);
             if (serverResponse.contains(CommunicationProtocol.GUESS_CORRECT.toString())) {
                 break;
-            } else if (serverResponse.contains(CommunicationProtocol.DISCONNECTED.toString())) {
-                if (!tryToReconnect()) {
-                    System.out.println("Server is in maintenance...");
-                    System.exit(0);
-                } else {
-                    continue; // do not lose the numGuesses (hard to know how many guesses were left though)
-                }
             }
+
             numGuesses--;
         }
 
@@ -497,7 +489,8 @@ public class Client implements Serializable { // This is the game.client applica
                 System.out.println("Points: " + args[1] + " --> New Rank = " + (player.getRank() + Integer.parseInt(args[1])));
                 System.out.println("Position: " + args[2] + "/" + args[3]);
                 if (delta != 0)
-                    System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) + " and took you " + (finalNumGuesses - 1) + " guesses");
+                    System.out.println("Your closest guess: " + args[4] + " was off by " + Math.abs(delta) +
+                            " and took you " + (finalNumGuesses - 1) + " guesses");
                 else System.out.println("It took you " + (finalNumGuesses - 1) + " guesses to win");
                 return true;
             }
@@ -541,7 +534,18 @@ public class Client implements Serializable { // This is the game.client applica
 
     private String sendGuess(String guess) {
         SocketUtils.sendToServer(socketChannel, CommunicationProtocol.GUESS, String.valueOf(guess));
-        return SocketUtils.NIORead(socketChannel, Client::dealWithServerGuessResponse);
+        String serverResponse = SocketUtils.NIORead(socketChannel, Client::dealWithServerGuessResponse);
+
+        if (serverResponse.contains(CommunicationProtocol.DISCONNECTED.toString())) {
+            if (!tryToReconnect()) {
+                System.out.println("Server is in maintenance...");
+                System.exit(0);
+            } else {
+                return sendGuess(guess);
+            }
+        }
+
+        return serverResponse;
     }
 
     public SocketChannel getSocketChannel() {

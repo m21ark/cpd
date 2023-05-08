@@ -16,13 +16,10 @@ import java.nio.file.Paths;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// Lembrar de ver isto melhor ... https://hackernoon.com/implementing-an-event-loop-in-java-for-fun-and-profit
 
 public class GameServer implements Serializable {
 
@@ -30,7 +27,7 @@ public class GameServer implements Serializable {
     private final Configurations configurations;
     public PlayingServer playingServer;
     public MyConcurrentMap<String, Socket> clients = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
-    public Map<String, TokenState> clientsStates = new HashMap<>(); // TODO: tornar isto thread safe
+    public MyConcurrentMap<String, TokenState> clientsStates = new MyConcurrentMap<>(); // TODO: tornar isto thread safe
     private transient ExecutorService executorService;
     private transient ServerSocketChannel serverSocket;
 

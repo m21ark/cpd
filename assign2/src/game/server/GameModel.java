@@ -273,7 +273,7 @@ public class GameModel implements Runnable, java.io.Serializable {
             }
 
             raf.close();
-            Logger.info("Updated persistant rank for user " + username);
+            Logger.info("Updated persistent rank for user " + username);
         } catch (IOException e) {
             throw new RuntimeException("Error updating score in file.");
         }
