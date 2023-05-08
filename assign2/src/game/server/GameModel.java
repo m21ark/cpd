@@ -201,7 +201,8 @@ public class GameModel implements Runnable, java.io.Serializable {
 
                 GuessErgo response = responseToGuess(gamePlayer);
 
-                if (response == GuessErgo.WINNING_MOVE) {
+                if (response == GuessErgo.WINNING_MOVE
+                        || (response == GuessErgo.ALREADY_LEFT_GAME && !gamePlayer.hasLeftGame())) {
                     finishedPlayers++;
                     gamePlayer.setLeftGame(true);
                 } else if (response == GuessErgo.PLAYED && getGuessesLeft(gamePlayer.getToken()) == 0)

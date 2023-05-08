@@ -227,7 +227,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
         }
 
         public void setLeftGame(boolean leftGame) {
-            this.leftGame = leftGame; // TODO: FAZ SE SET MAS NUNCA SE USA
+            this.leftGame = leftGame;
         }
 
         public String getToken() {
