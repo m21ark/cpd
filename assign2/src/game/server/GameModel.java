@@ -340,7 +340,6 @@ public class GameModel implements Runnable, java.io.Serializable {
     @Override
     public void run() {
         Logger.info("Game playground");
-        // TODO: Add max timeout to the game
 
         do {
             if (!gameStarted) {

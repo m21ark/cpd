@@ -241,7 +241,7 @@ public class ClientHandler implements Runnable {
         // if new user, add to persistant storage
         if (newUser) {
             Logger.info("New user detected. Adding to persistant storage.");
-            addNewUserToPersistantStorage(username, password, token);
+            addNewUserToPersistentStorage(username, password, token);
             SocketUtils.writeData(socket, "1");
         }
 
@@ -295,7 +295,7 @@ public class ClientHandler implements Runnable {
 
         Logger.info("Client wants to add a new entry. Password confirmation : |" + passwordConf + "| .");
 
-        if (passwordConf.equals("CANCEL_NEW_USER")) { // TODO: Change this to a proper enum
+        if (passwordConf.equals("CANCEL_NEW_USER")) {
             Logger.info("User doesn't want to add a new entry.");
             authResult = 2;
         } else if (!password.equals(passwordConf)) {
@@ -312,7 +312,7 @@ public class ClientHandler implements Runnable {
     }
 
 
-    private void addNewUserToPersistantStorage(String username, String passwordConf, String token) {
+    private void addNewUserToPersistentStorage(String username, String passwordConf, String token) {
         // TODO: ADD LOCK HERE TO WRITE TO FILE
 
         // Append the new entry to the database/users.txt file

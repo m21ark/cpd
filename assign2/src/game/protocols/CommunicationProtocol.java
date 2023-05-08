@@ -7,7 +7,7 @@ public enum CommunicationProtocol {
     DISCONNECTED, // Server or game.client informs that they disconnected. No args
 
     // ================== Game Waiting ==================
-    QUEUE_ADD, // Server informs game.client that he will be added to queue. No args  // TODO: Client não está à espera disto!
+    QUEUE_ADD, // Server informs game.client that he will be added to queue. No args
     QUEUE_UPDATE, // TODO: Server informs game.client that the queue has X players in it, that there are Y games and 1 is ending etc
     PLAYGROUND_UPDATE, // Server notifies players in the playground of how many players are still needed to start game. Args: CurrNumPlayers, NeededNumPlayers
     GAME_STARTED, // Server notifies all players that the game has begun. Args: MaxNumGuesses, NumPlayers, MaxValue
