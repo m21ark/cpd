@@ -24,9 +24,9 @@ public class GameModel implements Runnable, java.io.Serializable {
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private final MyConcurrentList<game.server.PlayingServer.WrappedPlayerSocket> gamePlayers;
     int finishedPlayers = 0;
+    boolean nextGame;
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
     private boolean gameStarted = false;
-    boolean nextGame;
 
 
     public GameModel(MyConcurrentList<PlayingServer.WrappedPlayerSocket> gamePlayers) {
@@ -110,8 +110,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     public boolean playgroundUpdate(boolean notifyPlayers) {
         if (notifyPlayers)
-        this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()),
-                String.valueOf(NR_MAX_PLAYERS));
+            this.notifyPlayers(CommunicationProtocol.PLAYGROUND_UPDATE, String.valueOf(this.gamePlayers.size()), String.valueOf(NR_MAX_PLAYERS));
 
         // Check if there's a player in queue suitable for this game
         // Only for the ranking mode
@@ -245,11 +244,7 @@ public class GameModel implements Runnable, java.io.Serializable {
 
             if (player.getConnection().isClosed()) continue;
 
-            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT,
-                    String.valueOf(leaderboard.get(token).getFirst()),
-                    String.valueOf(leaderboard.get(token).getSecond()),
-                    String.valueOf(leaderboard.size()),
-                    String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
+            SocketUtils.sendToClient(player.getConnection(), CommunicationProtocol.GAME_RESULT, String.valueOf(leaderboard.get(token).getFirst()), String.valueOf(leaderboard.get(token).getSecond()), String.valueOf(leaderboard.size()), String.valueOf(playerGuesses.get(token).getSecond()), String.valueOf(gameWinner));
             int newRank = player.getRank() + leaderboard.get(token).getFirst();
             if (newRank < 0) newRank = 0;
             player.setRank(newRank);
@@ -332,7 +327,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         return playgroundUpdate();
     }
 
-    public boolean addFromQueue(){
+    public boolean addFromQueue() {
         if (GameConfig.getInstance().getMode().equals("Simple")) {
             return addFromQueueSimpleMode();
         }
@@ -365,8 +360,7 @@ public class GameModel implements Runnable, java.io.Serializable {
             } else {
                 PlayingServer.getInstance().games.updateHeap(this);
             }
-        }
-        while (nextGame);
+        } while (nextGame);
     }
 
     public MyConcurrentList<PlayingServer.WrappedPlayerSocket> getGamePlayers() {

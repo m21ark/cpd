@@ -1,6 +1,5 @@
 package game.server;
 
-import game.client.Client;
 import game.client.GamePlayer;
 import game.config.GameConfig;
 import game.logic.structures.GameHeap;

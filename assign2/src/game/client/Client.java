@@ -134,8 +134,7 @@ public class Client implements Serializable { // This is the game.client applica
             System.out.println("There are " + parts[1] + "/" + parts[2] + " players in the game lobby.");
             return false;
         } else if (data.contains(CommunicationProtocol.QUEUE_ADD.toString())) {
-            System.out.println("Our server is currently on it's max capacity.\n" +
-                    "You will be added to a queue before joining the game lobby.");
+            System.out.println("Our server is currently on it's max capacity.\n" + "You will be added to a queue before joining the game lobby.");
             return false;
         }
 

@@ -143,8 +143,7 @@ public class GameServer implements Serializable {
         playingServer = new PlayingServer();
         registry.rebind("playingServer", playingServer);
 
-        ScheduledSerializer<GameServer> serializer =
-                new ScheduledSerializer<>("cache/gameServer.ser", this, this.getScheduler());
+        ScheduledSerializer<GameServer> serializer = new ScheduledSerializer<>("cache/gameServer.ser", this, this.getScheduler());
 
         serializer.start();
 
