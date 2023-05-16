@@ -145,7 +145,7 @@ public class ClientHandler implements Runnable {
             case QUEUED -> {
                 Logger.info("Client was in the queue. Getting him back in the queue...");
                 SocketUtils.sendToClient(socket, CommunicationProtocol.QUEUE_RECONNECT);
-                // TODO: send the game.client the current queue position
+                gs.playingServer.queueToPlayUpdateToken(token, socket);
             }
             case PLAYGROUND -> {
                 Logger.info("Client was in the playground. Getting him back in the playground...");

@@ -315,7 +315,7 @@ public class Client implements Serializable { // This is the game.client applica
         if (res > 0) {
             switch (res) {
                 case 1 -> gameReconnect(sb);
-                case 2 -> queueReconnect(sb);
+                case 2 -> queueReconnect();
                 case 3 -> playgroundReconnect(sb);
                 default -> {
                     System.out.println("Reconnect failed!");
@@ -383,8 +383,11 @@ public class Client implements Serializable { // This is the game.client applica
         mainGame(true, false);
     }
 
-    private void queueReconnect(StringBuilder sb) {
-        System.out.println("Reconnecting to queue..."); // TODO: Implement this
+    private void queueReconnect() {
+        System.out.println("Reconnecting to queue..."); // TODO: There are still problems with this and dont know why
+        System.out.println("Welcome back " + player.getName() + "!");
+        System.out.println("You are still in the queue...");
+        mainGame(true, false);
     }
 
     private void gameReconnect(StringBuilder sb) {

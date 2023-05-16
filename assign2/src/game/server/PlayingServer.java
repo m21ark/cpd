@@ -208,6 +208,14 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
     }
 
+    public void queueToPlayUpdateToken(String token, Socket socket) {
+        for (WrappedPlayerSocket player : queueToPlay)
+            if (player.getToken().equals(token)) {
+                player.setConnection(socket);
+                return;
+            }
+    }
+
     public static class WrappedPlayerSocket extends GamePlayer {
 
         ReentrantLock lock = new ReentrantLock();
