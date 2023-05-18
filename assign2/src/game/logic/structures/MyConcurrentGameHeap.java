@@ -9,11 +9,11 @@ import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class GameHeap implements Iterable<GameModel>, Serializable {
+public class MyConcurrentGameHeap implements Iterable<GameModel>, Serializable {
     private final PriorityQueue<GameModel> heap;
     private final ReadWriteLock lock;
 
-    public GameHeap() {
+    public MyConcurrentGameHeap() {
 
         heap = new PriorityQueue<>(new GameComparator());
         lock = new ReentrantReadWriteLock(true);

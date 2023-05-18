@@ -1,10 +1,12 @@
 package game.server;
 
 import game.config.GameConfig;
+import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.protocols.TokenState;
 import game.utils.Logger;
 import game.utils.SocketUtils;
+import game.utils.ServerLock;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,13 +20,15 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.ReadWriteLock;
 
 public class ClientHandler implements Runnable {
     public static boolean DEBUG_MODE = false;
     private final Socket socket;
     private File persistentUsersFile;
-    private List<String> persistentUsers; // Format: username:password:token:score
+    private MyConcurrentList<String> persistentUsers; // Format: username:password:token:score
     private boolean isAReturningUser = false;
+
 
     // should every handler have its own version of the file?
 
@@ -36,7 +40,8 @@ public class ClientHandler implements Runnable {
 
     public static void saveNewTokenToFile(String username, String newToken) {
         try {
-            // TODO : lock here
+            ServerLock.lockWriteFile();
+
             RandomAccessFile raf = new RandomAccessFile("database/users.txt", "rw");
 
             // Read the file line by line
@@ -60,6 +65,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             Logger.error("Could not save new token to file.");
         }
+        finally {
+            ServerLock.unlockWriteFile();
+        }
     }
 
     public static boolean isTokenStillValid(String token) {
@@ -71,8 +79,8 @@ public class ClientHandler implements Runnable {
     }
 
     private void loadPersistentStorage() {
+        ServerLock.lockReadFile();
         try {
-
             // Check if the database/users.txt file exists
             String dir = "database/users.txt";
             persistentUsersFile = new File(dir);
@@ -85,11 +93,15 @@ public class ClientHandler implements Runnable {
 
             // Read the lines from the database/users.txt file
             Path path = Paths.get(dir);
-            this.persistentUsers = Files.readAllLines(path);
+            this.persistentUsers = new MyConcurrentList<>(Files.readAllLines(path));
 
         } catch (IOException e) {
             Logger.error("Could not intialize database/users.txt file.");
         }
+        finally {
+            ServerLock.unlockReadFile();
+        }
+
     }
 
     private String generateRandomToken() {
@@ -272,11 +284,17 @@ public class ClientHandler implements Runnable {
 
     private boolean isValidTok(String username, String token) {
         if (!isTokenStillValid(token)) return false;
-        // TODO: LOCK HERE
-        for (String line : persistentUsers) {
-            String[] fields = line.split(",");
-            if (fields[0].equals(username) && fields[2].equals(token)) return true;
+
+        ServerLock.lockReadFile();
+        try {
+            for (String line : persistentUsers) {
+                String[] fields = line.split(",");
+                if (fields[0].equals(username) && fields[2].equals(token)) return true;
+            }
+        } finally {
+            ServerLock.unlockReadFile();
         }
+
         return false;
     }
 
@@ -312,14 +330,14 @@ public class ClientHandler implements Runnable {
 
 
     private void addNewUserToPersistentStorage(String username, String passwordConf, String token) {
-        // TODO: ADD LOCK HERE TO WRITE TO FILE
 
-        // Append the new entry to the database/users.txt file
-        // Format: username,password,token,rank
-        String newEntry = username + "," + passwordConf + "," + token + "," + "00000";
-        FileWriter writer; // Append mode
-
+        ServerLock.lockWriteFile();
         try {
+            // Append the new entry to the database/users.txt file
+            // Format: username,password,token,rank
+            String newEntry = username + "," + passwordConf + "," + token + "," + "00000";
+            FileWriter writer; // Append mode
+
             writer = new FileWriter(persistentUsersFile, true);
             writer.write(newEntry + System.lineSeparator()); // Add new line separator
             writer.close();
@@ -327,7 +345,8 @@ public class ClientHandler implements Runnable {
 
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            ServerLock.unlockWriteFile();
         }
-
     }
 }

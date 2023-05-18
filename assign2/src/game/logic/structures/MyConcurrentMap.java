@@ -1,5 +1,7 @@
 package game.logic.structures;
 
+import game.utils.ServerLock;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.net.Socket;

@@ -8,11 +8,13 @@ import game.protocols.GuessErgo;
 import game.protocols.TokenState;
 import game.utils.Logger;
 import game.utils.SocketUtils;
+import game.utils.ServerLock;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
 
 public class GameModel implements Runnable, java.io.Serializable {
 
@@ -23,6 +25,7 @@ public class GameModel implements Runnable, java.io.Serializable {
     // the following field does not have concurrent access, so it does not need to be thread-safe
     private final HashMap<String, Pair<Integer, Integer>> playerGuesses = new HashMap<>(); // <token, <num_guesses_left, best_guess>>
     private final MyConcurrentList<game.server.PlayingServer.WrappedPlayerSocket> gamePlayers;
+
     int finishedPlayers = 0;
     boolean nextGame;
     private int gameWinner = new Random().nextInt(MAX_GUESS) + 1;
@@ -261,34 +264,39 @@ public class GameModel implements Runnable, java.io.Serializable {
 
     private void updateRank(String username, int rank) {
         Logger.info("Updating persistent rank for user " + username);
-        // TODO: ADD LOCK HERE TO WRITE TO FILE
+
+        ServerLock.lockWriteFile();
         try {
+            try {
 
-            RandomAccessFile raf = new RandomAccessFile("database/users.txt", "rw");
-            Formatter formatter = new Formatter();
+                RandomAccessFile raf = new RandomAccessFile("database/users.txt", "rw");
+                Formatter formatter = new Formatter();
 
-            // Read the file line by line
-            String line;
-            while ((line = raf.readLine()) != null) {
+                // Read the file line by line
+                String line;
+                while ((line = raf.readLine()) != null) {
 
-                // Split the line into its components
-                String[] parts = line.split(",");
+                    // Split the line into its components
+                    String[] parts = line.split(",");
 
-                // Check if the username matches
-                if (parts[0].equals(username)) {
-                    // Update the score
-                    long pointer = raf.getFilePointer();
-                    raf.seek(pointer - line.length() - 1);
-                    String updatedLine = formatter.format("%s,%s,%s,%05d", parts[0], parts[1], parts[2], rank).toString();
-                    raf.writeBytes(updatedLine);
-                    break;
+                    // Check if the username matches
+                    if (parts[0].equals(username)) {
+                        // Update the score
+                        long pointer = raf.getFilePointer();
+                        raf.seek(pointer - line.length() - 1);
+                        String updatedLine = formatter.format("%s,%s,%s,%05d", parts[0], parts[1], parts[2], rank).toString();
+                        raf.writeBytes(updatedLine);
+                        break;
+                    }
                 }
-            }
 
-            raf.close();
-            Logger.info("Updated persistent rank for user " + username);
-        } catch (IOException e) {
-            throw new RuntimeException("Error updating score in file.");
+                raf.close();
+                Logger.info("Updated persistent rank for user " + username);
+            } catch (IOException e) {
+                throw new RuntimeException("Error updating score in file.");
+            }
+        } finally {
+            ServerLock.lockWriteFile();
         }
     }
 
