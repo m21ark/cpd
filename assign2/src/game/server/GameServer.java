@@ -81,9 +81,8 @@ public class GameServer implements Serializable {
 
         GameServer gameServer = checkSerializableServer();
 
-        if (gameServer == null) {
-            // ! argsList.contains("-restart") ... ??
-            // ...pode dar jeito para não estar sempre a dar _restart de um ficheiro visto que as configurações podem mudar
+        if (gameServer == null || argsList.contains("-new")) {
+
             gameServer = new GameServer(configurations);
         } else {
             Logger.info("Using previous game.server instance.");
@@ -106,7 +105,7 @@ public class GameServer implements Serializable {
         // var boundedQueue = new ArrayBlockingQueue<Runnable>(1000);
         // new ThreadPoolExecutor(10, 20, 60, SECONDS, boundedQueue, new AbortPolicy());
 
-        executorService = Executors.newCachedThreadPool();
+        executorService = Executors.newFixedThreadPool(3);
         scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 

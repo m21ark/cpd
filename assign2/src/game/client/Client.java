@@ -1,5 +1,6 @@
 package game.client;
 
+import game.config.Configurations;
 import game.config.GameConfig;
 import game.protocols.CommunicationProtocol;
 import game.server.GameServerInterface;
@@ -14,7 +15,9 @@ import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client implements Serializable { // This is the game.client application runner.
@@ -45,7 +48,12 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public static void main(String[] args) throws IOException {
-        Logger.setLevel(java.util.logging.Level.SEVERE);
+        Configurations configurations;
+        List<String> argsList = Arrays.stream(args).toList();
+
+        if (argsList.contains("-d"))
+            Logger.setLevel(java.util.logging.Level.SEVERE);
+
         Client client = new Client();
 
         // Authenticate
@@ -112,7 +120,10 @@ public class Client implements Serializable { // This is the game.client applica
             SocketUtils.NIOReadAndInput(this.socketChannel, this::dealWithServerMessages
                     , this::verifyUserWantToLeave);
         } catch (Exception e) {
-            System.out.println("The game.server is down (or bad connection).\n Try to connect again. \n You won't loose your progress in queue.");
+            System.out.println("The game.server is down (or bad connection).\n" +
+                    "Try to connect again." +
+                    "\nYou won't loose your progress in queue.");
+
             System.exit(0);
         }
     }
