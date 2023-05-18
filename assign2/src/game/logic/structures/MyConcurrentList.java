@@ -8,11 +8,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
 public class MyConcurrentList<E> implements Iterable<E>, java.io.Serializable {
-    private final List<E> elements;
+    private List<E> elements;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
-
     public MyConcurrentList() {
         elements = new ArrayList<>();
+    }
+
+    public MyConcurrentList(List<E> elements) {
+        this.elements = elements;
     }
 
     public void add(E element) {

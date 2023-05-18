@@ -2,7 +2,7 @@ package game.server;
 
 import game.client.GamePlayer;
 import game.config.GameConfig;
-import game.logic.structures.GameHeap;
+import game.logic.structures.MyConcurrentGameHeap;
 import game.logic.structures.MyConcurrentList;
 import game.protocols.CommunicationProtocol;
 import game.protocols.TokenState;
@@ -22,7 +22,7 @@ public class PlayingServer extends UnicastRemoteObject implements GameServerInte
 
     public static ExecutorService executorGameService;
     static PlayingServer instance = null;
-    public final GameHeap games = new GameHeap();
+    public final MyConcurrentGameHeap games = new MyConcurrentGameHeap();
     public MyConcurrentList<WrappedPlayerSocket> queueToPlay = new MyConcurrentList<>();
 
     PlayingServer() throws RemoteException {
