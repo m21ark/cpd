@@ -45,7 +45,7 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     public static void main(String[] args) throws IOException {
-        // Logger.setLevel(java.util.logging.Level.SEVERE);
+        Logger.setLevel(java.util.logging.Level.SEVERE);
         Client client = new Client();
 
         // Authenticate
@@ -112,14 +112,8 @@ public class Client implements Serializable { // This is the game.client applica
             SocketUtils.NIOReadAndInput(this.socketChannel, this::dealWithServerMessages
                     , this::verifyUserWantToLeave);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("The game.server is down... trying to reconnect");
-            if (tryToReconnect()) {
-                waitForGameStart();
-            } else {
-                System.out.println("The game.server is down... exiting");
-                System.exit(0);
-            }
+            System.out.println("The game.server is down (or bad connection).\n Try to connect again. \n You won't loose your progress in queue.");
+            System.exit(0);
         }
     }
 

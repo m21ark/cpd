@@ -100,6 +100,8 @@ public class GameModel implements Runnable, java.io.Serializable {
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers)
             if (gamePlayer.getToken().equals(token)) {
                 gamePlayer.setConnection(newSocket);
+                System.out.println("Updated player '" + gamePlayer.getName() + "' socket.");
+                System.out.println("New socket: " + gamePlayer.getConnection());
                 break;
             }
     }
