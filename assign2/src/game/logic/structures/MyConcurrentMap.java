@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MyConcurrentMap<K, S> implements Serializable {
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
+    private transient ReadWriteLock lock = new ReentrantReadWriteLock(true);
     private Map<K, S> map;
 
     public MyConcurrentMap() {
@@ -19,6 +19,9 @@ public class MyConcurrentMap<K, S> implements Serializable {
     }
 
     public S get(K key) {
+        if (lock == null) {
+            lock = new ReentrantReadWriteLock(true);
+        }
         lock.readLock().lock();
         try {
             return this.map.get(key);

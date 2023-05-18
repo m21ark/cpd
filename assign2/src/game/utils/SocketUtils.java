@@ -90,42 +90,41 @@ public class SocketUtils {
         }
     }
 
-    public static void NIOReadAndInput(SocketChannel channel, IntPredicate dealFunc, VoidPredicate inputFunc) {
+    public static void NIOReadAndInput(SocketChannel channel, IntPredicate dealFunc, VoidPredicate inputFunc)
+            throws IOException {
         // register a SocketChannel for reading data asynchronously (non-blocking)
-        try {
-            // Configure the channel to be non-blocking and register it with the selector for reading
-            Selector selector = Selector.open();
-            channel.configureBlocking(false);
-            channel.register(selector, SelectionKey.OP_READ);
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-            while (true) {
-                // Logger.info("Waiting for data...");
-                buffer.clear();
-                selector.selectNow(); // neither blocking nor waiting
+        // Configure the channel to be non-blocking and register it with the selector for reading
+        Selector selector = Selector.open();
+        channel.configureBlocking(false);
+        channel.register(selector, SelectionKey.OP_READ);
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-                inputFunc.func();
+        while (true) {
+            // Logger.info("Waiting for data...");
+            buffer.clear();
+            selector.selectNow(); // neither blocking nor waiting
 
-                // Handle read operation
-                int numBytesRead = channel.read(buffer);
-                if (numBytesRead == -1) {
-                    // Socket is down
-                    closeSocket(channel.socket());
-                    System.out.println("Socket is down");
-                    System.exit(0);
-                }
-                if (numBytesRead == 0) {
-                    continue;
-                }
+            inputFunc.func();
 
-                String msg = new String(buffer.array(), 0, numBytesRead);
-                if (dealFunc == null) return;
-                if (dealFunc.func(msg)) return;
+            // Handle read operation
+            int numBytesRead = channel.read(buffer);
+            if (numBytesRead == -1) {
+                // Socket is down
+                closeSocket(channel.socket());
+                System.out.println("Socket is down");
+                System.exit(0);
+            }
+            if (numBytesRead == 0) {
+                continue;
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            String msg = new String(buffer.array(), 0, numBytesRead);
+            if (dealFunc == null) return;
+            if (dealFunc.func(msg)) return;
         }
+
+
     }
 
     public static String NIORead(SocketChannel channel, IntPredicate dealFunc) {

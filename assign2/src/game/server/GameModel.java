@@ -83,7 +83,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         for (PlayingServer.WrappedPlayerSocket gamePlayer : gamePlayers) {
             Socket connection = gamePlayer.getConnection();
 
-            if (connection.isConnected() && !connection.isClosed())
+            if (connection != null && connection.isConnected() && !connection.isClosed())
                 SocketUtils.sendToClient(connection, protocol, args);
             else toRemove.add(gamePlayer);
         }

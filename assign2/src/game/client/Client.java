@@ -107,12 +107,19 @@ public class Client implements Serializable { // This is the game.client applica
         socketChannel = SocketChannel.open(address);
     }
 
-    public void waitForGameStart(SocketChannel socketChannel) {
+    public void waitForGameStart() {
         try {
-            SocketUtils.NIOReadAndInput(socketChannel, this::dealWithServerMessages, this::verifyUserWantToLeave);
+            SocketUtils.NIOReadAndInput(this.socketChannel, this::dealWithServerMessages
+                    , this::verifyUserWantToLeave);
         } catch (Exception e) {
-            System.out.println("The game.server closed your connection.");
-            System.exit(0);
+            e.printStackTrace();
+            System.out.println("The game.server is down... trying to reconnect");
+            if (tryToReconnect()) {
+                waitForGameStart();
+            } else {
+                System.out.println("The game.server is down... exiting");
+                System.exit(0);
+            }
         }
     }
 
@@ -339,7 +346,7 @@ public class Client implements Serializable { // This is the game.client applica
             if (!reconnect) option = options();
             if (option == 1) {
                 if (!reconnect) askToPlayGame();
-                if (!wasMidGame) waitForGameStart(socketChannel);
+                if (!wasMidGame) waitForGameStart();
 
                 gameLoop();
 
