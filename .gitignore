@@ -8,3 +8,4 @@ bin
 cache
 assign2/cache
 database
+*.class

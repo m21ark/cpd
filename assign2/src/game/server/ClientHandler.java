@@ -18,9 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public class ClientHandler implements Runnable {
     public static boolean DEBUG_MODE = false;

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public class GameModel implements Runnable, java.io.Serializable {
 
@@ -120,6 +119,7 @@ public class GameModel implements Runnable, java.io.Serializable {
         for (PlayingServer.WrappedPlayerSocket player : PlayingServer.getInstance().queueToPlay) {
             Logger.info("Player tolerance: " + player.getTolerance() + " | Rank diff: " + Math.abs(this.getRank() - player.getRank()));
             if (player.getTolerance() >= Math.abs(this.getRank() - player.getRank())) {
+                Logger.info("Game rank: " + this.getRank());
                 this.addPlayer(player);
                 PlayingServer.getInstance().queueToPlay.remove(player);
                 Logger.info("Added player '" + player.getName() + "' to the game." + player.getTolerance());

@@ -22,6 +22,7 @@ public class ScheduledRankRelaxer {
 
     private void relaxRanks() {
         for (GameModel game : playingServer.games) {
+            if (game.getRank() == -1) continue;
             int gameSize = game.getCurrentPlayers();
             boolean hasEnoughPlayer = game.playgroundUpdate(false); // check if a ranked player waiting can enter this updated game
             if (hasEnoughPlayer) {
