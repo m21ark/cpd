@@ -47,6 +47,31 @@ More information regarding the project can be accessed in the PDF file in the 'd
 The client can authenticate using an existing player credentials or by registering a new player.
 The credentials are stored in the `database/users.txt` file.
 
+## Game Modes
+
+The game has two modes: simple and ranked.
+The initial configuration is Simple with thread pool size of 5 with two players on each.
+
+The mode can be changed easily on the `resources/config.properties` file.
+
+We recommend the following:
+
+For Simple Mode:
+> mode=Simple
+> 
+> gamePoolSize=5
+> 
+> nrMaxPlayersInGame=2
+
+For Ranked Mode:
+> mode=Ranked
+> 
+> gamePoolSize=1
+> 
+> nrMaxPlayersInGame=2
+
+We recommend using a game pool size of 1, we ensure that only one game is running at a time, which makes testing the Ranked Mode easier.
+
 ## Important Notes
 
 Our code uses a cache folder to save the state of clients and server. 
