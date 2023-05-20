@@ -60,7 +60,7 @@ public class SocketUtils {
     }
 
     public static void sendToServer(SocketChannel channel, CommunicationProtocol message, String... args) {
-        SocketUtils.NIOWrite(channel, message + " " + String.join(" ", args));
+        SocketUtils.NIOWrite(channel, message + " " + String.join(" ", args) + " ");
     }
 
     public static void closeSocket(Socket socket) {
