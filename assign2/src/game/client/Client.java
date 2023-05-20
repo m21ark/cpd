@@ -396,7 +396,7 @@ public class Client implements Serializable { // This is the game.client applica
     }
 
     private void queueReconnect() {
-        System.out.println("Reconnecting to queue..."); // TODO: There are still problems with this and dont know why
+        System.out.println("Reconnecting to queue...");
         System.out.println("Welcome back " + player.getName() + "!");
         System.out.println("You are still in the queue...");
         mainGame(true, false);
